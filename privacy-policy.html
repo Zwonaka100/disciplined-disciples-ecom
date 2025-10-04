@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disciplined Disciples - Privacy Policy</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" type="image/png" href="assets/logo.jpg">
+    <!-- Firebase SDK Imports (REQUIRED) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <!-- Header Section - IMPORTANT: This header block must be identical across ALL your HTML pages -->
+    <header class="header">
+        <div class="container flex justify-between items-center py-4">
+            <a href="index.html" class="logo flex items-center">
+                <img src="assets/logo.jpg" alt="Disciplined Disciples Logo" class="site-logo" style="height:40px; width:auto; margin-right:10px;">
+                <span>Disciplined Disciples</span>
+            </a>
+            <nav class="nav-menu">
+                <ul class="flex space-x-6">
+                    <li><a href="index.html" class="nav-link">Home</a></li>
+                    <li><a href="shop.html" class="nav-link">Shop</a></li>
+                    <li><a href="blog.html" class="nav-link">Blog</a></li>
+                    <li><a href="contact.html" class="nav-link">Contact</a></li>
+                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link"><i class="fab fa-instagram"></i></a></li>
+                    <li><a href="cart.html" class="nav-link"><i class="fas fa-shopping-cart"></i></a></li>
+                    <li><a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a></li>
+                </ul>
+            </nav>
+            <button class="menu-toggle" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <nav class="mobile-menu">
+            <ul class="py-4">
+                <li><a href="index.html" class="nav-link-mobile">Home</a></li>
+                <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
+                <li><a href="blog.html" class="nav-link-mobile">Blog</a></li>
+                <li><a href="contact.html" class="nav-link-mobile">Contact</a></li>
+                <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
+                <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
+                <!-- Authentication links will be dynamically added here by script.js -->
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Profile Ribbon - Hidden by default, shown when user is logged in -->
+    <div id="profile-ribbon" class="relative flex items-center space-x-2 cursor-pointer select-none" style="display:none;">
+        <span id="profile-ribbon-name" class="font-semibold text-gray-700"></span>
+        <div id="profile-ribbon-avatar" class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 text-gray-700 font-bold text-lg border-2 border-gray-300 overflow-hidden"></div>
+        <div id="profile-dropdown" class="absolute right-0 top-12 bg-white border rounded shadow-lg min-w-[160px] hidden z-50">
+            <a href="profile.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Profile</a>
+            <a href="profile.html#account" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Account</a>
+            <a href="profile.html#orders" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Orders</a>
+            <button id="dropdown-logout-btn" class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Logout</button>
+        </div>
+    </div>
+
+    <!-- Privacy Policy Hero Section -->
+    <section class="shop-hero-section" style="position:relative; background-color:#111; min-height:320px;">
+        <img src="Assets/Products/Caps/WhatsApp Image 2025-08-10 at 14.56.45_da1863d8.jpg" alt="Privacy Policy Banner"
+            style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0.45; z-index:1;">
+        <div class="container text-center py-16" style="position:relative; z-index:2;">
+            <h1 class="shop-title" style="color:#fff;">Privacy Policy</h1>
+            <p class="shop-subtitle" style="color:#e0e0e0;">Your privacy matters to us.</p>
+        </div>
+    </section>
+
+    <!-- Privacy Policy Content Section -->
+    <section class="section-padding bg-light-gray">
+        <div class="container max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-md">
+            <p class="text-gray-700 mb-4">This Privacy Policy describes how Disciplined Disciples collects, uses, and discloses your personal information when you visit or make a purchase from our website.</p>
+
+            <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">Information We Collect</h2>
+            <div class="space-y-4">
+                <p class="text-gray-700">When you visit the Site, we collect certain information about your device, your interaction with the Site, and information necessary to process your purchases. We may also collect additional information if you contact us for customer support.</p>
+                <h3 class="font-semibold text-lg text-gray-900">Personal Information Examples:</h3>
+                <ul class="list-disc list-inside text-gray-700 ml-4">
+                    <li>Name</li>
+                    <li>Billing address</li>
+                    <li>Shipping address</li>
+                    <li>Payment information (credit card numbers, email, phone number)</li>
+                </ul>
+            </div>
+
+            <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">How We Use Your Information</h2>
+            <p class="text-gray-700">We use your personal information to provide our services to you, which includes: offering products for sale, processing payments, shipping and fulfillment of your order, and keeping you up to date on new products, services, and offers.</p>
+
+            <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">Sharing Your Personal Information</h2>
+            <p class="text-gray-700">We share your Personal Information with service providers to help us provide our services and fulfill our contracts with you, as described above. For example, we use Firebase for authentication and database services, and Payfast for payment processing. We may also share your Personal Information to comply with applicable laws and regulations, to respond to a subpoena, search warrant or other lawful request for information we receive, or to otherwise protect our rights.</p>
+
+            <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">Your Rights</h2>
+            <p class="text-gray-700">If you are a resident of South Africa, you have the right to access the personal information we hold about you and to ask that your personal information be corrected, updated, or deleted. If you would like to exercise this right, please contact us through the contact information below.</p>
+
+            <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">Contact</h2>
+            <p class="text-gray-700">For more information about our privacy practices, if you have questions, or if you would like to make a complaint, please contact us by e-mail at <a href="mailto:info@disciplineddisciples.co.za" class="text-blue-600 hover:underline">info@disciplineddisciples.co.za</a>.</p>
+        </div>
+    </section>
+
+    <!-- Footer Section -->
+    <footer class="footer">
+        <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="footer-col">
+                <h3 class="footer-heading">Disciplined Disciples</h3>
+                <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
+                <div class="social-links">
+                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="social-link"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Quick Links</h3>
+                <ul>
+                    <li><a href="index.html" class="footer-link">Home</a></li>
+                    <li><a href="shop.html" class="footer-link">Shop</a></li>
+                    <li><a href="blog.html" class="footer-link">Blog</a></li>
+                    <li><a href="contact.html" class="footer-link">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Support</h3>
+                <ul>
+                    <li><a href="faq.html" class="footer-link">FAQs</a></li>
+                    <li><a href="shipping-returns.html" class="footer-link">Shipping & Returns</a></li>
+                    <li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li>
+                    <li><a href="terms-of-service.html" class="footer-link">Terms of Service</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading text-lg font-semibold mb-4">Contact Us</h3>
+                <p class="footer-text text-gray-300 text-sm mb-2">Email: nomaqhizazolile@gmail.com</p>
+                <p class="footer-text text-gray-300 text-sm mb-2">Phone: +27 69 206 0618</p>
+                <p class="footer-text text-gray-300 text-sm">Johannesburg, South Africa</p>
+            </div>
+        </div>
+        <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
+            <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
+            <p>Built by Zande Technologies (Pty) Ltd</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

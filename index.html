@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disciplined Disciples</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" type="image/png" href="assets/logo.jpg">
+    <link rel="icon" type="image/png" href="assets/logo.jpg">
+    <!-- Firebase SDK Imports (REQUIRED) -->
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <!-- Firebase Auth -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <!-- Firebase Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <!-- Header Section - IMPORTANT: This header block must be identical across ALL your HTML pages -->
+    <header class="header">
+        <div class="container flex justify-between items-center py-4">
+            <a href="index.html" class="logo flex items-center">
+                <img src="assets/logo.jpg" alt="Disciplined Disciples Logo" class="site-logo" style="height:40px; width:auto; margin-right:10px;">
+                <span>Disciplined Disciples</span>
+            </a>
+            <nav class="nav-menu">
+                <ul class="flex space-x-6">
+                    <li><a href="index.html" class="nav-link active">Home</a></li>
+                    <li><a href="shop.html" class="nav-link">Shop</a></li>
+                    <li><a href="blog.html" class="nav-link">Blog</a></li>
+                    <li><a href="contact.html" class="nav-link">Contact</a></li>
+                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link"><i class="fab fa-instagram"></i></a>
+                    </li>
+                    <li><a href="cart.html" class="nav-link"><i class="fas fa-shopping-cart"></i></a></li>
+                    <!-- Authentication links (Login/Signup or My Account/Logout) will be dynamically added here by script.js -->
+                </ul>
+            </nav>
+            <button class="menu-toggle" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <nav class="mobile-menu">
+            <ul class="py-4">
+                <li><a href="index.html" class="nav-link-mobile active">Home</a></li>
+                <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
+                <li><a href="blog.html" class="nav-link-mobile">Blog</a></li>
+                <li><a href="contact.html" class="nav-link-mobile">Contact</a></li>
+                <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a>
+                </li>
+                <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
+                <!-- Authentication links will be dynamically added here by script.js -->
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section" style="position:relative; background-color:#111; min-height:400px;">
+        <img src="assets/Banner.jpg" alt="Disciplined Disciples"
+            style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0.45; z-index:1;">
+        <div class="container text-center py-20" style="position:relative; z-index:2;">
+            <h1 class="hero-title" style="color:#fff;">Forge Your Discipline</h1>
+            <p class="hero-subtitle" style="color:#e0e0e0;">Premium apparel designed for the disciplined mind and spirit.</p>
+            <a href="shop.html" class="btn btn-primary mt-8">Shop Now</a>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="section-padding bg-light-gray">
+        <div class="container text-center">
+            <h2 class="section-title">About Disciplined Disciples</h2>
+            <p class="section-subtitle">Our mission is to inspire through apparel.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
+                <!-- Mission Statement -->
+                <div class="about-card">
+                    <i class="fas fa-bullseye about-icon"></i>
+                    <h3 class="font-semibold text-xl mb-2">Mission Statement</h3>
+                    <p class="text-gray-700">At DisciplinedDisciples, our mission is to cultivate a culture of self-love and discipline, rooted in the belief that discipline is the DNA of success. Inspired by the scripture "Whoever loves discipline loves knowledge," we aim to educate and empower individuals, from school pupils to corporate leaders, that true success is rooted in a disciplined mindset. We believe that discipline fosters growth, resilience, and a deeper connection with one's faith.</p>
+                </div>
+                <!-- Vision Statement -->
+                <div class="about-card">
+                    <i class="fas fa-eye about-icon"></i>
+                    <h3 class="font-semibold text-xl mb-2">Vision Statement</h3>
+                    <p class="text-gray-700">Our vision is to build a vibrant community, or tribe, that embodies disciplined and faith-filled living, impacting our surroundings and spreading the Kingdom of God. We envision a future where individuals understand that true freedom is achieved through discipline, as echoed in Proverbs 25:28, "A person without self-control is like a city with broken-down walls." Through our apparel, including caps, hoodies, normal tees, and oversized tees, we seek to inspire a movement towards disciplined living.</p>
+                </div>
+                <!-- Quality Craftsmanship -->
+                <div class="about-card">
+                    <i class="fas fa-tshirt about-icon"></i>
+                    <h3 class="font-semibold text-xl mb-2">Quality Craftsmanship</h3>
+                    <p class="text-gray-700">At DisciplinedDisciples, we are committed to quality craftsmanship in every piece of apparel we create. Our products are designed not just to be worn but to be a statement of one's commitment to discipline and faith. From the meticulous selection of materials to the precise execution of our designs, every detail reflects our dedication to excellence. Our apparel is crafted to be durable, comfortable, and a testament to the values we uphold.</p>
+                </div>
+                <!-- Growth and Movement -->
+                <div class="about-card">
+                    <i class="fas fa-chart-line about-icon"></i>
+                    <h3 class="font-semibold text-xl mb-2">Growth and Movement</h3>
+                    <p class="text-gray-700">We are driven by a passion for growth and movement, believing that discipline is the catalyst for personal and communal advancement. Through our initiatives, we aim to foster a growth mindset among our community members, encouraging them to embrace challenges and view failures as opportunities for learning. Our goal is to create a ripple effect of positive change, inspiring others to adopt a disciplined approach to life and, in doing so, contribute to a broader movement of faith-filled living.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Products Section -->
+    <section class="section-padding">
+        <div class="container text-center">
+            <h2 class="section-title">Featured Products</h2>
+            <p class="section-subtitle">Our core collection, designed for your journey.</p>
+            <div class="product-grid mt-12" id="featured-products-grid">
+                <!-- Featured products will be dynamically loaded here -->
+                <p>Loading featured products...</p>
+            </div>
+            <a href="shop.html" class="btn btn-primary mt-8">View All Products</a>
+        </div>
+    </section>
+
+    <!-- Call to Action Section -->
+    <section class="cta-section">
+        <div class="container text-center py-16">
+            <h2 class="cta-title">Ready to Embrace Discipline?</h2>
+            <p class="cta-subtitle">Join the Disciplined Disciples community today.</p>
+            <a href="login-signup.html" class="btn btn-secondary mt-8">Sign Up Now</a>
+        </div>
+    </section>
+
+    <!-- Footer Section -->
+    <footer class="footer">
+        <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="footer-col">
+                <h3 class="footer-heading">Disciplined Disciples</h3>
+                <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
+                <div class="social-links">
+                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="social-link"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Quick Links</h3>
+                <ul>
+                    <li><a href="index.html" class="footer-link">Home</a></li>
+                    <li><a href="shop.html" class="footer-link">Shop</a></li>
+                    <li><a href="blog.html" class="footer-link">Blog</a></li>
+                    <li><a href="contact.html" class="footer-link">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Support</h3>
+                <ul>
+                    <li><a href="faq.html" class="footer-link">FAQs</a></li>
+                    <li><a href="shipping-returns.html" class="footer-link">Shipping & Returns</a></li>
+                    <li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li>
+                    <li><a href="terms-of-service.html" class="footer-link">Terms of Service</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading text-lg font-semibold mb-4">Contact Us</h3>
+                <p class="footer-text text-gray-300 text-sm mb-2">Email: nomaqhizazolile@gmail.com</p>
+                <p class="footer-text text-gray-300 text-sm mb-2">Phone: +27 69 206 0618</p>
+                <p class="footer-text text-gray-300 text-sm">Johannesburg, South Africa</p>
+            </div>
+        </div>
+        <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
+            <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
+            <p>Built by Zande Technologies (Pty) Ltd.</p>
+        </div>
+    </footer>
+
+    <div id="profile-ribbon" class="relative flex items-center space-x-2 cursor-pointer select-none" style="display:none;">
+        <span id="profile-ribbon-name" class="font-semibold text-gray-700"></span>
+        <div id="profile-ribbon-avatar" class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 text-gray-700 font-bold text-lg border-2 border-gray-300 overflow-hidden"></div>
+        <div id="profile-dropdown" class="absolute right-0 top-12 bg-white border rounded shadow-lg min-w-[160px] hidden z-50">
+            <a href="profile.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Profile</a>
+            <a href="profile.html#account" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Account</a>
+            <a href="profile.html#orders" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Orders</a>
+            <button id="dropdown-logout-btn" class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Logout</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const featuredGrid = document.getElementById('featured-products-grid');
+            const allProducts = window.getAllProducts();
+
+            if (featuredGrid && allProducts) {
+                featuredGrid.innerHTML = ''; // Clear loading text
+                allProducts.forEach(product => {
+                    const productCard = document.createElement('div');
+                    productCard.className = 'product-card';
+                    productCard.innerHTML = `
+                        <img src="${product.displayImage}" alt="${product.name}" class="product-image">
+                        <h3 class="product-name">${product.name}</h3>
+                        <p class="product-price">R ${product.price.toFixed(2)}</p>
+                        <a href="product-detail.html?id=${product.id}" class="btn btn-secondary">View Product</a>
+                    `;
+                    featuredGrid.appendChild(productCard);
+                });
+            } else {
+                featuredGrid.innerHTML = '<p>Could not load products.</p>';
+            }
+        });
+    </script>
+</body>
+</html>

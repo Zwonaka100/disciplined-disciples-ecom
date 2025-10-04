@@ -1,0 +1,2 @@
+// In your browser console or Node.js, run:
+console.log(JSON.stringify(window.products, null, 2));

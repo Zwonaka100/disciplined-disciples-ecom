@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disciplined Disciples - Order History</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" type="image/png" href="assets/logo.jpg">
+    <!-- Firebase SDK Imports (REQUIRED) -->
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <!-- Firebase Auth -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <!-- Firebase Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<body>
+    <!-- Header Section - IMPORTANT: This header block must be identical across ALL your HTML pages -->
+    <header class="header bg-white shadow">
+        <div class="container flex justify-between items-center py-4">
+            <a href="index.html" class="logo flex items-center">
+                <img src="assets/logo.jpg" alt="Disciplined Disciples Logo" style="height:40px; width:auto; margin-right:10px;">
+                <span class="font-bold text-xl">Disciplined Disciples</span>
+            </a>
+            <nav class="flex items-center space-x-6">
+                <ul class="flex space-x-6">
+                    <li><a href="index.html" class="nav-link">Home</a></li>
+                    <li><a href="shop.html" class="nav-link">Shop</a></li>
+                    <li><a href="blog.html" class="nav-link">Blog</a></li>
+                    <li><a href="contact.html" class="nav-link">Contact</a></li>
+                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link"><i class="fab fa-instagram"></i></a></li>
+                    <li><a href="cart.html" class="nav-link"><i class="fas fa-shopping-cart"></i></a></li>
+                    <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
+                </ul>
+                <div id="profile-ribbon" class="relative flex items-center space-x-2 cursor-pointer select-none" style="display:none;">
+                    <span id="profile-ribbon-name" class="font-semibold text-gray-700"></span>
+                    <div id="profile-ribbon-avatar" class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 text-gray-700 font-bold text-lg border-2 border-gray-300 overflow-hidden"></div>
+                    <div id="profile-dropdown" class="absolute right-0 top-12 bg-white border rounded shadow-lg min-w-[160px] hidden z-50">
+                        <a href="profile.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Profile</a>
+                        <a href="profile.html#account" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Account</a>
+                        <a href="profile.html#orders" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Orders</a>
+                        <button id="dropdown-logout-btn" class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Logout</button>
+                    </div>
+                </div>
+            </nav>
+        </div>
+        <nav class="mobile-menu">
+            <ul class="py-4">
+                <li><a href="index.html" class="nav-link-mobile">Home</a></li>
+                <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
+                <li><a href="blog.html" class="nav-link-mobile">Blog</a></li>
+                <li><a href="contact.html" class="nav-link-mobile">Contact</a></li>
+                <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
+                <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
+                <!-- Authentication links will be dynamically added here by script.js -->
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Order History Hero Section -->
+    <section class="shop-hero-section">
+        <div class="container text-center py-16">
+            <h1 class="shop-title">My Order History</h1>
+            <p class="shop-subtitle">View your past purchases.</p>
+        </div>
+    </section>
+
+    <!-- Order History Content Section -->
+    <section class="section-padding bg-light-gray">
+        <div class="container max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
+            <p class="text-center text-gray-700">This page will display a list of your past orders once implemented with Firebase Firestore.</p>
+            <!-- Orders will be dynamically loaded here -->
+            <div id="order-history-list" class="mt-8 space-y-4">
+                <!-- Example order card (will be replaced by dynamic data) -->
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-semibold text-lg">Order #DD2025-001</h3>
+                        <span class="text-sm text-gray-600">Date: July 20, 2025</span>
+                    </div>
+                    <p class="text-gray-700">Total: R 850.00</p>
+                    <p class="text-green-600 font-medium">Status: Delivered</p>
+                    <button class="text-blue-600 hover:underline mt-2">View Details</button>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-semibold text-lg">Order #DD2025-002</h3>
+                        <span class="text-sm text-gray-600">Date: June 10, 2025</span>
+                    </div>
+                    <p class="text-gray-700">Total: R 400.00</p>
+                    <p class="text-yellow-600 font-medium">Status: Shipped</p>
+                    <button class="text-blue-600 hover:underline mt-2">View Details</button>
+                </div>
+            </div>
+            <p class="text-center text-gray-600 mt-8">Please ensure you are logged in to view your order history.</p>
+        </div>
+    </section>
+
+    <!-- Footer Section -->
+    <footer class="footer">
+        <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="footer-col">
+                <h3 class="footer-heading">Disciplined Disciples</h3>
+                <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
+                <div class="social-links">
+                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="social-link"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Quick Links</h3>
+                <ul>
+                    <li><a href="index.html" class="footer-link">Home</a></li>
+                    <li><a href="shop.html" class="footer-link">Shop</a></li>
+                    <li><a href="blog.html" class="footer-link">Blog</a></li>
+                    <li><a href="contact.html" class="footer-link">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Support</h3>
+                <ul>
+                    <li><a href="faq.html" class="footer-link">FAQs</a></li>
+                    <li><a href="shipping-returns.html" class="footer-link">Shipping & Returns</a></li>
+                    <li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li>
+                    <li><a href="terms-of-service.html" class="footer-link">Terms of Service</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading text-lg font-semibold mb-4">Contact Us</h3>
+                <p class="footer-text text-gray-300 text-sm mb-2">Email: nomaqhizazolile@gmail.com</p>
+                <p class="footer-text text-gray-300 text-sm mb-2">Phone: +27 69 206 0618</p>
+                <p class="footer-text text-gray-300 text-sm">Johannesburg, South Africa</p>
+            </div>
+        </div>
+        <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
+            <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
+            <p>Built by Zande Technologies (Pty) Ltd</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

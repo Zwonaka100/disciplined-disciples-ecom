@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disciplined Disciples - Shipping & Returns</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" type="image/png" href="assets/logo.jpg">
+    <!-- Firebase SDK Imports (REQUIRED) -->
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <!-- Firebase Auth -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <!-- Firebase Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<body>
+    <!-- Header Section - IMPORTANT: This header block must be identical across ALL your HTML pages -->
+    <header class="header">
+        <div class="container flex justify-between items-center py-4">
+            <a href="index.html" class="logo flex items-center">
+                <img src="assets/logo.jpg" alt="Disciplined Disciples Logo" class="site-logo" style="height:40px; width:auto; margin-right:10px;">
+                <span>Disciplined Disciples</span>
+            </a>
+            <nav class="nav-menu">
+                <ul class="flex space-x-6">
+                    <li><a href="index.html" class="nav-link">Home</a></li>
+                    <li><a href="shop.html" class="nav-link">Shop</a></li>
+                    <li><a href="blog.html" class="nav-link">Blog</a></li>
+                    <li><a href="contact.html" class="nav-link">Contact</a></li>
+                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link"><i class="fab fa-instagram"></i></a></li>
+                    <li><a href="cart.html" class="nav-link"><i class="fas fa-shopping-cart"></i></a></li>
+                    <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
+                    <div id="profile-ribbon" class="relative flex items-center space-x-2 cursor-pointer select-none" style="display:none;">
+                        <span id="profile-ribbon-name" class="font-semibold text-gray-700"></span>
+                        <div id="profile-ribbon-avatar" class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 text-gray-700 font-bold text-lg border-2 border-gray-300 overflow-hidden"></div>
+                        <div id="profile-dropdown" class="absolute right-0 top-12 bg-white border rounded shadow-lg min-w-[160px] hidden z-50">
+                            <a href="profile.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Profile</a>
+                            <a href="profile.html#account" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Account</a>
+                            <a href="profile.html#orders" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Orders</a>
+                            <button id="dropdown-logout-btn" class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Logout</button>
+                        </div>
+                    </div>
+                </ul>
+            </nav>
+            <button class="menu-toggle" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <nav class="mobile-menu">
+            <ul class="py-4">
+                <li><a href="index.html" class="nav-link-mobile">Home</a></li>
+                <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
+                <li><a href="blog.html" class="nav-link-mobile">Blog</a></li>
+                <li><a href="contact.html" class="nav-link-mobile">Contact</a></li>
+                <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
+                <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
+                <!-- Authentication links will be dynamically added here by script.js -->
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Shipping & Returns Hero Section -->
+    <section class="shop-hero-section" style="position:relative; background-color:#111; min-height:320px;">
+        <img src="Assets/Other/IMG-20250928-WA0006.jpg" alt="Shipping & Returns Banner"
+            style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0.45; z-index:1;">
+        <div class="container text-center py-16" style="position:relative; z-index:2;">
+            <h1 class="shop-title" style="color:#fff;">Shipping & Returns</h1>
+            <p class="shop-subtitle" style="color:#e0e0e0;">Your guide to hassle-free shopping.</p>
+        </div>
+    </section>
+
+    <!-- Shipping & Returns Content Section -->
+    <section class="section-padding bg-light-gray">
+        <div class="container max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-md">
+            <h2 class="text-2xl font-semibold text-gray-900 mb-6">Shipping Information</h2>
+            <div class="space-y-4 mb-8">
+                <h3 class="font-semibold text-lg text-gray-900">Delivery Times</h3>
+                <p class="text-gray-700">Orders are typically processed within <strong>2-3 business days</strong>. Once shipped, delivery times vary by location:</p>
+                <ul class="list-disc list-inside text-gray-700 ml-4">
+                    <li>Major Metros (Johannesburg, Cape Town, Durban): <strong>3-5 business days</strong></li>
+                    <li>Regional Areas: <strong>5-7 business days</strong></li>
+                    <li>Rural Areas: <strong>7-10 business days</strong></li>
+                </ul>
+                <p class="text-gray-700">Please note that these are estimates and may be subject to delays during peak seasons or unforeseen circumstances.</p>
+
+                <h3 class="font-semibold text-lg text-gray-900 mt-6">Shipping Costs</h3>
+                <p class="text-gray-700">A flat rate of <strong>R 80.00</strong> applies to all orders nationwide. We offer free shipping on orders above R 1000.00.</p>
+                <p class="text-gray-700">All shipping costs are calculated at checkout.</p>
+
+                <h3 class="font-semibold text-lg text-gray-900 mt-6">Tracking Your Order</h3>
+                <p class="text-gray-700">Once your order has been dispatched, you will receive an email confirmation containing your tracking number and a link to the courier's website. You can use this link to monitor the progress of your delivery.</p>
+            </div>
+
+            <hr class="border-gray-200 my-8">
+
+            <h2 class="text-2xl font-semibold text-gray-900 mb-6">Returns & Exchanges</h2>
+            <div class="space-y-4">
+                <h3 class="font-semibold text-lg text-gray-900">Our Policy</h3>
+                <p class="text-gray-700">We want you to be completely satisfied with your purchase. If you are not, we accept returns or exchanges within <strong>30 days of the purchase date</strong>, subject to the following conditions:</p>
+                <ul class="list-disc list-inside text-gray-700 ml-4">
+                    <li>Items must be unworn, unwashed, and in their original condition.</li>
+                    <li>All original tags and packaging must be intact.</li>
+                    <li>Proof of purchase (order number or receipt) is required.</li>
+                </ul>
+                <p class="text-gray-700">Please note that final sale items and personalized products are not eligible for return or exchange.</p>
+
+                <h3 class="font-semibold text-lg text-gray-900 mt-6">How to Initiate a Return/Exchange</h3>
+                <p class="text-gray-700">To start a return or exchange, please contact our customer service team at <a href="mailto:info@disciplineddisciples.co.za" class="text-blue-600 hover:underline">info@disciplineddisciples.co.za</a> with your order number and reason for return. We will provide you with instructions on how to proceed.</p>
+
+                <h3 class="font-semibold text-lg text-gray-900 mt-6">Refunds</h3>
+                <p class="text-gray-700">Once your return is received and inspected, we will notify you of the approval or rejection of your refund. If approved, your refund will be processed, and a credit will automatically be applied to your original method of payment within 7-10 business days.</p>
+
+                <h3 class="font-semibold text-lg text-gray-900 mt-6">Exchanges</h3>
+                <p class="text-gray-700">If you need to exchange an item for a different size or product, please contact us. We'll assist you with the process based on product availability.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Section -->
+    <footer class="footer">
+        <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="footer-col">
+                <h3 class="footer-heading">Disciplined Disciples</h3>
+                <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
+                <div class="social-links">
+                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="social-link"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Quick Links</h3>
+                <ul>
+                    <li><a href="index.html" class="footer-link">Home</a></li>
+                    <li><a href="shop.html" class="footer-link">Shop</a></li>
+                    <li><a href="blog.html" class="footer-link">Blog</a></li>
+                    <li><a href="contact.html" class="footer-link">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Support</h3>
+                <ul>
+                    <li><a href="faq.html" class="footer-link">FAQs</a></li>
+                    <li><a href="shipping-returns.html" class="footer-link">Shipping & Returns</a></li>
+                    <li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li>
+                    <li><a href="terms-of-service.html" class="footer-link">Terms of Service</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading text-lg font-semibold mb-4">Contact Us</h3>
+                <p class="footer-text text-gray-300 text-sm mb-2">Email: nomaqhizazolile@gmail.com</p>
+                <p class="footer-text text-gray-300 text-sm mb-2">Phone: +27 69 206 0618</p>
+                <p class="footer-text text-gray-300 text-sm">Johannesburg, South Africa</p>
+            </div>
+        </div>
+        <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
+            <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
+            <p>Built by Zande Technologies (Pty) Ltd</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disciplined Disciples - Checkout</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="assets/logo.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+</head>
+<body class="checkout-page bg-gray-50">
+    <!-- Header Section - IMPORTANT: This header block must be identical across ALL your HTML pages -->
+    <header class="header bg-white shadow">
+        <div class="container flex justify-between items-center py-4">
+            <a href="index.html" class="logo flex items-center">
+                <img src="assets/logo.jpg" alt="Disciplined Disciples Logo" style="height:40px; width:auto; margin-right:10px;">
+                <span class="font-bold text-xl">Disciplined Disciples</span>
+            </a>
+            <nav class="flex items-center space-x-6">
+                <ul class="flex space-x-6">
+                    <li><a href="index.html" class="nav-link">Home</a></li>
+                    <li><a href="shop.html" class="nav-link">Shop</a></li>
+                    <li><a href="blog.html" class="nav-link">Blog</a></li>
+                    <li><a href="contact.html" class="nav-link">Contact</a></li>
+                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link"><i class="fab fa-instagram"></i></a></li>
+                    <li><a href="cart.html" class="nav-link"><i class="fas fa-shopping-cart"></i></a></li>
+                    <!-- Authentication links (Login/Signup or My Account/Logout) will be dynamically added here by script.js -->
+                </ul>
+                <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
+                <div id="profile-ribbon" class="relative flex items-center space-x-2 cursor-pointer select-none" style="display:none;">
+                    <span id="profile-ribbon-name" class="font-semibold text-gray-700"></span>
+                    <div id="profile-ribbon-avatar" class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 text-gray-700 font-bold text-lg border-2 border-gray-300 overflow-hidden"></div>
+                    <div id="profile-dropdown" class="absolute right-0 top-12 bg-white border rounded shadow-lg min-w-[160px] hidden z-50">
+                        <a href="profile.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Profile</a>
+                        <a href="profile.html#account" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Account</a>
+                        <a href="profile.html#orders" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Orders</a>
+                        <button id="dropdown-logout-btn" class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Logout</button>
+                    </div>
+                </div>
+            </nav>
+            <button class="menu-toggle" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <nav class="mobile-menu">
+            <ul class="py-4">
+                <li><a href="index.html" class="nav-link-mobile">Home</a></li>
+                <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
+                <li><a href="blog.html" class="nav-link-mobile">Blog</a></li>
+                <li><a href="contact.html" class="nav-link-mobile">Contact</a></li>
+                <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
+                <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
+                <!-- Authentication links will be dynamically added here by script.js -->
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container mx-auto py-12 px-4">
+        <h1 class="text-3xl font-bold mb-6 text-center">Checkout</h1>
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- Cart Summary -->
+            <section class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Order Summary</h2>
+                <div id="checkout-cart-items"></div>
+                <div class="mt-6 border-t pt-4">
+                    <div class="flex justify-between mb-2">
+                        <span>Subtotal:</span>
+                        <span id="checkout-subtotal">R0.00</span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                        <span>VAT (15%):</span>
+                        <span id="checkout-vat">R0.00</span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                        <span>Shipping:</span>
+                        <span id="checkout-shipping">R0.00</span>
+                    </div>
+                    <div class="flex justify-between font-bold text-lg mt-2">
+                        <span>Total:</span>
+                        <span id="checkout-total">R0.00</span>
+                    </div>
+                </div>
+            </section>
+            <!-- Delivery Info Form -->
+            <section class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Delivery Information</h2>
+                <form id="checkout-form" autocomplete="off">
+                    <div class="mb-4">
+                        <label for="name" class="block text-gray-700 mb-1">Full Name</label>
+                        <input type="text" id="name" name="name" required class="w-full border rounded px-3 py-2">
+                    </div>
+                    <div class="mb-4">
+                        <label for="phone" class="block text-gray-700 mb-1">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" required class="w-full border rounded px-3 py-2">
+                    </div>
+                    <div class="mb-4">
+                        <label for="address1" class="block text-gray-700 mb-1">Address Line 1</label>
+                        <input type="text" id="address1" name="address1" required class="w-full border rounded px-3 py-2">
+                    </div>
+                    <div class="mb-4">
+                        <label for="address2" class="block text-gray-700 mb-1">Address Line 2</label>
+                        <input type="text" id="address2" name="address2" class="w-full border rounded px-3 py-2">
+                    </div>
+                    <div class="mb-4">
+                        <label for="city" class="block text-gray-700 mb-1">City</label>
+                        <input type="text" id="city" name="city" required class="w-full border rounded px-3 py-2">
+                    </div>
+                    <div class="mb-4">
+                        <label for="province" class="block text-gray-700 mb-1">Province</label>
+                        <input type="text" id="province" name="province" required class="w-full border rounded px-3 py-2">
+                    </div>
+                    <div class="mb-4">
+                        <label for="postal" class="block text-gray-700 mb-1">Postal Code</label>
+                        <input type="text" id="postal" name="postal" required class="w-full border rounded px-3 py-2">
+                    </div>
+                    <button type="submit" class="btn-primary w-full mt-4">Place Order</button>
+                </form>
+                <div id="order-success" class="hidden mt-6 text-green-600 font-bold text-center"></div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="footer bg-gray-800 text-white py-8 mt-12">
+        <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="footer-col">
+                <h3 class="footer-heading">Disciplined Disciples</h3>
+                <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
+                <div class="social-links">
+                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="social-link"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Quick Links</h3>
+                <ul>
+                    <li><a href="index.html" class="footer-link">Home</a></li>
+                    <li><a href="shop.html" class="footer-link">Shop</a></li>
+                    <li><a href="blog.html" class="footer-link">Blog</a></li>
+                    <li><a href="contact.html" class="footer-link">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Support</h3>
+                <ul>
+                    <li><a href="faq.html" class="footer-link">FAQs</a></li>
+                    <li><a href="shipping-returns.html" class="footer-link">Shipping & Returns</a></li>
+                    <li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li>
+                    <li><a href="terms-of-service.html" class="footer-link">Terms of Service</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Contact Us</h3>
+                <p class="footer-text">Email: info@disciplineddisciples.co.za</p>
+                <p class="footer-text">Phone: +27 12 345 6789</p>
+                <p class="footer-text">Johannesburg, South Africa</p>
+            </div>
+        </div>
+        <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
+            <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
+            <p>Built by Zande Technologies, Inc.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        await window.firebaseInitialized;
+
+        // Render cart summary on checkout
+        function renderCheckoutCart() {
+            const cartItemsDiv = document.getElementById('checkout-cart-items');
+            cartItemsDiv.innerHTML = '';
+            let subtotal = 0;
+            window.cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                subtotal += itemTotal;
+                cartItemsDiv.innerHTML += `
+                    <div class="flex items-center mb-3">
+                        <img src="${item.imageUrl}" alt="${item.name}" class="w-12 h-12 rounded mr-3">
+                        <div>
+                            <div class="font-medium">${item.name} ${item.size !== 'N/A' ? `(Size: ${item.size})` : ''}</div>
+                            <div class="text-sm text-gray-600">Qty: ${item.quantity} &nbsp; Price: R${item.price.toFixed(2)}</div>
+                        </div>
+                        <div class="ml-auto font-bold">R${itemTotal.toFixed(2)}</div>
+                    </div>
+                `;
+            });
+            // Totals
+            const vat = window.getCartVAT(subtotal);
+            const shipping = window.cart.length > 0 ? window.SHIPPING_COST : 0;
+            const total = window.getCartTotal(subtotal, vat, shipping);
+            document.getElementById('checkout-subtotal').textContent = `R${subtotal.toFixed(2)}`;
+            document.getElementById('checkout-vat').textContent = `R${vat.toFixed(2)}`;
+            document.getElementById('checkout-shipping').textContent = `R${shipping.toFixed(2)}`;
+            document.getElementById('checkout-total').textContent = `R${total.toFixed(2)}`;
+        }
+        renderCheckoutCart();
+
+        // Handle order submission
+        document.getElementById('checkout-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!window.currentUserId) {
+                window.showMessage('Please sign in to place your order.', 'error');
+                window.location.href = 'login-signup.html';
+                return;
+            }
+            if (window.cart.length === 0) {
+                window.showMessage('Your cart is empty!', 'error');
+                window.location.href = 'shop.html';
+                return;
+            }
+            // Collect delivery info
+            const deliveryAddress = {
+                name: this.name.value,
+                phone: this.phone.value,
+                line1: this.address1.value,
+                line2: this.address2.value,
+                city: this.city.value,
+                province: this.province.value,
+                postalCode: this.postal.value
+            };
+            // Prepare order data
+            const subtotal = window.getCartSubtotal();
+            const vat = window.getCartVAT(subtotal);
+            const shipping = window.cart.length > 0 ? window.SHIPPING_COST : 0;
+            const total = window.getCartTotal(subtotal, vat, shipping);
+            const orderData = {
+                userId: window.currentUserId,
+                items: window.cart,
+                deliveryAddress,
+                subtotal,
+                vat,
+                shipping,
+                totalAmount: total,
+                orderDate: window.serverTimestamp(),
+                status: "Pending"
+            };
+            // Save order to Firestore
+            try {
+                const ordersRef = window.collection(window.db, "artifacts", "default-app-id", "orders");
+                await window.addDoc(ordersRef, orderData);
+                // Clear cart
+                window.cart = [];
+                window.saveCartToLocalStorage();
+                renderCheckoutCart();
+                document.getElementById('order-success').textContent = "Order placed successfully! Thank you for shopping with us.";
+                document.getElementById('order-success').classList.remove('hidden');
+                window.showMessage('Order placed successfully!', 'success');
+                this.reset();
+            } catch (error) {
+                window.showMessage('Failed to place order. Try again.', 'error');
+                console.error(error);
+            }
+        });
+    });
+    </script>
+</body>
+</html>
