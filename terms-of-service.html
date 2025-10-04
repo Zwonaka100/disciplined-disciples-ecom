@@ -15,71 +15,96 @@
 </head>
 <body class="bg-gray-50">
     <!-- Header -->
-    <header class="header bg-white shadow">
+    <header class="header">
         <div class="container flex justify-between items-center py-4">
             <a href="index.html" class="logo flex items-center">
                 <img src="assets/logo.jpg" alt="Disciplined Disciples Logo" style="height:40px; width:auto; margin-right:10px;">
                 <span class="font-bold text-xl">Disciplined Disciples</span>
             </a>
-            <nav class="flex items-center space-x-6">
+            <nav class="nav-menu">
                 <ul class="flex space-x-6">
                     <li><a href="index.html" class="nav-link">Home</a></li>
                     <li><a href="shop.html" class="nav-link">Shop</a></li>
                     <li><a href="blog.html" class="nav-link">Blog</a></li>
                     <li><a href="contact.html" class="nav-link">Contact</a></li>
                     <li><a href="cart.html" class="nav-link"><i class="fas fa-shopping-cart"></i></a></li>
+                    <li><a href="login-signup.html" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a></li>
                 </ul>
-                <div id="profile-ribbon" class="relative flex items-center space-x-2 cursor-pointer select-none" style="display:none;">
-                    <span id="profile-ribbon-name" class="font-semibold text-gray-700"></span>
-                    <div id="profile-ribbon-avatar" class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 text-gray-700 font-bold text-lg border-2 border-gray-300 overflow-hidden"></div>
-                    <div id="profile-dropdown" class="absolute right-0 top-12 bg-white border rounded shadow-lg min-w-[160px] hidden z-50">
-                        <a href="profile.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Profile</a>
-                        <a href="profile.html#account" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Account</a>
-                        <a href="profile.html#orders" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Orders</a>
-                        <button id="dropdown-logout-btn" class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Logout</button>
-                    </div>
-                </div>
             </nav>
+            <div id="profile-ribbon" class="relative flex items-center space-x-2 cursor-pointer select-none" style="display:none;">
+                <span id="profile-ribbon-name" class="font-semibold text-gray-700"></span>
+                <div id="profile-ribbon-avatar" class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 text-gray-700 font-bold text-lg border-2 border-gray-300 overflow-hidden"></div>
+                <div id="profile-dropdown" class="absolute right-0 top-12 bg-white border rounded shadow-lg min-w-[160px] hidden z-50">
+                    <a href="profile.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Profile</a>
+                    <a href="profile.html#account" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Account</a>
+                    <a href="profile.html#orders" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Orders</a>
+                    <button id="dropdown-logout-btn" class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Logout</button>
+                </div>
+            </div>
+            <button class="menu-toggle" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
         </div>
+        <nav class="mobile-menu">
+            <ul class="py-4">
+                <li><a href="index.html" class="nav-link-mobile">Home</a></li>
+                <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
+                <li><a href="blog.html" class="nav-link-mobile">Blog</a></li>
+                <li><a href="contact.html" class="nav-link-mobile">Contact</a></li>
+                <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
+                <li><a href="login-signup.html" class="nav-link-mobile"><i class="fas fa-sign-in-alt"></i> Login/Signup</a></li>
+            </ul>
+        </nav>
     </header>
 
     <!-- Hero Section -->
-    <section class="bg-gray-900 text-white py-16">
-        <div class="container mx-auto text-center">
-            <img src="assets/logo.jpg" alt="Disciplined Disciples Logo" class="mx-auto mb-4" style="height:60px;">
-            <h1 class="text-3xl md:text-4xl font-bold mb-2">Terms of Service</h1>
-            <p class="text-lg text-gray-300">Please read these terms carefully before using our website or services.</p>
+    <section class="shop-hero-section" style="position:relative; background-color:#111; min-height:320px;">
+        <img src="assets/Other/IMG-20250928-WA0012.jpg" alt="Terms Banner"
+            style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0.45; z-index:1;">
+        <div class="container text-center py-16" style="position:relative; z-index:2;">
+            <h1 class="shop-title" style="color:#fff;">Terms of Service</h1>
+            <p class="shop-subtitle" style="color:#e0e0e0;">Please read these terms carefully before using our website or services.</p>
         </div>
     </section>
 
     <!-- Terms Content -->
     <main class="container mx-auto max-w-3xl bg-white rounded-lg shadow p-8 my-12">
-        <h2 class="text-2xl font-bold mb-6">1. Acceptance of Terms</h2>
-        <p class="mb-6 text-gray-700">By accessing or using the Disciplined Disciples website and services, you agree to be bound by these Terms of Service and all applicable laws and regulations. If you do not agree, please do not use our site.</p>
-
-        <h2 class="text-2xl font-bold mb-6">2. Use of Our Website</h2>
-        <p class="mb-6 text-gray-700">You must be at least 18 years old to use our services, or have the consent of a parent or guardian if under 18. You agree to use our website only for lawful purposes and not to infringe on the rights of others.</p>
-
-        <h2 class="text-2xl font-bold mb-6">3. Products & Services</h2>
-        <p class="mb-6 text-gray-700">All products and services are subject to availability. We reserve the right to discontinue any product at any time. Prices and product images may change without notice. We strive for accuracy but cannot guarantee your device displays colors or images exactly as intended.</p>
-
-        <h2 class="text-2xl font-bold mb-6">4. Account Information</h2>
-        <p class="mb-6 text-gray-700">You agree to provide current, complete, and accurate account information. You are responsible for maintaining the confidentiality of your account and password and for restricting access to your account.</p>
-
-        <h2 class="text-2xl font-bold mb-6">5. Third-Party Links</h2>
-        <p class="mb-6 text-gray-700">Our website may contain links to third-party websites. We are not responsible for the content or accuracy of these sites and do not endorse them. Use third-party sites at your own risk.</p>
-
-        <h2 class="text-2xl font-bold mb-6">6. Limitation of Liability</h2>
-        <p class="mb-6 text-gray-700">Disciplined Disciples and its affiliates will not be liable for any damages arising from your use of our website or products, including but not limited to direct, indirect, incidental, punitive, or consequential damages.</p>
-
-        <h2 class="text-2xl font-bold mb-6">7. Changes to Terms</h2>
-        <p class="mb-6 text-gray-700">We reserve the right to update or change these Terms at any time. Changes will be posted on this page. Continued use of our website after changes constitutes acceptance of those changes.</p>
-
-        <h2 class="text-2xl font-bold mb-6">8. Governing Law</h2>
-        <p class="mb-6 text-gray-700">These Terms are governed by the laws of South Africa. Any disputes will be resolved in accordance with South African law.</p>
-
-        <h2 class="text-2xl font-bold mb-6">9. Contact Us</h2>
-        <p class="mb-6 text-gray-700">Questions about these Terms? Email us at <a href="mailto:info@disciplineddisciples.co.za" class="text-blue-600 hover:underline">info@disciplineddisciples.co.za</a>.</p>
+        <section>
+            <h2 class="text-2xl font-bold mb-4">1. Acceptance of Terms</h2>
+            <p class="mb-6 text-gray-700">By accessing or using the Disciplined Disciples website and services, you agree to be bound by these Terms of Service and all applicable laws and regulations. If you do not agree, please do not use our site.</p>
+        </section>
+        <section>
+            <h2 class="text-2xl font-bold mb-4">2. Use of Our Website</h2>
+            <p class="mb-6 text-gray-700">You must be at least 18 years old to use our services, or have the consent of a parent or guardian if under 18. You agree to use our website only for lawful purposes and not to infringe on the rights of others.</p>
+        </section>
+        <section>
+            <h2 class="text-2xl font-bold mb-4">3. Products & Services</h2>
+            <p class="mb-6 text-gray-700">All products and services are subject to availability. We reserve the right to discontinue any product at any time. Prices and product images may change without notice. We strive for accuracy but cannot guarantee your device displays colors or images exactly as intended.</p>
+        </section>
+        <section>
+            <h2 class="text-2xl font-bold mb-4">4. Account Information</h2>
+            <p class="mb-6 text-gray-700">You agree to provide current, complete, and accurate account information. You are responsible for maintaining the confidentiality of your account and password and for restricting access to your account.</p>
+        </section>
+        <section>
+            <h2 class="text-2xl font-bold mb-4">5. Third-Party Links</h2>
+            <p class="mb-6 text-gray-700">Our website may contain links to third-party websites. We are not responsible for the content or accuracy of these sites and do not endorse them. Use third-party sites at your own risk.</p>
+        </section>
+        <section>
+            <h2 class="text-2xl font-bold mb-4">6. Limitation of Liability</h2>
+            <p class="mb-6 text-gray-700">Disciplined Disciples and its affiliates will not be liable for any damages arising from your use of our website or products, including but not limited to direct, indirect, incidental, punitive, or consequential damages.</p>
+        </section>
+        <section>
+            <h2 class="text-2xl font-bold mb-4">7. Changes to Terms</h2>
+            <p class="mb-6 text-gray-700">We reserve the right to update or change these Terms at any time. Changes will be posted on this page. Continued use of our website after changes constitutes acceptance of those changes.</p>
+        </section>
+        <section>
+            <h2 class="text-2xl font-bold mb-4">8. Governing Law</h2>
+            <p class="mb-6 text-gray-700">These Terms are governed by the laws of South Africa. Any disputes will be resolved in accordance with South African law.</p>
+        </section>
+        <section>
+            <h2 class="text-2xl font-bold mb-4">9. Contact Us</h2>
+            <p class="mb-6 text-gray-700">Questions about these Terms? Email us at <a href="mailto:info@disciplineddisciples.co.za" class="text-blue-600 hover:underline">info@disciplineddisciples.co.za</a>.</p>
+        </section>
     </main>
 
     <!-- Footer -->
@@ -109,7 +134,7 @@
                     <li><a href="faq.html" class="footer-link">FAQs</a></li>
                     <li><a href="shipping-returns.html" class="footer-link">Shipping & Returns</a></li>
                     <li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li>
-                    <li><a href="terms-of-service.html" class="footer-link">Terms of Service</a></li>
+                    <li><a href="terms-of-service.html" class="footer-link active">Terms of Service</a></li>
                 </ul>
             </div>
             <div class="footer-col">

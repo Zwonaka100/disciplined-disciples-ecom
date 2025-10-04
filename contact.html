@@ -7,15 +7,14 @@
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Firebase App (the core Firebase SDK) -->
+    <link rel="icon" type="image/png" href="assets/logo.jpg">
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <!-- Firebase Auth -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <!-- Firebase Firestore -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
- 
+</head>
 <body>
-    <!-- Header Section - IMPORTANT: This header block must be identical across ALL your HTML pages -->
+    <!-- Header Section -->
     <header class="header">
         <div class="container flex justify-between items-center py-4">
             <a href="index.html" class="logo flex items-center">
@@ -28,11 +27,21 @@
                     <li><a href="shop.html" class="nav-link">Shop</a></li>
                     <li><a href="blog.html" class="nav-link">Blog</a></li>
                     <li><a href="contact.html" class="nav-link active">Contact</a></li>
-                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link"><i class="fab fa-instagram"></i></a>
+                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link"><i class="fab fa-instagram"></i></a></li>
                     <li><a href="cart.html" class="nav-link"><i class="fas fa-shopping-cart"></i></a></li>
-                    <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
+                    <li><a href="login-signup.html" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a></li>
                 </ul>
             </nav>
+            <div id="profile-ribbon" class="relative flex items-center space-x-2 cursor-pointer select-none" style="display:none;">
+                <span id="profile-ribbon-name" class="font-semibold text-gray-700"></span>
+                <div id="profile-ribbon-avatar" class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 text-gray-700 font-bold text-lg border-2 border-gray-300 overflow-hidden"></div>
+                <div id="profile-dropdown" class="absolute right-0 top-12 bg-white border rounded shadow-lg min-w-[160px] hidden z-50">
+                    <a href="profile.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Profile</a>
+                    <a href="profile.html#account" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Account</a>
+                    <a href="profile.html#orders" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Orders</a>
+                    <button id="dropdown-logout-btn" class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Logout</button>
+                </div>
+            </div>
             <button class="menu-toggle" aria-label="Toggle navigation">
                 <i class="fas fa-bars"></i>
             </button>
@@ -45,14 +54,14 @@
                 <li><a href="contact.html" class="nav-link-mobile active">Contact</a></li>
                 <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
                 <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
-                <!-- Authentication links will be dynamically added here by script.js -->
+                <li><a href="login-signup.html" class="nav-link-mobile"><i class="fas fa-sign-in-alt"></i> Login/Signup</a></li>
             </ul>
         </nav>
     </header>
 
     <!-- Contact Hero Section -->
     <section class="shop-hero-section" style="position:relative; background-color:#111; min-height:320px;">
-        <img src="Assets/Other/WhatsApp Image 2025-09-28 at 12.06.47_e9d362da.jpg" alt="Contact Banner"
+        <img src="assets/Other/WhatsApp Image 2025-09-28 at 12.06.47_e9d362da.jpg" alt="Contact Banner"
             style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0.45; z-index:1;">
         <div class="container text-center py-16" style="position:relative; z-index:2;">
             <h1 class="shop-title" style="color:#fff;">Get in Touch</h1>
@@ -60,29 +69,13 @@
         </div>
     </section>
 
-    <!-- Contact Form Section -->
+    <!-- Contact Form Section (Google Forms Embed) -->
     <section class="section-padding bg-light-gray">
         <div class="container max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-md">
             <p class="text-center text-gray-700 mb-8">Have a question about our products, an order, or just want to share your journey? Fill out the form below or reach out directly.</p>
-            <form id="contact-form" class="space-y-6">
-                <div>
-                    <label for="contact-name" class="form-label">Your Name</label>
-                    <input type="text" id="contact-name" class="form-input" placeholder="John Doe" required>
-                </div>
-                <div>
-                    <label for="contact-email" class="form-label">Your Email</label>
-                    <input type="email" id="contact-email" class="form-input" placeholder="you@example.com" required>
-                </div>
-                <div>
-                    <label for="contact-subject" class="form-label">Subject</label>
-                    <input type="text" id="contact-subject" class="form-input" placeholder="Inquiry about an order / General feedback" required>
-                </div>
-                <div>
-                    <label for="contact-message" class="form-label">Message</label>
-                    <textarea id="contact-message" rows="6" class="form-input" placeholder="Your message..." required></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary w-full">Send Message</button>
-            </form>
+            <div class="mb-8 flex justify-center">
+                <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSf0E8SzoGlzRjvPOPkihdJ0__ob8HC2t7_FhnHy-OYE6CR5_A/viewform?embedded=true" width="100%" height="800" frameborder="0" marginheight="0" marginwidth="0" style="border-radius: 0.5rem;">Loading…</iframe>
+            </div>
             <div class="mt-8 text-center text-gray-700">
                 <h3 class="font-semibold text-lg mb-2">Direct Contact</h3>
                 <p><i class="fas fa-envelope mr-2"></i> Email: nomaqhizazolile@gmail.com</p>
@@ -93,7 +86,7 @@
     </section>
 
     <!-- Footer Section -->
-    <footer class="footer">
+    <footer class="footer bg-gray-800 text-white py-8 mt-12">
         <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
             <div class="footer-col">
                 <h3 class="footer-heading">Disciplined Disciples</h3>
@@ -110,7 +103,7 @@
                     <li><a href="index.html" class="footer-link">Home</a></li>
                     <li><a href="shop.html" class="footer-link">Shop</a></li>
                     <li><a href="blog.html" class="footer-link">Blog</a></li>
-                    <li><a href="contact.html" class="footer-link">Contact</a></li>
+                    <li><a href="contact.html" class="footer-link active">Contact</a></li>
                 </ul>
             </div>
             <div class="footer-col">
@@ -131,10 +124,9 @@
         </div>
         <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
             <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
-            <p>Built by Zande Technologies, Inc.</p>
+            <p>Built by Zande Technologies (Pty) Ltd</p>
         </div>
     </footer>
-
     <script src="script.js"></script>
 </body>
 </html>

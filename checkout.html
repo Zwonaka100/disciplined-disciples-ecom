@@ -6,13 +6,15 @@
     <title>Disciplined Disciples - Checkout</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" type="image/png" href="assets/logo.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 </head>
 <body class="checkout-page bg-gray-50">
-    <!-- Header Section - IMPORTANT: This header block must be identical across ALL your HTML pages -->
+    <!-- Header Section -->
     <header class="header bg-white shadow">
         <div class="container flex justify-between items-center py-4">
             <a href="index.html" class="logo flex items-center">
@@ -27,7 +29,6 @@
                     <li><a href="contact.html" class="nav-link">Contact</a></li>
                     <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link"><i class="fab fa-instagram"></i></a></li>
                     <li><a href="cart.html" class="nav-link"><i class="fas fa-shopping-cart"></i></a></li>
-                    <!-- Authentication links (Login/Signup or My Account/Logout) will be dynamically added here by script.js -->
                 </ul>
                 <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
                 <div id="profile-ribbon" class="relative flex items-center space-x-2 cursor-pointer select-none" style="display:none;">
@@ -53,13 +54,21 @@
                 <li><a href="contact.html" class="nav-link-mobile">Contact</a></li>
                 <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
                 <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
-                <!-- Authentication links will be dynamically added here by script.js -->
             </ul>
         </nav>
     </header>
 
+    <!-- Checkout Hero Section -->
+    <section class="shop-hero-section" style="position:relative; background-color:#111; min-height:220px;">
+        <img src="assets/Other/IMG-20250928-WA0012.jpg" alt="Checkout Banner"
+            style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0.45; z-index:1;">
+        <div class="container text-center py-10" style="position:relative; z-index:2;">
+            <h1 class="shop-title" style="color:#fff;">Secure Checkout</h1>
+            <p class="shop-subtitle" style="color:#e0e0e0;">Complete your order and get ready for delivery!</p>
+        </div>
+    </section>
+
     <main class="container mx-auto py-12 px-4">
-        <h1 class="text-3xl font-bold mb-6 text-center">Checkout</h1>
         <div class="grid md:grid-cols-2 gap-8">
             <!-- Cart Summary -->
             <section class="bg-white p-6 rounded-lg shadow-md">
@@ -116,7 +125,7 @@
                         <label for="postal" class="block text-gray-700 mb-1">Postal Code</label>
                         <input type="text" id="postal" name="postal" required class="w-full border rounded px-3 py-2">
                     </div>
-                    <button type="submit" class="btn-primary w-full mt-4">Place Order</button>
+                    <button type="submit" class="btn btn-primary w-full mt-4">Place Order</button>
                 </form>
                 <div id="order-success" class="hidden mt-6 text-green-600 font-bold text-center"></div>
             </section>
@@ -156,13 +165,13 @@
             <div class="footer-col">
                 <h3 class="footer-heading">Contact Us</h3>
                 <p class="footer-text">Email: info@disciplineddisciples.co.za</p>
-                <p class="footer-text">Phone: +27 12 345 6789</p>
+                <p class="footer-text">Phone: +27 69 206 0618</p>
                 <p class="footer-text">Johannesburg, South Africa</p>
             </div>
         </div>
         <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
             <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
-            <p>Built by Zande Technologies, Inc.</p>
+            <p>Built by Zande Technologies (Pty) Ltd</p>
         </div>
     </footer>
 

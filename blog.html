@@ -7,17 +7,58 @@
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
-    <!-- Firebase App (the core Firebase SDK) -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<!-- Firebase Auth -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<!-- Firebase Firestore -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-   
+    <link rel="icon" type="image/png" href="assets/logo.jpg">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <style>
+        .blog-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.6);
+            align-items: center; justify-content: center;
+        }
+        .blog-modal-content {
+            background: #fff;
+            max-width: 600px;
+            width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 1rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            padding: 2rem;
+            position: relative;
+        }
+        .blog-modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            color: #888;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        .blog-card-img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        .blog-modal-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+    </style>
 </head>
 <body>
-    <!-- Header Section - IMPORTANT: This header block must be identical across ALL your HTML pages -->
+    <!-- Header Section -->
     <header class="header">
         <div class="container flex justify-between items-center py-4">
             <a href="index.html" class="logo flex items-center">
@@ -32,9 +73,19 @@
                     <li><a href="contact.html" class="nav-link">Contact</a></li>
                     <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link"><i class="fab fa-instagram"></i></a></li>
                     <li><a href="cart.html" class="nav-link"><i class="fas fa-shopping-cart"></i></a></li>
-                    <!-- Authentication links (Login/Signup or My Account/Logout) will be dynamically added here by script.js -->
+                    <li><a href="login-signup.html" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a></li>
                 </ul>
             </nav>
+            <div id="profile-ribbon" class="relative flex items-center space-x-2 cursor-pointer select-none" style="display:none;">
+                <span id="profile-ribbon-name" class="font-semibold text-gray-700"></span>
+                <div id="profile-ribbon-avatar" class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 text-gray-700 font-bold text-lg border-2 border-gray-300 overflow-hidden"></div>
+                <div id="profile-dropdown" class="absolute right-0 top-12 bg-white border rounded shadow-lg min-w-[160px] hidden z-50">
+                    <a href="profile.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Profile</a>
+                    <a href="profile.html#account" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Account</a>
+                    <a href="profile.html#orders" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Orders</a>
+                    <button id="dropdown-logout-btn" class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Logout</button>
+                </div>
+            </div>
             <button class="menu-toggle" aria-label="Toggle navigation">
                 <i class="fas fa-bars"></i>
             </button>
@@ -47,14 +98,14 @@
                 <li><a href="contact.html" class="nav-link-mobile">Contact</a></li>
                 <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
                 <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
-                <!-- Authentication links will be dynamically added here by script.js -->
+                <li><a href="login-signup.html" class="nav-link-mobile"><i class="fas fa-sign-in-alt"></i> Login/Signup</a></li>
             </ul>
         </nav>
     </header>
 
     <!-- Blog Hero Section -->
     <section class="shop-hero-section" style="position:relative; background-color:#111; min-height:320px;">
-        <img src="Assets/Other/WhatsApp Image 2025-09-28 at 12.07.34_78f51a25.jpg" alt="Blog Banner"
+        <img src="assets/Other/WhatsApp Image 2025-09-28 at 12.07.34_78f51a25.jpg" alt="Blog Banner"
             style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0.45; z-index:1;">
         <div class="container text-center py-16" style="position:relative; z-index:2;">
             <h1 class="shop-title" style="color:#fff;">Our Blog</h1>
@@ -65,73 +116,22 @@
     <!-- Blog Posts Section -->
     <section class="section-padding bg-light-gray">
         <div class="container">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Blog Post 1 -->
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <img src="https://placehold.co/600x400/D0D0D0/333333?text=Blog+Post+1" alt="Blog Post Image" class="w-full h-48 object-cover">
-                    <div class="p-6">
-                        <h3 class="text-xl font-semibold text-gray-900 mb-2">The Power of Daily Habits</h3>
-                        <p class="text-gray-600 text-sm mb-4">By John Doe | July 25, 2025</p>
-                        <p class="text-gray-700 mb-4">Discover how small, consistent actions can lead to monumental change in your life and spiritual journey...</p>
-                        <a href="#" class="text-blue-600 hover:underline font-semibold">Read More &rarr;</a>
-                    </div>
-                </div>
-                <!-- Blog Post 2 -->
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <img src="https://placehold.co/600x400/A0A0A0/333333?text=Blog+Post+2" alt="Blog Post Image" class="w-full h-48 object-cover">
-                    <div class="p-6">
-                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Finding Purpose in Everyday Life</h3>
-                        <p class="text-gray-600 text-sm mb-4">By Jane Smith | July 20, 2025</p>
-                        <p class="text-gray-700 mb-4">Explore practical ways to infuse purpose into your routines and responsibilities, turning mundane tasks into meaningful acts...</p>
-                        <a href="#" class="text-blue-600 hover:underline font-semibold">Read More &rarr;</a>
-                    </div>
-                </div>
-                <!-- Blog Post 3 -->
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <img src="https://placehold.co/600x400/C0C0C0/333333?text=Blog+Post+3" alt="Blog Post Image" class="w-full h-48 object-cover">
-                    <div class="p-6">
-                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Resilience: Bouncing Back Stronger</h3>
-                        <p class="text-gray-600 text-sm mb-4">By David Lee | July 15, 2025</p>
-                        <p class="text-gray-700 mb-4">Learn strategies to build mental and emotional resilience, enabling you to overcome challenges with strength and grace...</p>
-                        <a href="#" class="text-blue-600 hover:underline font-semibold">Read More &rarr;</a>
-                    </div>
-                </div>
-                 <!-- Blog Post 4 -->
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <img src="https://placehold.co/600x400/E0E0E0/333333?text=Blog+Post+4" alt="Blog Post Image" class="w-full h-48 object-cover">
-                    <div class="p-6">
-                        <h3 class="text-xl font-semibold text-gray-900 mb-2">The Journey of Faith and Fitness</h3>
-                        <p class="text-gray-600 text-sm mb-4">By Sarah Chen | July 10, 2025</p>
-                        <p class="text-gray-700 mb-4">Discover how integrating your spiritual journey with physical well-being can lead to a more holistic and fulfilling life...</p>
-                        <a href="#" class="text-blue-600 hover:underline font-semibold">Read More &rarr;</a>
-                    </div>
-                </div>
-                <!-- Blog Post 5 -->
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <img src="https://placehold.co/600x400/909090/333333?text=Blog+Post+5" alt="Blog Post Image" class="w-full h-48 object-cover">
-                    <div class="p-6">
-                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Discipline in Digital Age</h3>
-                        <p class="text-gray-600 text-sm mb-4">By Alex Kim | July 5, 2025</p>
-                        <p class="text-gray-700 mb-4">Navigate the distractions of the modern world with intentional discipline, protecting your focus and mental peace...</p>
-                        <a href="#" class="text-blue-600 hover:underline font-semibold">Read More &rarr;</a>
-                    </div>
-                </div>
-                <!-- Blog Post 6 -->
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <img src="https://placehold.co/600x400/F0F0F0/333333?text=Blog+Post+6" alt="Blog Post Image" class="w-full h-48 object-cover">
-                    <div class="p-6">
-                        <h3 class="text-xl font-semibold text-gray-900 mb-2">The Art of Mindful Living</h3>
-                        <p class="text-gray-600 text-sm mb-4">By Olivia Green | June 30, 2025</p>
-                        <p class="text-gray-700 mb-4">Embrace mindfulness to enhance your awareness, reduce stress, and live more fully in the present moment...</p>
-                        <a href="#" class="text-blue-600 hover:underline font-semibold">Read More &rarr;</a>
-                    </div>
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="blog-list">
+                <!-- Blog cards will be rendered here -->
             </div>
         </div>
     </section>
 
+    <!-- Blog Modal -->
+    <div class="blog-modal" id="blog-modal">
+        <div class="blog-modal-content" id="blog-modal-content">
+            <button class="blog-modal-close" id="blog-modal-close" aria-label="Close">&times;</button>
+            <!-- Blog content will be injected here -->
+        </div>
+    </div>
+
     <!-- Footer Section -->
-    <footer class="footer">
+    <footer class="footer bg-gray-800 text-white py-8 mt-12">
         <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
             <div class="footer-col">
                 <h3 class="footer-heading">Disciplined Disciples</h3>
@@ -147,7 +147,7 @@
                 <ul>
                     <li><a href="index.html" class="footer-link">Home</a></li>
                     <li><a href="shop.html" class="footer-link">Shop</a></li>
-                    <li><a href="blog.html" class="footer-link">Blog</a></li>
+                    <li><a href="blog.html" class="footer-link active">Blog</a></li>
                     <li><a href="contact.html" class="footer-link">Contact</a></li>
                 </ul>
             </div>
@@ -169,10 +169,145 @@
         </div>
         <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
             <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
-            <p>Built by Zande Technologies, Inc.</p>
+            <p>Built by Zande Technologies (Pty) Ltd</p>
         </div>
     </footer>
 
+    <script>
+        // Blog data with real images from assets/Other and assets/Products
+        const blogs = [
+            {
+                id: 1,
+                title: "The Power of Daily Habits",
+                date: "July 25, 2025",
+                image: "assets/Other/IMG-20250928-WA0006.jpg",
+                excerpt: "Discover how small, consistent actions can lead to monumental change in your life and spiritual journey...",
+                author: "Zolile Nomaqhiza, Founder of Disciplined Disciples",
+                content: `
+                    <p>Habits shape our lives more than we realize. Every day, the small choices we make—whether to pray, exercise, read, or reflect—accumulate into powerful forces that define our character and destiny.</p>
+                    <p>As a believer and entrepreneur, I've learned that discipline is not about grand gestures, but about the quiet commitment to daily growth. Start with one habit: wake up 15 minutes earlier to meditate or journal. Over time, you'll notice a shift in your mindset and productivity.</p>
+                    <p>Remember, consistency is key. Even when motivation fades, discipline keeps you moving forward. Trust the process, and let your daily habits become the foundation of your faith and success.</p>
+                `
+            },
+            {
+                id: 2,
+                title: "Finding Purpose in Everyday Life",
+                date: "July 20, 2025",
+                image: "assets/Other/IMG-20250928-WA0012.jpg",
+                excerpt: "Explore practical ways to infuse purpose into your routines and responsibilities, turning mundane tasks into meaningful acts...",
+                author: "Zolile Nomaqhiza, Founder of Disciplined Disciples",
+                content: `
+                    <p>Purpose isn't reserved for special occasions—it's woven into the fabric of our daily lives. Whether you're at work, at home, or serving others, every moment is an opportunity to live intentionally.</p>
+                    <p>Ask yourself: Why am I doing this? How does this task serve my values or my community? When you connect your actions to a deeper purpose, even routine chores become acts of service and worship.</p>
+                    <p>Challenge yourself to find meaning in the ordinary. You'll discover joy, fulfillment, and a renewed sense of direction in everything you do.</p>
+                `
+            },
+            {
+                id: 3,
+                title: "Resilience: Bouncing Back Stronger",
+                date: "July 15, 2025",
+                image: "assets/Other/IMG-20250928-WA0013.jpg",
+                excerpt: "Learn strategies to build mental and emotional resilience, enabling you to overcome challenges with strength and grace...",
+                author: "Zolile Nomaqhiza, Founder of Disciplined Disciples",
+                content: `
+                    <p>Life is full of setbacks, but resilience is what allows us to rise again. It's not about avoiding failure, but about learning, adapting, and growing through adversity.</p>
+                    <p>When faced with challenges, lean on your faith, your support system, and your inner strength. Take time to reflect, but don't dwell on mistakes. Instead, focus on solutions and the lessons learned.</p>
+                    <p>Remember, every setback is a setup for a comeback. Embrace resilience, and you'll find yourself stronger and wiser with each trial.</p>
+                `
+            },
+            {
+                id: 4,
+                title: "The Journey of Faith and Fitness",
+                date: "July 10, 2025",
+                image: "assets/Products/Caps/WhatsApp Image 2025-08-10 at 14.56.45_da1863d8.jpg",
+                excerpt: "Discover how integrating your spiritual journey with physical well-being can lead to a more holistic and fulfilling life...",
+                author: "Zolile Nomaqhiza, Founder of Disciplined Disciples",
+                content: `
+                    <p>Faith and fitness go hand in hand. Caring for your body is an act of stewardship, honoring the gift of life God has given you.</p>
+                    <p>Start small: take daily walks, stretch, or join a group workout. As you build physical strength, you'll notice improvements in your mental clarity and spiritual focus.</p>
+                    <p>Let your fitness journey be a reflection of your faith—persistent, purposeful, and rooted in gratitude.</p>
+                `
+            },
+            {
+                id: 5,
+                title: "Discipline in the Digital Age",
+                date: "July 5, 2025",
+                image: "assets/Products/Tees/WhatsApp Image 2025-08-10 at 14.56.45_7c6e4b7d.jpg",
+                excerpt: "Navigate the distractions of the modern world with intentional discipline, protecting your focus and mental peace...",
+                author: "Zolile Nomaqhiza, Founder of Disciplined Disciples",
+                content: `
+                    <p>Technology is a blessing, but it can also be a source of distraction. To thrive in the digital age, set boundaries for your screen time and social media use.</p>
+                    <p>Schedule regular digital detoxes—unplug for an hour each day to pray, read, or connect with loved ones. Use technology as a tool, not a master.</p>
+                    <p>Discipline in the digital age means choosing what matters most and protecting your peace of mind.</p>
+                `
+            },
+            {
+                id: 6,
+                title: "The Art of Mindful Living",
+                date: "June 30, 2025",
+                image: "assets/Products/Hoodies/WhatsApp Image 2025-08-10 at 14.56.45_8e7f4c2a.jpg",
+                excerpt: "Embrace mindfulness to enhance your awareness, reduce stress, and live more fully in the present moment...",
+                author: "Zolile Nomaqhiza, Founder of Disciplined Disciples",
+                content: `
+                    <p>Mindfulness is the practice of being fully present. In a busy world, it's easy to rush through life without noticing the beauty around us.</p>
+                    <p>Take time each day to pause, breathe, and reflect. Notice the sights, sounds, and sensations of the moment. Practice gratitude for the simple blessings.</p>
+                    <p>Mindful living leads to greater peace, joy, and a deeper connection with God and others.</p>
+                `
+            }
+        ];
+
+        // Render blog cards
+        function renderBlogs() {
+            const blogList = document.getElementById('blog-list');
+            blogList.innerHTML = '';
+            blogs.forEach(blog => {
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-lg shadow-md overflow-hidden flex flex-col";
+                card.innerHTML = `
+                    <img src="${blog.image}" alt="${blog.title}" class="blog-card-img">
+                    <div class="p-6 flex flex-col flex-1">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">${blog.title}</h3>
+                        <p class="text-gray-600 text-sm mb-2">By ${blog.author} | ${blog.date}</p>
+                        <p class="text-gray-700 mb-4">${blog.excerpt}</p>
+                        <button class="btn btn-primary mt-auto read-more-btn" data-id="${blog.id}">Read More &rarr;</button>
+                    </div>
+                `;
+                blogList.appendChild(card);
+            });
+        }
+
+        // Show blog modal
+        function showBlogModal(blogId) {
+            const blog = blogs.find(b => b.id == blogId);
+            if (!blog) return;
+            const modal = document.getElementById('blog-modal');
+            const modalContent = document.getElementById('blog-modal-content');
+            modalContent.innerHTML = `
+                <button class="blog-modal-close" id="blog-modal-close" aria-label="Close">&times;</button>
+                <img src="${blog.image}" alt="${blog.title}" class="blog-modal-img">
+                <h2 class="text-2xl font-bold mb-2">${blog.title}</h2>
+                <p class="text-gray-600 text-sm mb-2">By ${blog.author} | ${blog.date}</p>
+                <div class="text-gray-800 mb-4">${blog.content}</div>
+            `;
+            modal.style.display = "flex";
+            document.getElementById('blog-modal-close').onclick = () => {
+                modal.style.display = "none";
+            };
+        }
+
+        // Event delegation for read more buttons
+        document.addEventListener('DOMContentLoaded', () => {
+            renderBlogs();
+            document.getElementById('blog-list').addEventListener('click', function(e) {
+                if (e.target.classList.contains('read-more-btn')) {
+                    showBlogModal(e.target.getAttribute('data-id'));
+                }
+            });
+            document.getElementById('blog-modal').addEventListener('click', function(e) {
+                if (e.target === this) this.style.display = "none";
+            });
+        });
+    </script>
     <script src="script.js"></script>
 </body>
 </html>
