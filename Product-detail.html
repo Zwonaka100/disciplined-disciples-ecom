@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disciplined Disciples - Product Detail</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" type="image/png" href="assets/logo.jpg">
+    <!-- Firebase SDK Imports -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+</head>
+<body class="product-detail-page">
+    <!-- Header Section (ensure this is consistent) -->
+    <header class="header">
+        <div class="container flex justify-between items-center py-4">
+            <a href="index.html" class="logo flex items-center">
+                <img src="assets/logo.jpg" alt="Disciplined Disciples Logo" class="site-logo" style="height:40px; width:auto; margin-right:10px;">
+                <span>Disciplined Disciples</span>
+            </a>
+            <nav class="nav-menu">
+                <ul class="flex space-x-6">
+                    <li><a href="index.html" class="nav-link">Home</a></li>
+                    <li><a href="shop.html" class="nav-link">Shop</a></li>
+                    <li><a href="blog.html" class="nav-link">Blog</a></li>
+                    <li><a href="contact.html" class="nav-link">Contact</a></li>
+                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link"><i class="fab fa-instagram"></i></a></li>
+                    <li><a href="cart.html" class="nav-link"><i class="fas fa-shopping-cart"></i></a></li>
+                    <!-- Authentication links (Login/Signup or My Account/Logout) will be dynamically added here by script.js -->
+                </ul>
+            </nav>
+            <button class="menu-toggle" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <nav class="mobile-menu">
+            <ul class="py-4">
+                <li><a href="index.html" class="nav-link-mobile">Home</a></li>
+                <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
+                <li><a href="blog.html" class="nav-link-mobile">Blog</a></li>
+                <li><a href="contact.html" class="nav-link-mobile">Contact</a></li>
+                <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
+                <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
+                <!-- Authentication links will be dynamically added here by script.js -->
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Product Detail Section -->
+    <section class="section-padding">
+        <div class="container grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+            <!-- Product Image Gallery -->
+            <div class="product-gallery">
+                <img src="https://placehold.co/800x800/D0D0D0/333333?text=Loading..." alt="Main Product Image" id="main-product-image" class="product-detail-main-image rounded-lg shadow-lg w-full h-auto mb-4">
+                <div id="thumbnail-container" class="grid grid-cols-5 gap-2">
+                    <!-- Thumbnails will be dynamically loaded here -->
+                </div>
+            </div>
+
+            <!-- Product Info -->
+            <div class="product-info lg:sticky">
+                <h1 id="product-name" class="text-4xl font-bold text-gray-900 mb-2">Product Name</h1>
+                <p id="product-price" class="text-3xl text-blue-600 font-semibold mb-4">R 0.00</p>
+                <p id="product-description" class="text-gray-700 leading-relaxed mb-6">Product description...</p>
+
+                <!-- Color Selector -->
+                <div class="mb-6">
+                    <label class="text-gray-700 font-medium mb-2 block">Color:</label>
+                    <div id="color-selector" class="flex flex-wrap gap-2">
+                        <!-- Color swatches will be dynamically loaded here -->
+                    </div>
+                </div>
+
+                <div class="product-controls">
+                    <!-- Size Selector -->
+                    <div class="control-group">
+                        <label for="product-size">Size:</label>
+                        <select id="product-size" class="form-input">
+                            <option value="">Select Size</option>
+                        </select>
+                    </div>
+                    <!-- Quantity Selector -->
+                    <div class="control-group">
+                        <label for="product-quantity">Quantity:</label>
+                        <input type="number" id="product-quantity" value="1" min="1" class="form-input">
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <button id="add-to-cart-btn" class="btn btn-primary w-full">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Add to Cart</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Section -->
+    <footer class="footer">
+        <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="footer-col">
+                <h3 class="footer-heading">Disciplined Disciples</h3>
+                <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
+                <div class="social-links">
+                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="social-link"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Quick Links</h3>
+                <ul>
+                    <li><a href="index.html" class="footer-link">Home</a></li>
+                    <li><a href="shop.html" class="footer-link">Shop</a></li>
+                    <li><a href="blog.html" class="footer-link">Blog</a></li>
+                    <li><a href="contact.html" class="footer-link">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Support</h3>
+                <ul>
+                    <li><a href="faq.html" class="footer-link">FAQs</a></li>
+                    <li><a href="shipping-returns.html" class="footer-link">Shipping & Returns</a></li>
+                    <li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li>
+                    <li><a href="terms-of-service.html" class="footer-link">Terms of Service</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading text-lg font-semibold mb-4">Contact Us</h3>
+                <p class="footer-text text-gray-300 text-sm mb-2">Email: nomaqhizazolile@gmail.com</p>
+                <p class="footer-text text-gray-300 text-sm mb-2">Phone: +27 69 206 0618</p>
+                <p class="footer-text text-gray-300 text-sm">Johannesburg, South Africa</p>
+            </div>
+        </div>
+        <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
+            <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
+            <p>Built by Zande Technologies, Inc.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const mainImage = document.getElementById('main-product-image');
+            const thumbnailContainer = document.getElementById('thumbnail-container');
+            const colorSelector = document.getElementById('color-selector');
+            const sizeSelector = document.getElementById('product-size');
+            const quantityInput = document.getElementById('product-quantity');
+            const addToCartBtn = document.getElementById('add-to-cart-btn');
+            const productNameEl = document.getElementById('product-name');
+            const productPriceEl = document.getElementById('product-price');
+            const productDescriptionEl = document.getElementById('product-description');
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+
+            if (!productId) {
+                productNameEl.textContent = "Product not found.";
+                return;
+            }
+
+            const product = window.getProductById(productId);
+
+            if (!product) {
+                productNameEl.textContent = "Product could not be loaded.";
+                return;
+            }
+
+            // --- RENDER FUNCTIONS ---
+            const renderThumbnails = (images) => {
+                thumbnailContainer.innerHTML = '';
+                images.forEach(imgSrc => {
+                    const thumb = document.createElement('img');
+                    thumb.src = imgSrc;
+                    thumb.alt = "Product Thumbnail";
+                    thumb.className = "product-thumb w-full h-auto rounded-md object-cover cursor-pointer hover:opacity-75 border-2 border-transparent transition-all";
+                    thumb.addEventListener('click', () => {
+                        mainImage.src = imgSrc;
+                    });
+                    thumbnailContainer.appendChild(thumb);
+                });
+            };
+
+            const renderColorSwatches = (colors) => {
+                colorSelector.innerHTML = '';
+                Object.keys(colors).forEach((colorName, index) => {
+                    const swatch = document.createElement('button');
+                    swatch.className = 'color-swatch';
+                    swatch.textContent = colorName;
+                    swatch.dataset.color = colorName;
+                    
+                    // Activate the first color by default
+                    if (index === 0) {
+                        swatch.classList.add('active');
+                    }
+
+                    swatch.addEventListener('click', () => {
+                        // Update active state
+                        document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+                        swatch.classList.add('active');
+                        
+                        // Update images
+                        const selectedColorData = colors[colorName];
+                        mainImage.src = selectedColorData.defaultImage;
+                        renderThumbnails(selectedColorData.images);
+                    });
+                    colorSelector.appendChild(swatch);
+                });
+            };
+
+            // --- INITIAL PAGE LOAD ---
+            productNameEl.textContent = product.name;
+            productPriceEl.textContent = `R ${product.price.toFixed(2)}`;
+            productDescriptionEl.textContent = product.description;
+
+            // Populate Sizes
+            sizeSelector.innerHTML = '<option value="">Select Size</option>';
+            product.options.sizes.forEach(size => {
+                const option = document.createElement('option');
+                option.value = size;
+                option.textContent = size;
+                sizeSelector.appendChild(option);
+            });
+
+            // Populate Colors and initial images
+            const colors = product.options.colors;
+            if (colors) {
+                renderColorSwatches(colors);
+                // Load images for the first color by default
+                const firstColorName = Object.keys(colors)[0];
+                const firstColorData = colors[firstColorName];
+                mainImage.src = firstColorData.defaultImage;
+                renderThumbnails(firstColorData.images);
+            }
+
+            // --- EVENT LISTENERS ---
+            addToCartBtn.addEventListener('click', () => {
+                const selectedColorEl = document.querySelector('.color-swatch.active');
+                const selectedColor = selectedColorEl ? selectedColorEl.dataset.color : null;
+                const selectedSize = sizeSelector.value;
+                const quantity = parseInt(quantityInput.value);
+
+                if (colors && !selectedColor) {
+                    alert('Please select a color.');
+                    return;
+                }
+                if (!selectedSize) {
+                    alert('Please select a size.');
+                    return;
+                }
+                if (quantity < 1) {
+                    alert('Please enter a valid quantity.');
+                    return;
+                }
+
+                // Use global addToCart function
+                if (typeof window.addToCart === 'function') {
+                    window.addToCart(product.id, quantity, selectedSize);
+                    window.renderCartIcon(); // Update cart icon immediately
+                    alert(`${product.name} (${selectedColor}, ${selectedSize}) added to cart!`);
+                } else {
+                    alert('Cart functionality is not available.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
