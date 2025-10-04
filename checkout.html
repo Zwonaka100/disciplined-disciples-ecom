@@ -27,7 +27,7 @@
                     <li><a href="shop.html" class="nav-link">Shop</a></li>
                     <li><a href="blog.html" class="nav-link">Blog</a></li>
                     <li><a href="contact.html" class="nav-link">Contact</a></li>
-                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link"><i class="fab fa-instagram"></i></a></li>
+                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link"><i class="fab fa-instagram"></i></a>
                     <li><a href="cart.html" class="nav-link"><i class="fas fa-shopping-cart"></i></a></li>
                 </ul>
                 <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
@@ -130,6 +130,20 @@
                 <div id="order-success" class="hidden mt-6 text-green-600 font-bold text-center"></div>
             </section>
         </div>
+        <!-- Add this PayFast payment form just before the closing </main> tag -->
+        <form id="payfast-form" action="https://www.payfast.co.za/eng/process" method="post" style="display:none;">
+            <input type="hidden" name="merchant_id" value="15069294">
+            <input type="hidden" name="merchant_key" value="nms7cymkxsyll">
+            <input type="hidden" name="return_url" value="https://yourdomain.com/thank-you.html">
+            <input type="hidden" name="cancel_url" value="https://yourdomain.com/checkout.html">
+            <input type="hidden" name="notify_url" value="https://yourdomain.com/payfast-itn.php">
+            <input type="hidden" name="amount" id="payfast-amount" value="">
+            <input type="hidden" name="item_name" id="payfast-item-name" value="">
+            <input type="hidden" name="name_first" id="payfast-name" value="">
+            <input type="hidden" name="email_address" id="payfast-email" value="">
+            <input type="hidden" name="cell_number" id="payfast-phone" value="">
+            <input type="hidden" name="custom_str1" id="payfast-address" value="">
+        </form>
     </main>
 
     <!-- Footer Section -->
@@ -185,20 +199,45 @@
             const cartItemsDiv = document.getElementById('checkout-cart-items');
             cartItemsDiv.innerHTML = '';
             let subtotal = 0;
-            window.cart.forEach(item => {
-                const itemTotal = item.price * item.quantity;
-                subtotal += itemTotal;
-                cartItemsDiv.innerHTML += `
-                    <div class="flex items-center mb-3">
-                        <img src="${item.imageUrl}" alt="${item.name}" class="w-12 h-12 rounded mr-3">
-                        <div>
-                            <div class="font-medium">${item.name} ${item.size !== 'N/A' ? `(Size: ${item.size})` : ''}</div>
-                            <div class="text-sm text-gray-600">Qty: ${item.quantity} &nbsp; Price: R${item.price.toFixed(2)}</div>
-                        </div>
-                        <div class="ml-auto font-bold">R${itemTotal.toFixed(2)}</div>
-                    </div>
+            if (window.cart.length === 0) {
+                cartItemsDiv.innerHTML = '<p>Your cart is empty.</p>';
+            } else {
+                // Display products in a table for consistency with cart, including images
+                const table = document.createElement('table');
+                table.className = 'cart-table';
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Image</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="checkout-table-body"></tbody>
                 `;
-            });
+                cartItemsDiv.appendChild(table);
+
+                const tbody = table.querySelector('#checkout-table-body');
+                window.cart.forEach(item => {
+                    const itemTotal = item.price * item.quantity;
+                    subtotal += itemTotal;
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            ${item.name} ${item.size && item.size !== 'N/A' ? `(Size: ${item.size})` : ''}
+                        </td>
+                        <td>
+                            <img src="${item.imageUrl}" alt="${item.name}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;">
+                        </td>
+                        <td>R${item.price.toFixed(2)}</td>
+                        <td>${item.quantity}</td>
+                        <td>R${itemTotal.toFixed(2)}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
             // Totals
             const vat = window.getCartVAT(subtotal);
             const shipping = window.cart.length > 0 ? window.SHIPPING_COST : 0;
@@ -251,16 +290,28 @@
             };
             // Save order to Firestore
             try {
-                const ordersRef = window.collection(window.db, "artifacts", "default-app-id", "orders");
-                await window.addDoc(ordersRef, orderData);
+                const ordersRef = window.db.collection("artifacts").doc("default-app-id").collection("orders");
+                await ordersRef.add(orderData);
+                // Prepare PayFast form
+                document.getElementById('payfast-amount').value = total.toFixed(2);
+                document.getElementById('payfast-item-name').value = "Disciplined Disciples Order";
+                document.getElementById('payfast-name').value = deliveryAddress.name;
+                document.getElementById('payfast-email').value = window.currentUserProfile?.email || "";
+                document.getElementById('payfast-phone').value = deliveryAddress.phone;
+                document.getElementById('payfast-address').value = `${deliveryAddress.line1}, ${deliveryAddress.line2}, ${deliveryAddress.city}, ${deliveryAddress.province}, ${deliveryAddress.postalCode}`;
                 // Clear cart
                 window.cart = [];
                 window.saveCartToLocalStorage();
                 renderCheckoutCart();
-                document.getElementById('order-success').textContent = "Order placed successfully! Thank you for shopping with us.";
+                document.getElementById('order-success').textContent = "Order placed successfully! Redirecting to payment...";
                 document.getElementById('order-success').classList.remove('hidden');
                 window.showMessage('Order placed successfully!', 'success');
                 this.reset();
+                // Submit to PayFast
+                setTimeout(() => {
+                    document.getElementById('payfast-form').style.display = "block";
+                    document.getElementById('payfast-form').submit();
+                }, 1500);
             } catch (error) {
                 window.showMessage('Failed to place order. Try again.', 'error');
                 console.error(error);
