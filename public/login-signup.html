@@ -232,16 +232,35 @@
                     // Clear stored redirect
                     localStorage.removeItem('redirectAfterLogin');
                     
-                    // Wait a moment for auth state to update
-                    setTimeout(() => {
-                        if (redirectUrl && redirectUrl !== 'login-signup.html') {
-                            console.log('Redirecting to:', redirectUrl);
-                            window.location.href = redirectUrl;
+                    // Wait for auth state to fully propagate before redirect
+                    console.log('Login successful, waiting for auth state to stabilize...');
+                    
+                    // Wait for the auth state to be fully established
+                    let redirectAttempts = 0;
+                    const maxRedirectAttempts = 10;
+                    
+                    const attemptRedirect = () => {
+                        redirectAttempts++;
+                        console.log(`Redirect attempt ${redirectAttempts}/${maxRedirectAttempts}`);
+                        
+                        if (window.auth.currentUser) {
+                            console.log('Auth state confirmed, redirecting...');
+                            if (redirectUrl && redirectUrl !== 'login-signup.html' && !redirectUrl.includes('login-signup')) {
+                                console.log('Redirecting to:', redirectUrl);
+                                window.location.href = redirectUrl;
+                            } else {
+                                console.log('Redirecting to profile.html');
+                                window.location.href = "profile.html";
+                            }
+                        } else if (redirectAttempts < maxRedirectAttempts) {
+                            setTimeout(attemptRedirect, 200);
                         } else {
-                            console.log('Redirecting to profile.html');
+                            console.log('Max attempts reached, redirecting anyway');
                             window.location.href = "profile.html";
                         }
-                    }, 1000);
+                    };
+                    
+                    setTimeout(attemptRedirect, 500);
                 } catch (error) {
                     window.showMessage(error.message, 'error');
                     console.error('Login error:', error);
@@ -262,7 +281,20 @@
                     profileRibbon.style.display = 'none';
                 }
             }
-            window.onAuthStateChanged(window.auth, (user) => {
+            
+            // Check current auth state first
+            if (window.auth.currentUser) {
+                updateProfileRibbon(window.auth.currentUser);
+                // If user is already logged in, redirect them away from login page after a moment
+                const urlParams = new URLSearchParams(window.location.search);
+                if (!urlParams.get('redirect')) {
+                    setTimeout(() => {
+                        window.location.href = 'profile.html';
+                    }, 1000);
+                }
+            }
+            
+            window.auth.onAuthStateChanged((user) => {
                 updateProfileRibbon(user);
             });
             profileRibbon?.addEventListener('click', () => {
@@ -270,7 +302,7 @@
             });
             document.getElementById('dropdown-logout-btn')?.addEventListener('click', async () => {
                 try {
-                    await window.signOut(window.auth);
+                    await window.auth.signOut();
                     alert('Logout successful!');
                     window.location.href = "login-signup.html";
                 } catch (error) {

@@ -172,31 +172,87 @@
     </footer>
 
     <script>
-        // Handle payment return from PayFast
-        document.addEventListener('DOMContentLoaded', async function() {
-            // Wait for Firebase to be initialized from script.js
+        // Handle payment return from PayFast and profile authentication
+        let profileInitialized = false;
+        
+        async function checkAuthAndInitProfile() {
+            if (profileInitialized) return; // Prevent multiple initializations
+            
+            console.log('Checking auth for profile...');
+            
+            // Wait for Firebase to be ready
             if (window.firebaseInitialized) {
-                await window.firebaseInitialized;
+                try {
+                    const firebaseReady = await window.firebaseInitialized;
+                    if (!firebaseReady) {
+                        console.log('Firebase failed to initialize');
+                        window.location.href = 'login-signup.html?redirect=profile.html';
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Firebase initialization error:', error);
+                    window.location.href = 'login-signup.html?redirect=profile.html';
+                    return;
+                }
             }
             
-            // Wait for auth state to be determined
-            return new Promise((resolve) => {
-                const unsubscribe = window.onAuthStateChanged(window.auth, (user) => {
-                    console.log('Profile auth state changed:', user ? user.uid : 'no user');
-                    unsubscribe(); // Stop listening after first check
-                    
-                    if (user) {
-                        // User is authenticated, proceed with profile loading
-                        window.currentUserId = user.uid;
-                        initializeProfile();
-                    } else {
-                        // User is not authenticated, redirect to login
-                        console.log('User not authenticated, redirecting to login');
-                        window.location.href = 'login-signup.html?redirect=profile.html';
-                    }
-                    resolve();
-                });
+            // Multiple attempts to get current user
+            let currentUser = window.auth?.currentUser;
+            let attempts = 0;
+            const maxAttempts = 10;
+            
+            while (!currentUser && attempts < maxAttempts) {
+                console.log(`Auth check attempt ${attempts + 1}/${maxAttempts}`);
+                await new Promise(resolve => setTimeout(resolve, 300));
+                currentUser = window.auth?.currentUser;
+                attempts++;
+            }
+            
+            console.log('Final auth check result:', currentUser ? currentUser.uid : 'no user');
+            
+            if (currentUser) {
+                profileInitialized = true;
+                window.currentUserId = currentUser.uid;
+                console.log('User authenticated, initializing profile');
+                initializeProfile();
+            } else {
+                console.log('No authenticated user found, redirecting to login');
+                window.location.href = 'login-signup.html?redirect=profile.html';
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Profile page DOM loaded');
+            
+            // Try immediate auth check
+            if (window.auth?.currentUser) {
+                console.log('User already available on DOM load');
+                profileInitialized = true;
+                window.currentUserId = window.auth.currentUser.uid;
+                initializeProfile();
+                return;
+            }
+            
+            // Set up auth state listener as backup
+            const unsubscribe = window.auth.onAuthStateChanged((user) => {
+                console.log('Auth state changed in profile:', user ? user.uid : 'no user');
+                if (user && !profileInitialized) {
+                    unsubscribe();
+                    profileInitialized = true;
+                    window.currentUserId = user.uid;
+                    initializeProfile();
+                } else if (!user && !profileInitialized) {
+                    unsubscribe();
+                    window.location.href = 'login-signup.html?redirect=profile.html';
+                }
             });
+            
+            // Also try the delayed check method
+            setTimeout(() => {
+                if (!profileInitialized) {
+                    checkAuthAndInitProfile();
+                }
+            }, 1000);
         });
         
         function initializeProfile() {

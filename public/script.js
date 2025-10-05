@@ -32,11 +32,29 @@ window.auth = window.firebase.auth();
 window.db = window.firebase.firestore();
 window.serverTimestamp = window.firebase.firestore.FieldValue.serverTimestamp;
 
+// Expose Firebase auth functions to window for login-signup.html
+window.onAuthStateChanged = window.firebase.auth().onAuthStateChanged.bind(window.firebase.auth());
+window.signInWithEmailAndPassword = window.firebase.auth().signInWithEmailAndPassword.bind(window.firebase.auth());
+window.createUserWithEmailAndPassword = window.firebase.auth().createUserWithEmailAndPassword.bind(window.firebase.auth());
+window.signOut = window.firebase.auth().signOut.bind(window.firebase.auth());
+
 // === NEW DIAGNOSTIC LOG ===
 console.log("firebaseConfig loaded:", firebaseConfig);
 console.log("firebaseConfig keys count:", Object.keys(firebaseConfig).length);
 console.log("firebaseConfig.apiKey present:", !!firebaseConfig.apiKey);
 // ==========================
+
+// --- Global Authentication Functions ---
+async function handleLogout() {
+    try {
+        await window.auth.signOut();
+        showMessage("Logged out successfully.", "success");
+        window.location.href = "index.html";
+    } catch (error) {
+        console.error('Logout error:', error);
+        showMessage("Logout failed.", "error");
+    }
+}
 
 // --- Product Data (Hardcoded for now - will come from Firestore/Backend later) ---
 const products = [
@@ -836,90 +854,107 @@ window.initiatePayfastPayment = async (orderItems, totalAmount, deliveryAddress)
 };
 
 // --- Authentication UI Update Function ---
-// Moved outside DOMContentLoaded to be globally accessible
+// Clean profile dropdown system
 function updateAuthUI(isLoggedIn) {
-    const authLinksDesktop = document.querySelector('.nav-menu ul');
-    const authLinksMobile = document.querySelector('.mobile-menu ul');
-
     console.log("updateAuthUI called. Is logged in:", isLoggedIn);
-    console.log("Auth Links Desktop element:", authLinksDesktop);
-    console.log("Auth Links Mobile element:", authLinksMobile);
-
-    // Defensive check: if no navigation containers, cannot update UI
-    if (!authLinksDesktop && !authLinksMobile) {
-        console.error("Auth navigation containers not found. Cannot update UI.");
-        return;
-    }
-
-    // Find the cart links for positioning; they should always be present.
-    const cartLinkDesktop = authLinksDesktop?.querySelector('.nav-link[href="cart.html"]');
-    const cartLinkMobile = authLinksMobile?.querySelector('.nav-link-mobile[href="cart.html"]');
-
-    console.log("Desktop Cart Link found (for positioning):", !!cartLinkDesktop);
-    console.log("Mobile Cart Link found (for positioning):", !!cartLinkMobile);
-
-    // Remove any previously added auth links to prevent duplicates on state change
-    authLinksDesktop?.querySelectorAll('.auth-link').forEach(link => link.remove());
-    authLinksMobile?.querySelectorAll('.auth-link-mobile').forEach(link => link.remove());
+    
+    // Get existing elements from HTML
+    const loginSignupLinkDesktop = document.getElementById('login-signup-link');
+    const loginSignupLinkMobile = document.getElementById('login-signup-link-mobile');
+    const profileRibbon = document.getElementById('profile-ribbon');
+    
+    // Remove any previously added dynamic auth links to prevent duplicates
+    document.querySelectorAll('.auth-link, .auth-link-mobile').forEach(link => link.remove());
 
     if (isLoggedIn) {
-        // Logged In: Show My Account and Logout
-        const myAccountLi = document.createElement('li');
-        myAccountLi.classList.add('auth-link');
-        myAccountLi.innerHTML = '<a href="profile.html" class="nav-link"><i class="fas fa-user"></i> My Account</a>'; // <-- Link to profile.html
-        if (authLinksDesktop) {
-            const cartLinkDesktop = authLinksDesktop.querySelector('.nav-link[href="cart.html"]');
-            if (cartLinkDesktop) { authLinksDesktop.insertBefore(myAccountLi, cartLinkDesktop.nextSibling); }
-            else { authLinksDesktop.appendChild(myAccountLi); }
+        // Hide login/signup buttons
+        if (loginSignupLinkDesktop) loginSignupLinkDesktop.style.display = 'none';
+        if (loginSignupLinkMobile) loginSignupLinkMobile.style.display = 'none';
+        
+        // Show and setup profile dropdown
+        if (profileRibbon) {
+            profileRibbon.style.display = 'flex';
+            setupProfileDropdown();
         }
-
-        const logoutLi = document.createElement('li');
-        logoutLi.classList.add('auth-link');
-        logoutLi.innerHTML = '<a href="#" id="logout-btn" class="nav-link">Logout</a>';
-        authLinksDesktop?.appendChild(logoutLi);
-
-        // Mobile menu
-        const myAccountLiMobile = document.createElement('li');
-        myAccountLiMobile.classList.add('auth-link-mobile');
-        myAccountLiMobile.innerHTML = '<a href="profile.html" class="nav-link-mobile"><i class="fas fa-user"></i> My Account</a>'; // <-- Link to profile.html
+        
+        // Add mobile profile option since dropdown doesn't work well on mobile
+        const authLinksMobile = document.querySelector('.mobile-menu ul');
         if (authLinksMobile) {
-            const cartLinkMobile = authLinksMobile.querySelector('.nav-link-mobile[href="cart.html"]');
-            if (cartLinkMobile) { authLinksMobile.insertBefore(myAccountLiMobile, cartLinkMobile.nextSibling); }
-            else { authLinksMobile.appendChild(myAccountLiMobile); }
+            // Add Profile link for mobile
+            const profileLiMobile = document.createElement('li');
+            profileLiMobile.classList.add('auth-link-mobile');
+            profileLiMobile.innerHTML = '<a href="profile.html" class="nav-link-mobile"><i class="fas fa-user"></i> My Profile</a>';
+            authLinksMobile.appendChild(profileLiMobile);
+            
+            // Add Logout link for mobile
+            const logoutLiMobile = document.createElement('li');
+            logoutLiMobile.classList.add('auth-link-mobile');
+            logoutLiMobile.innerHTML = '<a href="#" id="logout-btn-mobile" class="nav-link-mobile"><i class="fas fa-sign-out-alt"></i> Logout</a>';
+            authLinksMobile.appendChild(logoutLiMobile);
+            
+            // Add mobile logout event listener
+            document.getElementById('logout-btn-mobile')?.addEventListener('click', handleLogout);
         }
 
-        const logoutLiMobile = document.createElement('li');
-        logoutLiMobile.classList.add('auth-link-mobile');
-        logoutLiMobile.innerHTML = '<a href="#" id="logout-btn-mobile" class="nav-link-mobile">Logout</a>';
-        authLinksMobile?.appendChild(logoutLiMobile);
-
-        document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
-        document.getElementById('logout-btn-mobile')?.addEventListener('click', handleLogout);
-
-        document.querySelectorAll('a[href="login-signup.html"]').forEach(link => link.style.display = 'none');
     } else {
-        // Not Logged In: Show Login/Signup
-        const loginSignupLi = document.createElement('li');
-        loginSignupLi.classList.add('auth-link');
-        loginSignupLi.innerHTML = '<a href="login-signup.html" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>';
-        if (authLinksDesktop) {
-            if (cartLinkDesktop) { authLinksDesktop.insertBefore(loginSignupLi, cartLinkDesktop.nextSibling); } // Insert after cart
-            else { authLinksDesktop.appendChild(loginSignupLi); }
-        }
-
-        // Mobile menu
-        const loginSignupLiMobile = document.createElement('li');
-        loginSignupLiMobile.classList.add('auth-link-mobile');
-        loginSignupLiMobile.innerHTML = '<a href="login-signup.html" class="nav-link-mobile"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>';
-        if (authLinksMobile) {
-            if (cartLinkMobile) { authLinksMobile.insertBefore(loginSignupLiMobile, cartLinkMobile.nextSibling); } // Insert after cart
-            else { authLinksMobile.appendChild(loginSignupLiMobile); }
-        }
-
-        // Ensure any static "Login/Signup" links are visible
-        document.querySelectorAll('a[href="login-signup.html"]').forEach(link => link.style.display = 'block');
+        // Show login/signup buttons
+        if (loginSignupLinkDesktop) loginSignupLinkDesktop.style.display = 'inline-block';
+        if (loginSignupLinkMobile) loginSignupLinkMobile.style.display = 'block';
+        
+        // Hide profile dropdown
+        if (profileRibbon) profileRibbon.style.display = 'none';
     }
+    
     renderCartIcon(); // Update cart count to ensure it's always accurate
+}
+
+// --- Profile Dropdown Setup Function ---
+function setupProfileDropdown() {
+    const profileRibbon = document.getElementById('profile-ribbon');
+    const profileDropdown = document.getElementById('profile-dropdown');
+    const profileRibbonName = document.getElementById('profile-ribbon-name');
+    const profileRibbonAvatar = document.getElementById('profile-ribbon-avatar');
+    const dropdownLogoutBtn = document.getElementById('dropdown-logout-btn');
+    
+    if (!profileRibbon || !profileDropdown) return;
+    
+    // Set user info if available
+    if (window.auth?.currentUser) {
+        const user = window.auth.currentUser;
+        if (profileRibbonName) {
+            profileRibbonName.textContent = user.displayName || user.email.split('@')[0];
+        }
+        if (profileRibbonAvatar) {
+            if (user.photoURL) {
+                profileRibbonAvatar.innerHTML = `<img src="${user.photoURL}" alt="Profile" class="w-full h-full rounded-full object-cover">`;
+            } else {
+                profileRibbonAvatar.textContent = (user.displayName || user.email).charAt(0).toUpperCase();
+            }
+        }
+    }
+    
+    // Profile ribbon click handler
+    profileRibbon.addEventListener('click', (e) => {
+        e.stopPropagation();
+        profileDropdown.classList.toggle('hidden');
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!profileRibbon.contains(e.target)) {
+            profileDropdown.classList.add('hidden');
+        }
+    });
+    
+    // Dropdown logout button
+    if (dropdownLogoutBtn) {
+        dropdownLogoutBtn.removeEventListener('click', handleLogout); // Remove any existing listeners
+        dropdownLogoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            profileDropdown.classList.add('hidden'); // Close dropdown first
+            handleLogout();
+        });
+    }
 }
 
 
@@ -1005,12 +1040,12 @@ async function initFirebase() {
         console.log("Firebase objects assigned: app=", !!window.app, "auth=", !!window.auth, "db=", !!window.db);
 
         if (window.auth) {
-            if (initialAuthToken) {
-                await window.auth.signInWithCustomToken(initialAuthToken);
-                console.log('Signed in with custom token.');
+            // Check for existing authentication state first
+            if (window.auth.currentUser) {
+                console.log('User already authenticated:', window.auth.currentUser.uid);
             } else {
-                await window.auth.signInAnonymously();
-                console.log('Signed in anonymously.');
+                console.log('No existing user session found.');
+                // Don't sign in anonymously automatically - let users sign in explicitly
             }
 
             window.auth.onAuthStateChanged(async (user) => {
@@ -1187,15 +1222,7 @@ await window.db.collection('artifacts').doc('default-app-id')
         }
     };
 
-    async function handleLogout() {
-        try {
-            await window.auth.signOut();
-            showMessage("Logged out.");
-            window.location.href = "index.html";
-        } catch (error) {
-            showMessage("Logout failed.", "error");
-        }
-    }
+    // handleLogout function moved to global scope above
 
     // --- Attach Login/Signup Form Event Listeners ---
     const loginForm = document.getElementById('login-form');

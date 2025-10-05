@@ -1130,3 +1130,70 @@ h1, h2, h3, h4, h5, h6 {
     object-fit: cover;
 }
 
+/* Profile Dropdown Styles */
+#profile-ribbon {
+    transition: all 0.2s ease;
+}
+
+#profile-ribbon:hover {
+    opacity: 0.8;
+}
+
+#profile-ribbon-avatar {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: 2px solid #e5e7eb;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#profile-ribbon:hover #profile-ribbon-avatar {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+#profile-dropdown {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    min-width: 180px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+#profile-dropdown a,
+#profile-dropdown button {
+    display: block;
+    width: 100%;
+    padding: 12px 16px;
+    text-align: left;
+    border: none;
+    background: none;
+    transition: background-color 0.2s ease;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+#profile-dropdown a:hover,
+#profile-dropdown button:hover {
+    background-color: #f8fafc;
+}
+
+#profile-dropdown button:hover {
+    background-color: #fef2f2;
+    color: #dc2626;
+}
+
+/* Mobile Profile Links */
+.auth-link-mobile a {
+    color: #374151;
+    padding: 12px 16px;
+    display: block;
+}
+
+.auth-link-mobile a:hover {
+    background-color: #f3f4f6;
+    color: #1f2937;
+}
+
