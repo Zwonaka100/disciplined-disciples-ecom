@@ -986,23 +986,23 @@ async function initFirebase() {
     }
 
     try {
-        window.app = window.initializeApp(firebaseConfig);
-        window.auth = window.getAuth(window.app);
-        window.db = window.getFirestore(window.app);
-        window.serverTimestamp = window.serverTimestamp; // Assign the function to the global window object
+        window.app = window.firebase.initializeApp(firebaseConfig);
+        window.auth = window.firebase.auth();
+        window.db = window.firebase.firestore();
+        window.serverTimestamp = window.firebase.firestore.FieldValue.serverTimestamp;
 
         console.log("Firebase objects assigned: app=", !!window.app, "auth=", !!window.auth, "db=", !!window.db);
 
         if (window.auth) {
             if (initialAuthToken) {
-                await window.signInWithCustomToken(window.auth, initialAuthToken);
+                await window.auth.signInWithCustomToken(initialAuthToken);
                 console.log('Signed in with custom token.');
             } else {
-                await window.signInAnonymously(window.auth);
+                await window.auth.signInAnonymously();
                 console.log('Signed in anonymously.');
             }
 
-            window.onAuthStateChanged(window.auth, async (user) => {
+            window.auth.onAuthStateChanged(async (user) => {
                 if (user) {
                     window.currentUserId = user.uid;
                     console.log('User is signed in (onAuthStateChanged):', user.uid);
