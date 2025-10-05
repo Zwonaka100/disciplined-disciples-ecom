@@ -45,37 +45,37 @@ const products = [
         name: 'Faith Hoodie',
         price: 649.00,
         category: 'hoodie', // <--- Add this
-        displayImage: 'Assets/Products/hoodies/unisex-premium-hoodie-black-front-6898d6eb53d0e.jpg',
+        displayImage: 'Assets/Products/Hoodies/unisex-premium-hoodie-black-front-6898d6eb53d0e.jpg',
         description: 'Representing warmth and comfort in the journey of disciplined living. Made from premium, soft-touch fabric for ultimate comfort and durability.',
         options: {
             colors: {
                 'Black': {
-                    defaultImage: 'Assets/Products/hoodies/unisex-premium-hoodie-black-front-6898d6eb53d0e.jpg',
+                    defaultImage: 'Assets/Products/Hoodies/unisex-premium-hoodie-black-front-6898d6eb53d0e.jpg',
                     images: [
                         'Assets/Products/Hoodies/unisex-premium-hoodie-black-front-6898d6eb5c3fb.jpg',
-                        'Assets/Products/hoodies/unisex-premium-hoodie-black-front-2-6898d6eb47f0b.jpg?size=small',
-                        'Assets/Products/hoodies/unisex-premium-hoodie-black-back-6898d6eb52300.jpg?size=small',
-                        'Assets/Products/hoodies/unisex-premium-hoodie-black-back-6898d6eb48eaf.jpg?size=small',
-                        'Assets/Products/hoodies/unisex-premium-hoodie-black-left-front-6898d6eb612e0.jpg?size=small',
-                        'Assets/Products/hoodies/unisex-premium-hoodie-black-right-front-6898d6eb66caa.jpg?size=small',
-                        'Assets/Products/hoodies/unisex-premium-hoodie-black-zoomed-in-6898d6eb73758.jpg?size=small',
-                        'Assets/Products/hoodies/unisex-premium-hoodie-black-product-details-6898d6eb317e2.jpg?size=small',
-                        'Assets/Products/hoodies/unisex-premium-hoodie-black-left-front-6898d6eb6a7e5.jpg?size=small',
-                        'Assets/Products/hoodies/unisex-premium-hoodie-black-front-6898d6eb36e77.jpg?size=small'
+                        'Assets/Products/Hoodies/unisex-premium-hoodie-black-front-2-6898d6eb47f0b.jpg?size=small',
+                        'Assets/Products/Hoodies/unisex-premium-hoodie-black-back-6898d6eb52300.jpg?size=small',
+                        'Assets/Products/Hoodies/unisex-premium-hoodie-black-back-6898d6eb48eaf.jpg?size=small',
+                        'Assets/Products/Hoodies/unisex-premium-hoodie-black-left-front-6898d6eb612e0.jpg?size=small',
+                        'Assets/Products/Hoodies/unisex-premium-hoodie-black-right-front-6898d6eb66caa.jpg?size=small',
+                        'Assets/Products/Hoodies/unisex-premium-hoodie-black-zoomed-in-6898d6eb73758.jpg?size=small',
+                        'Assets/Products/Hoodies/unisex-premium-hoodie-black-product-details-6898d6eb317e2.jpg?size=small',
+                        'Assets/Products/Hoodies/unisex-premium-hoodie-black-left-front-6898d6eb6a7e5.jpg?size=small',
+                        'Assets/Products/Hoodies/unisex-premium-hoodie-black-front-6898d6eb36e77.jpg?size=small'
                     ]
                 },
                 'Maroon': {
-                    defaultImage: 'Assets/Products/hoodies/unisex-premium-hoodie-maroon-front-6898dd7272343.jpg',
+                    defaultImage: 'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-front-6898dd7272343.jpg',
                     images: [
-                        'Assets/Products/hoodies/unisex-premium-hoodie-maroon-front-6898dd727c49b.jpg?size=small',
-                        'Assets/Products/hoodies/unisex-premium-hoodie-maroon-front-6898dd727095f.jpg?size=small',
-                        'Assets/Products/hoodies/unisex-premium-hoodie-maroon-back-6898dd72819fe.jpg?size=small',
-                        'Assets/Products/hoodies/unisex-premium-hoodie-maroon-back-6898dd729610d.jpg?size=small',
-                        'Assets/Products/hoodies/unisex-premium-hoodie-maroon-left-6898dd728873b.jpg?size=small',
-                        'Assets/Products/hoodies/unisex-premium-hoodie-maroon-right-front-6898dd72382d8.jpg?size=small',
-                        'Assets/Products/hoodies/unisex-premium-hoodie-maroon-zoomed-in-6898dd722bebf.jpg?size=small',
-                        'Assets/Products/hoodies/unisex-premium-hoodie-maroon-product-details-6898dd72279d8.jpg?size=small',
-                        'Assets/Products/hoodies/unisex-premium-hoodie-maroon-front-6898dd722f6b6.jpg?size=small',
+                        'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-front-6898dd727c49b.jpg?size=small',
+                        'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-front-6898dd727095f.jpg?size=small',
+                        'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-back-6898dd72819fe.jpg?size=small',
+                        'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-back-6898dd729610d.jpg?size=small',
+                        'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-left-6898dd728873b.jpg?size=small',
+                        'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-right-front-6898dd72382d8.jpg?size=small',
+                        'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-zoomed-in-6898dd722bebf.jpg?size=small',
+                        'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-product-details-6898dd72279d8.jpg?size=small',
+                        'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-front-6898dd722f6b6.jpg?size=small',
                         'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-front-2-6898dd7298a94.jpg'
                     ]
                 },
@@ -135,7 +135,7 @@ const products = [
         name: 'Discipline Cap',
         price: 249.00,
         category: 'cap', // <--- Add this
-        displayImage: 'Assets/Products/caps/IMG-20250810-WA0005.jpg',
+        displayImage: 'Assets/Products/Caps/IMG-20250810-WA0005.jpg',
         description: 'A symbol of casual, everyday discipline. Perfect for any occasion.',
         options: {
             colors: {
@@ -400,7 +400,7 @@ const products = [
                     ]
                 },
                 'Navy': {
-                    defaultImage: 'Assets/Products/oversized tshirts/oversized-tee-navy-front.jpg',
+                    defaultImage: 'Assets/Products/Oversized tess/unisex-oversized-t-shirt-navy-front-6898e814f347a.jpg',
                     images: [
                         'Assets/Products/Oversized tess/unisex-oversized-t-shirt-navy-front-2-6898e814f2b50.jpg',
                         'Assets/Products/Oversized tess/unisex-oversized-t-shirt-navy-front-6898e814f2e0c.jpg',
@@ -430,18 +430,37 @@ const products = [
                         'Assets/Products/Oversized tess/unisex-oversized-t-shirt-sand-khaki-left-6898ea1ddd128.jpg'
                     ]
                 },
-                'Grey': {
-                    defaultImage: 'Assets/Products/oversized tshirts/oversized-tee-grey-front.jpg',
+                'Faded': {
+                    defaultImage: 'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-front-6898d53df2bf6.jpg',
                     images: [
-                        'Assets/Products/oversized tshirts/oversized-tee-grey-front.jpg',
-                        'Assets/Products/oversized tshirts/oversized-tee-grey-back.jpg'
+                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-front-6898d53df2e7c.jpg',
+                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-front-6898d53df30a2.jpg',
+                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-front-6898d53df239d.jpg',
+                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-front-6898d53df34eb.jpg',
+                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-front-6898d53df3719.jpg',
+                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-front-6898d53e01fae.jpg',
+                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-front-6898d53e04cf2.jpg',
+                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-left-6898d53df4045.jpg',
+                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-left-6898d53e007cb.jpg',
+                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-right-6898d53e000b4.jpg',
+                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-product-details-6898d53e03643.jpg'
+
+                    
                     ]
                 },
                 'City Green': {
-                    defaultImage: 'Assets/Products/oversized tshirts/oversized-tee-city-green-front.jpg',
+                    defaultImage: 'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-front-6898eb2672f75.jpg',
                     images: [
-                        'Assets/Products/oversized tshirts/oversized-tee-city-green-front.jpg',
-                        'Assets/Products/oversized tshirts/oversized-tee-city-green-back.jpg'
+                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-front-6898eb267308e.jpg',
+                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-front-6898eb2672294.jpg',
+                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-left-6898eb267351f.jpg',
+                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-left-front-2-6898eb267496a.jpg',
+                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-left-front-6898eb267482a.jpg',
+                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-product-details-2-6898eb26742c0.jpg',
+                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-right-6898eb2673a98.jpg',
+                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-right-6898eb2674600.jpg',
+                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-right-front-6898eb26744f4.jpg',
+                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-zoomed-in-6898eb26741b8.jpg'
                     ]
                 }
             },
@@ -893,43 +912,52 @@ function updateAuthUI(isLoggedIn) {
 }
 
 
-// --- Function to update the header with user info
-async function updateHeaderUI(user) {
-    const profileRibbon = document.getElementById('profile-ribbon');
+// --- Unified Login/Profile Button Logic ---
+function updateHeaderUI(user) {
+    // Desktop
     const loginSignupLink = document.getElementById('login-signup-link');
+    const profileRibbon = document.getElementById('profile-ribbon');
     const profileRibbonName = document.getElementById('profile-ribbon-name');
     const profileRibbonAvatar = document.getElementById('profile-ribbon-avatar');
+    // Mobile
+    const loginSignupLinkMobile = document.getElementById('login-signup-link-mobile');
 
     if (user) {
-        // User is signed in
-        profileRibbonName.textContent = user.displayName || user.email;
-        profileRibbonAvatar.textContent = user.email[0].toUpperCase(); // Use first initial
-        profileRibbon.style.display = 'flex';
+        // Show profile ribbon, hide login/signup
         if (loginSignupLink) loginSignupLink.style.display = 'none';
+        if (loginSignupLinkMobile) loginSignupLinkMobile.style.display = 'none';
+        if (profileRibbon) profileRibbon.style.display = 'flex';
+
+        // Fetch name from Firestore, fallback to displayName/email
+        window.db.collection('artifacts').doc('default-app-id').collection('users').doc(user.uid).get().then(doc => {
+            let name = doc.exists && doc.data().name ? doc.data().name : (user.displayName || user.email);
+            profileRibbonName.textContent = name;
+            profileRibbonAvatar.textContent = name.split(' ').map(n => n[0]).join('').toUpperCase();
+        });
     } else {
-        // No user is signed in
-        profileRibbonName.textContent = '';
-        profileRibbonAvatar.textContent = '';
-        profileRibbon.style.display = 'none';
+        // Show login/signup, hide profile ribbon
         if (loginSignupLink) loginSignupLink.style.display = 'inline-block';
+        if (loginSignupLinkMobile) loginSignupLinkMobile.style.display = 'inline-block';
+        if (profileRibbon) profileRibbon.style.display = 'none';
     }
 }
 
-// Call this function on every page to check auth state
-async function checkAuthState() {
-    // Use the compat API
-    const auth = window.firebase.auth();
-    auth.onAuthStateChanged(async (user) => {
-        window.currentUserId = user ? user.uid : null;
-        await updateHeaderUI(user);
-    });
-}
+// Ensure only one login/signup button per menu (desktop/mobile) in your HTML
+// Example for desktop: <a href="login-signup.html" id="login-signup-link" class="nav-link">...</a>
+// Example for mobile: <a href="login-signup.html" id="login-signup-link-mobile" class="nav-link-mobile">...</a>
 
-// Call checkAuthState on every page load
-document.addEventListener('DOMContentLoaded', async () => {
-    await checkAuthState();
+// --- Profile Ribbon Click: Go to Profile ---
+document.addEventListener('DOMContentLoaded', () => {
+    const profileRibbon = document.getElementById('profile-ribbon');
+    if (profileRibbon) {
+        profileRibbon.onclick = () => {
+            window.location.href = "profile.html";
+        };
+    }
 });
 
+// --- Auth State Listener ---
+window.auth.onAuthStateChanged(updateHeaderUI);
 
 // --- Firebase Initialization Function ---
 async function initFirebase() {
@@ -1089,6 +1117,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                 createdAt: window.serverTimestamp(),
                 deliveryAddress: {}
             });
+            // After successful signup
+await window.db.collection('artifacts').doc('default-app-id')
+    .collection('users').doc(user.uid).set({
+        email: user.email,
+        name: "", // Let user fill later
+        phone: "",
+        avatarUrl: "",
+        deliveryAddress: {
+            line1: "",
+            line2: "",
+            city: "",
+            province: "",
+            postalCode: ""
+        }
+    });
             window.location.href = 'index.html';
         } catch (error) {
             console.error("Error during registration:", error.message);
@@ -1127,15 +1170,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     async function handleLogout() {
-        if (!window.auth) { showMessage("App not initialized. Cannot logout.", "error"); return; }
         try {
-            await window.signOut(window.auth);
-            console.log("User logged out.");
-            showMessage("You have been logged out.");
-            window.location.href = 'index.html';
+            await window.auth.signOut();
+            showMessage("Logged out.");
+            window.location.href = "index.html";
         } catch (error) {
-            console.error("Error during logout:", error.message);
-            showMessage("Logout failed. Please try again.", "error");
+            showMessage("Logout failed.", "error");
         }
     }
 
@@ -1184,7 +1224,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 await window.db.collection('artifacts').doc('default-app-id')
                     .collection('users').doc(user.uid).set({
                         email: user.email,
-                        name: "",
+                        name: "", // Let user fill later
                         phone: "",
                         avatarUrl: "",
                         deliveryAddress: {
@@ -1361,23 +1401,248 @@ async function showProfileRibbon(user) {
     if (ribbon) ribbon.style.display = 'flex';
 }
 
+// --- Profile Ribbon Dropdown Navigation ---
 document.addEventListener('DOMContentLoaded', () => {
     const profileRibbon = document.getElementById('profile-ribbon');
     const profileDropdown = document.getElementById('profile-dropdown');
     if (profileRibbon && profileDropdown) {
+        // Toggle dropdown on click
         profileRibbon.onclick = function(e) {
             e.stopPropagation();
             profileDropdown.classList.toggle('hidden');
         };
+        // Hide dropdown when clicking outside
         document.addEventListener('click', function(e) {
-            if (!profileRibbon.contains(e.target)) {
-                profileDropdown.classList.add('hidden');
+            if (!profileRibbon.contains(e.target)) profileDropdown.classList.add('hidden');
+        });
+        // Profile link
+        profileDropdown.querySelector('a[href="profile.html"]')?.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            window.location.href = "profile.html";
+        });
+        // Account link
+        profileDropdown.querySelector('a[href="profile.html#account"]')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = "profile.html#account";
+        });
+        // Orders link
+        profileDropdown.querySelector('a[href="profile.html#orders"]')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = "profile.html#orders";
+        });
+        // Logout button
+        document.getElementById('dropdown-logout-btn')?.addEventListener('click', async function() {
+            if ( window.auth) {
+                await window.auth.signOut();
+                window.location.href = "index.html";
             }
         });
-        document.getElementById('dropdown-logout-btn').onclick = async function() {
-            await window.signOut(window.getAuth());
-            window.location.href = 'login-signup.html';
-        };
     }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Profile dropdown navigation
+    document.querySelector('a[href="profile.html"]')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.location.href = "profile.html#dashboard";
+    });
+    document.querySelector('a[href="profile.html#account"]')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.location.href = "profile.html#account";
+    });
+    document.querySelector('a[href="profile.html#orders"]')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.location.href = "profile.html#orders";
+    });
+    document.getElementById('dropdown-logout-btn')?.addEventListener('click', async function() {
+        if (window.auth) {
+            await window.auth.signOut();
+            window.location.href = "index.html";
+        }
+    });
+
+    // Scroll to section if hash is present
+    if (window.location.hash) {
+        const section = document.getElementById(window.location.hash.replace('#', ''));
+        if (section) section.scrollIntoView({ behavior: 'smooth' });
+    }
+});
+
+async function saveProfileChanges(data) {
+    if (!window.currentUserId) return showMessage("Not logged in.", "error");
+    await window.db.collection('artifacts').doc('default-app-id')
+        .collection('users').doc(window.currentUserId).update(data);
+    Object.assign(window.currentUserProfile, data);
+    showMessage("Profile updated!", "success");
+}
+
+function prefillProfileForm() {
+    document.getElementById('profile-name').value = window.currentUserProfile.name || '';
+    document.getElementById('profile-phone').value = window.currentUserProfile.phone || '';
+    // ...repeat for address fields
+}
+
+// --- Profile Page Logic ---
+document.addEventListener('DOMContentLoaded', async () => {
+    // Only run on profile page
+    if (!document.body.classList.contains('profile-page') && !window.location.pathname.includes('profile.html')) return;
+
+    // Elements
+    const dashboardAvatar = document.getElementById('dashboard-avatar');
+    const dashboardName = document.getElementById('dashboard-name');
+    const dashboardEmail = document.getElementById('dashboard-email');
+    const dashboardAddress = document.getElementById('dashboard-address');
+    const ordersList = document.getElementById('orders-list');
+    const editProfileBtn = document.getElementById('edit-profile-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const editAddressBtn = document.getElementById('edit-address-btn');
+
+    // Modals
+    const profileModal = document.getElementById('profile-modal');
+    const closeProfileModal = document.getElementById('close-profile-modal');
+    const profileForm = document.getElementById('profile-form');
+    const profileUpdateMsg = document.getElementById('profile-update-message');
+    const addressModal = document.getElementById('address-modal');
+    const closeAddressModal = document.getElementById('close-address-modal');
+    const addressForm = document.getElementById('address-form');
+    const addressUpdateMsg = document.getElementById('address-update-message');
+
+    // Helper: Render Profile
+    async function renderProfile() {
+        if (!window.currentUserId) {
+            window.location.href = "login-signup.html";
+            return;
+        }
+        // Fetch profile from Firestore
+        const userDoc = await window.db.collection('artifacts').doc('default-app-id')
+            .collection('users').doc(window.currentUserId).get();
+        if (!userDoc.exists) return;
+        window.currentUserProfile = userDoc.data();
+
+        // Avatar
+        if (window.currentUserProfile.avatarUrl) {
+            dashboardAvatar.innerHTML = `<img src="${window.currentUserProfile.avatarUrl}" alt="Avatar" class="w-full h-full object-cover rounded-full">`;
+        } else {
+            dashboardAvatar.textContent = (window.currentUserProfile.name || window.currentUserProfile.email || "U")[0].toUpperCase();
+        }
+        // Name & Email
+        dashboardName.textContent = window.currentUserProfile.name || "";
+        dashboardEmail.textContent = window.currentUserProfile.email || "";
+
+        // Address
+        const addr = window.currentUserProfile.deliveryAddress || {};
+        dashboardAddress.innerHTML = `
+            <div>${addr.line1 || ""}</div>
+            <div>${addr.line2 || ""}</div>
+            <div>${addr.city || ""}, ${addr.province || ""}</div>
+            <div>${addr.postalCode || ""}</div>
+        `;
+
+        // Orders
+        renderOrderHistory();
+    }
+
+    // Helper: Render Order History
+    async function renderOrderHistory() {
+        ordersList.innerHTML = "<div>Loading orders...</div>";
+        const ordersRef = window.db.collection('artifacts').doc('default-app-id')
+            .collection('orders').where("userId", "==", window.currentUserId).orderBy("orderDate", "desc");
+        const snapshot = await ordersRef.get();
+        if (snapshot.empty) {
+            ordersList.innerHTML = "<div>No orders found.</div>";
+            return;
+        }
+        ordersList.innerHTML = "";
+        snapshot.forEach(doc => {
+            const order = doc.data();
+            const productsHtml = order.items.map(item => `
+                <div class="flex items-center mb-2">
+                    <img src="${item.imageUrl}" alt="${item.name}" style="width:40px;height:40px;border-radius:6px;margin-right:10px;">
+                    <span>${item.name} ${item.size && item.size !== 'N/A' ? `(Size: ${item.size})` : ''} x${item.quantity}</span>
+                </div>
+            `).join('');
+            ordersList.innerHTML += `
+                <div class="border rounded-lg p-4 bg-gray-50">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-semibold">Order #${doc.id}</span>
+                        <span class="text-sm text-gray-600">${order.status || "Pending"}</span>
+                    </div>
+                    <div class="mb-2">${productsHtml}</div>
+                    <div class="text-sm text-gray-700 mb-1">Total: R${order.totalAmount?.toFixed(2) || "0.00"}</div>
+                    <div class="text-xs text-gray-500">Date: ${order.orderDate?.toDate().toLocaleString() || ""}</div>
+                    ${order.invoiceUrl ? `<a href="${order.invoiceUrl}" target="_blank" class="text-blue-600 underline text-sm">Download Invoice</a>` : ""}
+                    ${order.trackingNumber ? `<div class="text-green-600 text-sm">Tracking: ${order.trackingNumber}</div>` : ""}
+                </div>
+            `;
+        });
+    }
+
+    // Edit Profile Modal
+    editProfileBtn.onclick = () => {
+        profileModal.classList.remove('hidden');
+        profileForm['profile-name'].value = window.currentUserProfile.name || "";
+        profileForm['profile-phone'].value = window.currentUserProfile.phone || "";
+        profileUpdateMsg.textContent = "";
+    };
+    closeProfileModal.onclick = () => profileModal.classList.add('hidden');
+
+    profileForm.onsubmit = async function(e) {
+        e.preventDefault();
+        const name = profileForm['profile-name'].value.trim();
+        const phone = profileForm['profile-phone'].value.trim();
+        let avatarUrl = window.currentUserProfile.avatarUrl || "";
+        // Handle avatar upload (optional)
+        const avatarFile = profileForm['profile-avatar-upload'].files[0];
+        if (avatarFile) {
+            // You need Firebase Storage for this, here is a placeholder:
+            // avatarUrl = await uploadAvatarToStorage(avatarFile, window.currentUserId);
+        }
+        await window.db.collection('artifacts').doc('default-app-id')
+            .collection('users').doc(window.currentUserId).update({ name, phone, avatarUrl });
+        window.currentUserProfile.name = name;
+        window.currentUserProfile.phone = phone;
+        window.currentUserProfile.avatarUrl = avatarUrl;
+        profileUpdateMsg.textContent = "Profile updated!";
+        setTimeout(() => { profileModal.classList.add('hidden'); renderProfile(); }, 1200);
+    };
+
+    // Edit Address Modal
+    editAddressBtn.onclick = () => {
+        addressModal.classList.remove('hidden');
+        const addr = window.currentUserProfile.deliveryAddress || {};
+        addressForm['address-line1'].value = addr.line1 || "";
+        addressForm['address-line2'].value = addr.line2 || "";
+        addressForm['address-city'].value = addr.city || "";
+        addressForm['address-province'].value = addr.province || "";
+        addressForm['address-postal'].value = addr.postalCode || "";
+        addressUpdateMsg.textContent = "";
+    };
+    closeAddressModal.onclick = () => addressModal.classList.add('hidden');
+
+    addressForm.onsubmit = async function(e) {
+        e.preventDefault();
+        const deliveryAddress = {
+            line1: addressForm['address-line1'].value.trim(),
+            line2: addressForm['address-line2'].value.trim(),
+            city: addressForm['address-city'].value.trim(),
+            province: addressForm['address-province'].value.trim(),
+            postalCode: addressForm['address-postal'].value.trim()
+        };
+        await window.db.collection('artifacts').doc('default-app-id')
+            .collection('users').doc(window.currentUserId).update({ deliveryAddress });
+        window.currentUserProfile.deliveryAddress = deliveryAddress;
+        addressUpdateMsg.textContent = "Address updated!";
+        setTimeout(() => { addressModal.classList.add('hidden'); renderProfile(); }, 1200);
+    };
+
+    // Logout
+    logoutBtn.onclick = async () => {
+        await window.auth.signOut();
+        window.location.href = "index.html";
+    };
+
+    // Initial render
+    renderProfile();
 });
 
