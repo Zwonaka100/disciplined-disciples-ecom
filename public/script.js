@@ -973,10 +973,21 @@ window.auth.onAuthStateChanged(updateHeaderUI);
 // --- Firebase Initialization Function ---
 async function initFirebase() {
     console.log("Attempting to initialize Firebase...");
+    
+    // Check if Firebase is available
+    if (typeof window.firebase === 'undefined') {
+        console.log("Firebase SDK not loaded. Running in offline mode.");
+        updateAuthUI(false);
+        if (resolveFirebaseInitialized) {
+            resolveFirebaseInitialized(false);
+            resolveFirebaseInitialized = null;
+        }
+        return false;
+    }
+    
     // Check if firebaseConfig is populated
     if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
-        console.error("firebaseConfig is empty or missing apiKey. Firebase will not initialize. Current config:", firebaseConfig); // Added config to log
-        showMessage("Firebase configuration missing. Core features will not work.", "error");
+        console.log("Firebase config not available. Running in offline mode.");
         updateAuthUI(false);
         if (resolveFirebaseInitialized) {
             resolveFirebaseInitialized(false);
@@ -1020,8 +1031,7 @@ async function initFirebase() {
             });
             return true;
         } else {
-            console.error("window.auth was null after getAuth. Firebase Auth not properly initialized.");
-            showMessage("Firebase Authentication failed to initialize.", "error");
+            console.log("Firebase Auth not available. Running in offline mode.");
             updateAuthUI(false);
             if (resolveFirebaseInitialized) {
                 resolveFirebaseInitialized(false);
@@ -1031,8 +1041,7 @@ async function initFirebase() {
         }
 
     } catch (error) {
-        console.error("Error during Firebase initialization (initFirebase function):", error.message);
-        showMessage("Failed to initialize Firebase: " + error.message + ". Check console for details.", "error");
+        console.error("Error during Firebase initialization:", error.message);
         updateAuthUI(false);
         if (resolveFirebaseInitialized) {
             resolveFirebaseInitialized(false);
@@ -1058,7 +1067,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         updateAuthUI(!!window.auth.currentUser);
     } else {
-        console.error("Firebase initialization failed. Some application features will not work.");
+        console.log("Firebase initialization failed. Using offline mode.");
         if (resolveFirebaseInitialized) {
             resolveFirebaseInitialized(false);
             resolveFirebaseInitialized = null;
