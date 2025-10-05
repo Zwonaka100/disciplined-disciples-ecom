@@ -313,11 +313,18 @@
                     window.showMessage('Your cart is empty! Please add items before checking out.', 'info');
                     return;
                 }
-                if (!window.currentUserId) {
+                
+                // Check authentication - try both currentUserId and auth.currentUser
+                const isAuthenticated = window.currentUserId || (window.auth && window.auth.currentUser);
+                
+                if (!isAuthenticated) {
                     window.showMessage('Please sign in or sign up to proceed to checkout!', 'info');
-                    window.location.href = 'login-signup.html'; // Redirect to login/signup page
+                    // Store checkout as redirect destination after login
+                    localStorage.setItem('redirectAfterLogin', 'checkout.html');
+                    window.location.href = 'login-signup.html?redirect=checkout.html';
                 } else {
-                    window.location.href = 'checkout.html'; // Redirect to checkout page
+                    // User is authenticated, go directly to checkout
+                    window.location.href = 'checkout.html';
                 }
             };
 

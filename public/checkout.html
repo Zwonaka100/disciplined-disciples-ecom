@@ -265,10 +265,24 @@
         // Handle order submission
         document.getElementById('checkout-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-            if (!window.currentUserId) {
+            
+            // Check authentication - try both currentUserId and auth.currentUser
+            const isAuthenticated = window.currentUserId || (window.auth && window.auth.currentUser);
+            console.log('Auth check - currentUserId:', window.currentUserId);
+            console.log('Auth check - auth.currentUser:', window.auth?.currentUser);
+            console.log('Auth check - isAuthenticated:', isAuthenticated);
+            
+            if (!isAuthenticated) {
                 window.showMessage('Please sign in to place your order.', 'error');
-                window.location.href = 'login-signup.html';
+                // Store current page to redirect back after login
+                localStorage.setItem('redirectAfterLogin', 'checkout.html');
+                window.location.href = 'login-signup.html?redirect=checkout.html';
                 return;
+            }
+            
+            // Ensure currentUserId is set if auth.currentUser exists
+            if (!window.currentUserId && window.auth?.currentUser) {
+                window.currentUserId = window.auth.currentUser.uid;
             }
             if (window.cart.length === 0) {
                 window.showMessage('Your cart is empty!', 'error');
@@ -294,7 +308,7 @@
             const orderData = {
                 orderId: orderId,
                 userId: window.currentUserId,
-                customerEmail: window.currentUserProfile?.email || '',
+                customerEmail: window.currentUserProfile?.email || window.auth?.currentUser?.email || '',
                 items: window.cart,
                 deliveryAddress,
                 subtotal,
@@ -320,7 +334,7 @@
                 document.getElementById('payfast-amount').value = total.toFixed(2);
                 document.getElementById('payfast-item-name').value = `Disciplined Disciples Order #${orderId}`;
                 document.getElementById('payfast-name').value = deliveryAddress.name;
-                document.getElementById('payfast-email').value = window.currentUserProfile?.email || "";
+                document.getElementById('payfast-email').value = window.currentUserProfile?.email || window.auth?.currentUser?.email || "";
                 document.getElementById('payfast-phone').value = deliveryAddress.phone;
                 document.getElementById('payfast-address').value = `${deliveryAddress.line1}, ${deliveryAddress.line2}, ${deliveryAddress.city}, ${deliveryAddress.province}, ${deliveryAddress.postalCode}`;
                 

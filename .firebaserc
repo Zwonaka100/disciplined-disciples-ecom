@@ -1,0 +1,18 @@
+{
+  "projects": {
+    "default": "disciplined-disciples-1"
+  },
+  "targets": {
+    "disciplined-disciples-1": {
+      "hosting": {
+        "main": [
+          "disciplined-disciples-1"
+        ],
+        "disciplineddisciples": [
+          "disciplineddisciples"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

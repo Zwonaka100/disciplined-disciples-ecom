@@ -145,7 +145,11 @@
 
     <script src="script.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Wait for Firebase to be initialized from script.js
+            if (window.firebaseInitialized) {
+                await window.firebaseInitialized;
+            }
             // Tab switching logic
             const loginTab = document.getElementById('login-tab');
             const signupTab = document.getElementById('signup-tab');
@@ -182,10 +186,10 @@
                     return;
                 }
                 try {
-                    const userCredential = await window.firebase.auth().createUserWithEmailAndPassword(email, password);
+                    const userCredential = await window.createUserWithEmailAndPassword(window.auth, email, password);
                     const user = userCredential.user;
                     // Create user profile in Firestore
-                    await window.firebase.firestore().collection('artifacts').doc('default-app-id')
+                    await window.db.collection('artifacts').doc('default-app-id')
                         .collection('users').doc(user.uid).set({
                             email: user.email,
                             name: "",
@@ -213,11 +217,34 @@
                 const email = document.getElementById('login-email').value.trim();
                 const password = document.getElementById('login-password').value;
                 try {
-                    const userCredential = await window.firebase.auth().signInWithEmailAndPassword(email, password);
-                    alert('Login successful!');
-                    window.location.href = "profile.html";
+                    console.log('Attempting login with:', email);
+                    const userCredential = await window.signInWithEmailAndPassword(window.auth, email, password);
+                    console.log('Login successful, user:', userCredential.user);
+                    window.showMessage('Login successful!', 'success');
+                    
+                    // Check if user was redirected from another page
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const redirectUrl = urlParams.get('redirect') || localStorage.getItem('redirectAfterLogin');
+                    console.log('Redirect URL found:', redirectUrl);
+                    console.log('URL params:', urlParams.toString());
+                    console.log('localStorage redirectAfterLogin:', localStorage.getItem('redirectAfterLogin'));
+                    
+                    // Clear stored redirect
+                    localStorage.removeItem('redirectAfterLogin');
+                    
+                    // Wait a moment for auth state to update
+                    setTimeout(() => {
+                        if (redirectUrl && redirectUrl !== 'login-signup.html') {
+                            console.log('Redirecting to:', redirectUrl);
+                            window.location.href = redirectUrl;
+                        } else {
+                            console.log('Redirecting to profile.html');
+                            window.location.href = "profile.html";
+                        }
+                    }, 1000);
                 } catch (error) {
-                    alert(error.message);
+                    window.showMessage(error.message, 'error');
+                    console.error('Login error:', error);
                 }
             });
 
@@ -235,7 +262,7 @@
                     profileRibbon.style.display = 'none';
                 }
             }
-            window.firebase.auth().onAuthStateChanged((user) => {
+            window.onAuthStateChanged(window.auth, (user) => {
                 updateProfileRibbon(user);
             });
             profileRibbon?.addEventListener('click', () => {
@@ -243,7 +270,7 @@
             });
             document.getElementById('dropdown-logout-btn')?.addEventListener('click', async () => {
                 try {
-                    await window.firebase.auth().signOut();
+                    await window.signOut(window.auth);
                     alert('Logout successful!');
                     window.location.href = "login-signup.html";
                 } catch (error) {

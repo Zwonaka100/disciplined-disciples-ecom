@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/jpeg" href="Assets/logo.jpg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -23,10 +24,10 @@
             </a>
             <nav class="nav-menu">
                 <ul class="flex space-x-6">
-                    <a href="index.html" class="nav-link">Home</a>
-                    <a href="shop.html" class="nav-link">Shop</a>
-                    <a href="blog.html" class="nav-link">Blog</a>
-                    <a href="contact.html" class="nav-link">Contact</a>
+                    <li><a href="index.html" class="nav-link">Home</a></li>
+                    <li><a href="shop.html" class="nav-link">Shop</a></li>
+                    <li><a href="blog.html" class="nav-link">Blog</a></li>
+                    <li><a href="contact.html" class="nav-link">Contact</a></li>
                     <li><a href="cart.html" class="nav-link"><i class="fas fa-shopping-cart"></i></a></li>
                 </ul>
                 <a href="login-signup.html" id="login-signup-link-mobile" class="nav-link-mobile"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
@@ -172,7 +173,42 @@
 
     <script>
         // Handle payment return from PayFast
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Wait for Firebase to be initialized from script.js
+            if (window.firebaseInitialized) {
+                await window.firebaseInitialized;
+            }
+            
+            // Wait for auth state to be determined
+            return new Promise((resolve) => {
+                const unsubscribe = window.onAuthStateChanged(window.auth, (user) => {
+                    console.log('Profile auth state changed:', user ? user.uid : 'no user');
+                    unsubscribe(); // Stop listening after first check
+                    
+                    if (user) {
+                        // User is authenticated, proceed with profile loading
+                        window.currentUserId = user.uid;
+                        initializeProfile();
+                    } else {
+                        // User is not authenticated, redirect to login
+                        console.log('User not authenticated, redirecting to login');
+                        window.location.href = 'login-signup.html?redirect=profile.html';
+                    }
+                    resolve();
+                });
+            });
+        });
+        
+        function initializeProfile() {
+            console.log('Initializing profile for user:', window.currentUserId);
+            
+            // Ensure currentUserId is set if auth.currentUser exists
+            if (!window.currentUserId && window.auth?.currentUser) {
+                window.currentUserId = window.auth.currentUser.uid;
+            }
+            
+            console.log('Profile page loaded for user:', window.currentUserId);
+            
             const urlParams = new URLSearchParams(window.location.search);
             const paymentStatus = urlParams.get('payment');
             
@@ -189,7 +225,7 @@
             
             // Load and display order history
             loadOrderHistory();
-        });
+        }
         
         async function handlePaymentSuccess() {
             const pendingOrderId = localStorage.getItem('pendingOrderId');
@@ -220,7 +256,16 @@
         }
         
         async function loadOrderHistory() {
-            if (!window.currentUserId) return;
+            console.log('Loading order history for user:', window.currentUserId);
+            if (!window.currentUserId) {
+                console.log('No current user ID, cannot load orders');
+                return;
+            }
+            
+            if (!window.db) {
+                console.error('Firebase DB not initialized');
+                return;
+            }
             
             try {
                 const ordersRef = window.db.collection("artifacts").doc("default-app-id").collection("orders");

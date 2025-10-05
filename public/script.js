@@ -568,11 +568,22 @@ function addToCart(productId, quantity = 1, size = 'N/A') {
     if (existingItemIndex > -1) {
         window.cart[existingItemIndex].quantity += quantity;
     } else {
+        // Get the correct image URL - use displayImage or first available color image
+        let imageUrl = product.displayImage;
+        if (!imageUrl && product.options && product.options.colors) {
+            // Get first color's default or first image
+            const firstColor = Object.keys(product.options.colors)[0];
+            if (firstColor) {
+                const colorData = product.options.colors[firstColor];
+                imageUrl = colorData.defaultImage || colorData.images[0];
+            }
+        }
+        
         window.cart.push({
             productId: product.id,
             name: product.name,
             price: product.price,
-            imageUrl: product.imageUrl,
+            imageUrl: imageUrl || product.displayImage,
             quantity: quantity,
             size: size // Store the selected size
         });
@@ -995,6 +1006,7 @@ async function initFirebase() {
                 if (user) {
                     window.currentUserId = user.uid;
                     console.log('User is signed in (onAuthStateChanged):', user.uid);
+                    console.log('Current page:', window.location.pathname);
                     updateAuthUI(true);
                     if (document.body.classList.contains('checkout-page')) {
                          await window.loadUserDeliveryAddress();
@@ -1045,9 +1057,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             resolveFirebaseInitialized = null;
         }
         updateAuthUI(!!window.auth.currentUser);
-
-        // Only call checkAuthState after Firebase is initialized!
-        await checkAuthState();
     } else {
         console.error("Firebase initialization failed. Some application features will not work.");
         if (resolveFirebaseInitialized) {
@@ -1344,7 +1353,7 @@ function renderCartPage() {
     window.cart.forEach(item => {
         cartContainer.innerHTML += `
             <div class="cart-item">
-                <img src="${item.imageUrl}" alt="${item.name}" class="cart-item-img">
+                <img src="${item.imageUrl || item.displayImage}" alt="${item.name}" class="cart-item-img">
                 <div class="cart-item-details">
                     <div class="cart-item-name">${item.name}</div>
                     <div class="cart-item-size">Size: ${item.size}</div>
