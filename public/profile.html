@@ -170,6 +170,207 @@
         </div>
     </footer>
 
+    <script>
+        // Handle payment return from PayFast
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const paymentStatus = urlParams.get('payment');
+            
+            if (paymentStatus === 'success') {
+                window.showMessage('Payment successful! Your order has been confirmed.', 'success');
+                handlePaymentSuccess();
+                // Clean up URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else if (paymentStatus === 'cancelled') {
+                window.showMessage('Payment was cancelled. Your order is still pending.', 'error');
+                // Clean up URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            
+            // Load and display order history
+            loadOrderHistory();
+        });
+        
+        async function handlePaymentSuccess() {
+            const pendingOrderId = localStorage.getItem('pendingOrderId');
+            if (pendingOrderId && window.currentUserId) {
+                try {
+                    // Update order status to paid
+                    const ordersRef = window.db.collection("artifacts").doc("default-app-id").collection("orders");
+                    const querySnapshot = await ordersRef.where("orderId", "==", pendingOrderId).get();
+                    
+                    if (!querySnapshot.empty) {
+                        const orderDoc = querySnapshot.docs[0];
+                        await orderDoc.ref.update({
+                            status: "Processing",
+                            paymentStatus: "Paid",
+                            paymentDate: window.serverTimestamp(),
+                            estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
+                        });
+                        
+                        // Send confirmation email (mock - in real app, this would be server-side)
+                        await sendOrderConfirmationEmail(orderDoc.data());
+                        
+                        localStorage.removeItem('pendingOrderId');
+                    }
+                } catch (error) {
+                    console.error('Error updating order status:', error);
+                }
+            }
+        }
+        
+        async function loadOrderHistory() {
+            if (!window.currentUserId) return;
+            
+            try {
+                const ordersRef = window.db.collection("artifacts").doc("default-app-id").collection("orders");
+                const querySnapshot = await ordersRef
+                    .where("userId", "==", window.currentUserId)
+                    .orderBy("orderDate", "desc")
+                    .get();
+                
+                const ordersList = document.getElementById('orders-list');
+                ordersList.innerHTML = '';
+                
+                if (querySnapshot.empty) {
+                    ordersList.innerHTML = '<p class="text-gray-500">No orders found.</p>';
+                    return;
+                }
+                
+                querySnapshot.forEach(doc => {
+                    const order = doc.data();
+                    const orderElement = createOrderElement(order);
+                    ordersList.appendChild(orderElement);
+                });
+            } catch (error) {
+                console.error('Error loading order history:', error);
+                document.getElementById('orders-list').innerHTML = '<p class="text-red-500">Error loading order history.</p>';
+            }
+        }
+        
+        function createOrderElement(order) {
+            const orderDiv = document.createElement('div');
+            orderDiv.className = 'border rounded-lg p-4 bg-white shadow-sm';
+            
+            const orderDate = order.orderDate?.toDate ? order.orderDate.toDate().toLocaleDateString() : 'N/A';
+            const statusColor = getStatusColor(order.status);
+            const paymentStatusColor = getStatusColor(order.paymentStatus);
+            
+            orderDiv.innerHTML = `
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <h4 class="font-semibold text-lg">Order #${order.orderId}</h4>
+                        <p class="text-gray-600 text-sm">Placed on ${orderDate}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-lg">R ${order.totalAmount?.toFixed(2) || '0.00'}</p>
+                        <span class="inline-block px-2 py-1 rounded text-xs font-medium ${statusColor}">${order.status || 'Unknown'}</span>
+                        <span class="inline-block px-2 py-1 rounded text-xs font-medium ${paymentStatusColor} ml-1">${order.paymentStatus || 'Unknown'}</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <h5 class="font-medium mb-2">Items:</h5>
+                    <ul class="space-y-1">
+                        ${order.items?.map(item => `
+                            <li class="text-sm text-gray-700">
+                                ${item.name} - Size: ${item.selectedSize} - Qty: ${item.quantity} - R ${(item.price * item.quantity).toFixed(2)}
+                            </li>
+                        `).join('') || '<li class="text-sm text-gray-500">No items found</li>'}
+                    </ul>
+                </div>
+                <div class="text-sm text-gray-600">
+                    <p><strong>Delivery Address:</strong> ${formatAddress(order.deliveryAddress)}</p>
+                    ${order.trackingNumber ? `<p><strong>Tracking Number:</strong> ${order.trackingNumber}</p>` : ''}
+                    ${order.estimatedDelivery ? `<p><strong>Estimated Delivery:</strong> ${new Date(order.estimatedDelivery.seconds * 1000).toLocaleDateString()}</p>` : ''}
+                </div>
+                ${order.status === 'Processing' || order.status === 'Shipped' ? `
+                    <div class="mt-3 pt-3 border-t">
+                        <p class="text-sm text-green-600">
+                            <i class="fas fa-check-circle mr-1"></i>
+                            Your order is being processed. You will receive email updates.
+                        </p>
+                    </div>
+                ` : ''}
+            `;
+            
+            return orderDiv;
+        }
+        
+        function getStatusColor(status) {
+            switch (status?.toLowerCase()) {
+                case 'paid': case 'processing': return 'bg-green-100 text-green-800';
+                case 'shipped': return 'bg-blue-100 text-blue-800';
+                case 'delivered': return 'bg-purple-100 text-purple-800';
+                case 'cancelled': return 'bg-red-100 text-red-800';
+                case 'pending': case 'pending payment': return 'bg-yellow-100 text-yellow-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+        
+        function formatAddress(address) {
+            if (!address) return 'N/A';
+            return `${address.line1}, ${address.line2 ? address.line2 + ', ' : ''}${address.city}, ${address.province}, ${address.postalCode}`;
+        }
+        
+        async function sendOrderConfirmationEmail(orderData) {
+            // In a real application, this would be handled by a server-side function
+            // For now, we'll just log that an email would be sent
+            console.log('Order confirmation email would be sent for order:', orderData.orderId);
+            
+            // You would typically call a cloud function or API endpoint here
+            // that handles email sending with proper templates and order details
+            
+            // Mock email content that would be sent:
+            const emailContent = {
+                to: orderData.customerEmail,
+                subject: `Order Confirmation - Disciplined Disciples Order #${orderData.orderId}`,
+                html: generateOrderEmailTemplate(orderData)
+            };
+            
+            console.log('Email content:', emailContent);
+            return true;
+        }
+        
+        function generateOrderEmailTemplate(order) {
+            return `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #333;">Thank you for your order!</h2>
+                    <p>Hi ${order.deliveryAddress?.name || 'Valued Customer'},</p>
+                    <p>Your order #${order.orderId} has been confirmed and is being processed.</p>
+                    
+                    <div style="background: #f9f9f9; padding: 20px; margin: 20px 0;">
+                        <h3>Order Summary</h3>
+                        <p><strong>Order Total:</strong> R ${order.totalAmount?.toFixed(2)}</p>
+                        <p><strong>Order Date:</strong> ${new Date().toLocaleDateString()}</p>
+                        <p><strong>Payment Status:</strong> Paid</p>
+                    </div>
+                    
+                    <div style="margin: 20px 0;">
+                        <h3>Items Ordered</h3>
+                        ${order.items?.map(item => `
+                            <p>${item.name} - Size: ${item.selectedSize} - Qty: ${item.quantity} - R ${(item.price * item.quantity).toFixed(2)}</p>
+                        `).join('') || ''}
+                    </div>
+                    
+                    <div style="margin: 20px 0;">
+                        <h3>Delivery Address</h3>
+                        <p>${formatAddress(order.deliveryAddress)}</p>
+                    </div>
+                    
+                    <p>You will receive email updates when your order ships.</p>
+                    <p>Thank you for shopping with Disciplined Disciples!</p>
+                    
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                        <p style="font-size: 12px; color: #666;">
+                            Disciplined Disciples<br>
+                            Email: nomaqhizazolile@gmail.com<br>
+                            Phone: +27 69 206 0618
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
     <script src="script.js"></script>
 </body>
 </html>

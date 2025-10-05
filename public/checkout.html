@@ -135,15 +135,17 @@
         <form id="payfast-form" action="https://www.payfast.co.za/eng/process" method="post" style="display:none;">
             <input type="hidden" name="merchant_id" value="15069294">
             <input type="hidden" name="merchant_key" value="nms7cymkxsyll">
-            <input type="hidden" name="return_url" value="https://yourdomain.com/thank-you.html">
-            <input type="hidden" name="cancel_url" value="https://yourdomain.com/checkout.html">
-            <input type="hidden" name="notify_url" value="https://yourdomain.com/payfast-itn.php">
+            <input type="hidden" name="return_url" value="https://disciplined-disciples-1.web.app/thank-you.html">
+            <input type="hidden" name="cancel_url" value="https://disciplined-disciples-1.web.app/checkout.html?payment=cancelled">
+            <input type="hidden" name="notify_url" value="https://disciplined-disciples-1.web.app/payfast-notify">
             <input type="hidden" name="amount" id="payfast-amount" value="">
             <input type="hidden" name="item_name" id="payfast-item-name" value="">
             <input type="hidden" name="name_first" id="payfast-name" value="">
             <input type="hidden" name="email_address" id="payfast-email" value="">
             <input type="hidden" name="cell_number" id="payfast-phone" value="">
-            <input type="hidden" name="custom_str1" id="payfast-address" value="">
+            <input type="hidden" name="custom_str1" id="payfast-custom-str1" value="">
+            <input type="hidden" name="custom_str2" id="payfast-custom-str2" value="">
+            <input type="hidden" name="custom_str3" id="payfast-address" value="">
         </form>
     </main>
 
@@ -194,6 +196,16 @@
     <script>
     document.addEventListener('DOMContentLoaded', async () => {
         await window.firebaseInitialized;
+
+        // Handle payment cancellation return
+        const urlParams = new URLSearchParams(window.location.search);
+        const paymentStatus = urlParams.get('payment');
+        
+        if (paymentStatus === 'cancelled') {
+            window.showMessage('Payment was cancelled. You can try again or modify your order.', 'error');
+            // Clean up URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
 
         // Render cart summary on checkout
         function renderCheckoutCart() {
@@ -278,8 +290,11 @@
             const vat = window.getCartVAT(subtotal);
             const shipping = window.cart.length > 0 ? window.SHIPPING_COST : 0;
             const total = window.getCartTotal(subtotal, vat, shipping);
+            const orderId = 'DD' + Date.now() + Math.random().toString(36).substr(2, 9);
             const orderData = {
+                orderId: orderId,
                 userId: window.currentUserId,
+                customerEmail: window.currentUserProfile?.email || '',
                 items: window.cart,
                 deliveryAddress,
                 subtotal,
@@ -287,35 +302,49 @@
                 shipping,
                 totalAmount: total,
                 orderDate: window.serverTimestamp(),
-                status: "Pending"
+                status: "Pending Payment",
+                paymentStatus: "Pending",
+                trackingNumber: null,
+                estimatedDelivery: null,
+                notes: []
             };
             // Save order to Firestore
             try {
                 const ordersRef = window.db.collection("artifacts").doc("default-app-id").collection("orders");
                 await ordersRef.add(orderData);
+                
+                // Store order ID for PayFast return
+                localStorage.setItem('pendingOrderId', orderId);
+                
                 // Prepare PayFast form
                 document.getElementById('payfast-amount').value = total.toFixed(2);
-                document.getElementById('payfast-item-name').value = "Disciplined Disciples Order";
+                document.getElementById('payfast-item-name').value = `Disciplined Disciples Order #${orderId}`;
                 document.getElementById('payfast-name').value = deliveryAddress.name;
                 document.getElementById('payfast-email').value = window.currentUserProfile?.email || "";
                 document.getElementById('payfast-phone').value = deliveryAddress.phone;
                 document.getElementById('payfast-address').value = `${deliveryAddress.line1}, ${deliveryAddress.line2}, ${deliveryAddress.city}, ${deliveryAddress.province}, ${deliveryAddress.postalCode}`;
+                
+                // Set custom fields for order tracking
+                document.getElementById('payfast-custom-str1').value = orderId;
+                document.getElementById('payfast-custom-str2').value = window.currentUserId;
+                
                 // Clear cart
                 window.cart = [];
                 window.saveCartToLocalStorage();
                 renderCheckoutCart();
                 document.getElementById('order-success').textContent = "Order placed successfully! Redirecting to payment...";
                 document.getElementById('order-success').classList.remove('hidden');
-                window.showMessage('Order placed successfully!', 'success');
+                window.showMessage('Order placed successfully! Redirecting to PayFast...', 'success');
                 this.reset();
+                
                 // Submit to PayFast
                 setTimeout(() => {
                     document.getElementById('payfast-form').style.display = "block";
                     document.getElementById('payfast-form').submit();
-                }, 1500);
+                }, 2000);
             } catch (error) {
-                window.showMessage('Failed to place order. Try again.', 'error');
-                console.error(error);
+                window.showMessage('Failed to place order. Please try again.', 'error');
+                console.error('Order creation error:', error);
             }
         });
     });
