@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://disciplineddisciples.co.za/sitemap.xml
+
+# Block access to private areas
+Disallow: /profile.html
+Disallow: /order-history.html
+Disallow: /.firebase/
+Disallow: /node_modules/
