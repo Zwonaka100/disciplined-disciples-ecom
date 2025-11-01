@@ -23,6 +23,9 @@ let firebaseInitializationPromise = new Promise(resolve => {
 });
 let firebaseInitializationResult = null;
 
+// Maintain legacy promise reference used by other scripts/pages
+window.firebaseInitialized = firebaseInitializationPromise;
+
 function settleFirebaseInitialization(result) {
     firebaseInitializationResult = result;
     if (resolveFirebaseInitialized) {
@@ -45,6 +48,7 @@ async function waitForFirebaseReady(timeoutMs = 10000) {
         firebaseInitializationPromise = new Promise(resolve => {
             resolveFirebaseInitialized = resolve;
         });
+        window.firebaseInitialized = firebaseInitializationPromise;
     }
 
     if (timeoutMs === Infinity || timeoutMs <= 0) {
