@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Test - Disciplined Disciples</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
+        <h1 class="text-2xl font-bold text-center mb-6">Authentication Test</h1>
+        
+        <div id="auth-status" class="mb-6 p-4 rounded-lg text-center">
+            <i class="fas fa-spinner fa-spin mr-2"></i>
+            Checking authentication status...
+        </div>
+        
+        <div class="space-y-4">
+            <button onclick="testSignup()" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700">
+                Test Signup
+            </button>
+            <button onclick="testLogin()" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700">
+                Test Login
+            </button>
+            <button onclick="testLogout()" class="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700">
+                Test Logout
+            </button>
+            <button onclick="testFirestore()" class="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700">
+                Test Firestore
+            </button>
+        </div>
+        
+        <div id="test-results" class="mt-6 p-4 bg-gray-50 rounded-lg hidden">
+            <h3 class="font-bold mb-2">Test Results:</h3>
+            <div id="results-content"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBVpuDI_YJI7mxtT6-igSL7ZX3s-cqMRnc",
+            authDomain: "disciplined-disciples-1.firebaseapp.com",
+            projectId: "disciplined-disciples-1",
+            storageBucket: "disciplined-disciples-1.firebasestorage.app",
+            messagingSenderId: "565996965931",
+            appId: "1:565996965931:web:b9d18489caa790e7afda6e",
+            measurementId: "G-2J1GWH59V4"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Test user credentials
+        const testEmail = 'test@disciplineddisciples.com';
+        const testPassword = 'testpassword123';
+        const testName = 'Test User';
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('auth-status');
+            const colors = {
+                success: 'bg-green-100 text-green-800',
+                error: 'bg-red-100 text-red-800',
+                info: 'bg-blue-100 text-blue-800',
+                warning: 'bg-yellow-100 text-yellow-800'
+            };
+            
+            statusDiv.className = `mb-6 p-4 rounded-lg text-center ${colors[type]}`;
+            statusDiv.innerHTML = message;
+        }
+
+        function addResult(test, result, details = '') {
+            const resultsDiv = document.getElementById('test-results');
+            const contentDiv = document.getElementById('results-content');
+            
+            resultsDiv.classList.remove('hidden');
+            
+            const resultElement = document.createElement('div');
+            resultElement.className = `mb-2 p-2 rounded ${result === 'PASS' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+            resultElement.innerHTML = `
+                <strong>${test}:</strong> ${result}
+                ${details ? `<br><small>${details}</small>` : ''}
+            `;
+            
+            contentDiv.appendChild(resultElement);
+        }
+
+        async function testSignup() {
+            try {
+                updateStatus('Testing signup...', 'info');
+                
+                // Try to create a new user
+                const userCredential = await auth.createUserWithEmailAndPassword(testEmail, testPassword);
+                const user = userCredential.user;
+                
+                // Create user profile in Firestore
+                await db.collection('artifacts').doc('default-app-id')
+                    .collection('users').doc(user.uid).set({
+                        email: user.email,
+                        name: testName,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                
+                updateStatus(`Signup successful! User created: ${user.uid}`, 'success');
+                addResult('Signup Test', 'PASS', `User ID: ${user.uid}`);
+                
+            } catch (error) {
+                console.error('Signup error:', error);
+                if (error.code === 'auth/email-already-in-use') {
+                    updateStatus('User already exists - this is expected for testing', 'warning');
+                    addResult('Signup Test', 'PASS', 'User already exists (expected)');
+                } else {
+                    updateStatus(`Signup failed: ${error.message}`, 'error');
+                    addResult('Signup Test', 'FAIL', error.message);
+                }
+            }
+        }
+
+        async function testLogin() {
+            try {
+                updateStatus('Testing login...', 'info');
+                
+                const userCredential = await auth.signInWithEmailAndPassword(testEmail, testPassword);
+                const user = userCredential.user;
+                
+                updateStatus(`Login successful! Welcome ${user.email}`, 'success');
+                addResult('Login Test', 'PASS', `User: ${user.email}`);
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                updateStatus(`Login failed: ${error.message}`, 'error');
+                addResult('Login Test', 'FAIL', error.message);
+            }
+        }
+
+        async function testLogout() {
+            try {
+                updateStatus('Testing logout...', 'info');
+                
+                await auth.signOut();
+                
+                updateStatus('Logout successful!', 'success');
+                addResult('Logout Test', 'PASS', 'User signed out successfully');
+                
+            } catch (error) {
+                console.error('Logout error:', error);
+                updateStatus(`Logout failed: ${error.message}`, 'error');
+                addResult('Logout Test', 'FAIL', error.message);
+            }
+        }
+
+        async function testFirestore() {
+            try {
+                updateStatus('Testing Firestore connection...', 'info');
+                
+                if (!auth.currentUser) {
+                    // Sign in first
+                    await auth.signInWithEmailAndPassword(testEmail, testPassword);
+                }
+                
+                const testDoc = db.collection('test').doc('connectivity');
+                await testDoc.set({
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    test: 'connectivity',
+                    userId: auth.currentUser.uid
+                });
+                
+                const doc = await testDoc.get();
+                if (doc.exists) {
+                    updateStatus('Firestore test successful!', 'success');
+                    addResult('Firestore Test', 'PASS', 'Read/write operations working');
+                    
+                    // Clean up
+                    await testDoc.delete();
+                } else {
+                    throw new Error('Document not found after write');
+                }
+                
+            } catch (error) {
+                console.error('Firestore error:', error);
+                updateStatus(`Firestore test failed: ${error.message}`, 'error');
+                addResult('Firestore Test', 'FAIL', error.message);
+            }
+        }
+
+        // Check initial auth state
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                updateStatus(`Authenticated as: ${user.email}`, 'success');
+            } else {
+                updateStatus('Not authenticated', 'info');
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateStatus('Firebase initialized - ready for testing', 'success');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Debug - Disciplined Disciples</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8">Login Debug Monitor</h1>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Debug Console -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4 flex items-center">
+                    <i class="fas fa-bug mr-2 text-red-500"></i>
+                    Debug Console
+                </h2>
+                <div id="debug-log" class="bg-gray-900 text-green-400 p-4 rounded-lg h-96 overflow-y-auto font-mono text-sm">
+                    <div class="text-yellow-400">[DEBUG] Initializing debug monitor...</div>
+                </div>
+                <button onclick="clearDebugLog()" class="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                    Clear Log
+                </button>
+            </div>
+            
+            <!-- Login Form -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4 flex items-center">
+                    <i class="fas fa-sign-in-alt mr-2 text-blue-500"></i>
+                    Test Login
+                </h2>
+                
+                <form id="debug-login-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" id="debug-email" value="zmabege@gmail.com" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <input type="password" id="debug-password" value="testpassword123"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        Test Login
+                    </button>
+                </form>
+                
+                <div class="mt-6 space-y-2">
+                    <button onclick="testFirebaseInit()" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700">
+                        Test Firebase Init
+                    </button>
+                    <button onclick="testAuthState()" class="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700">
+                        Check Auth State
+                    </button>
+                    <button onclick="testFirestore()" class="w-full bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700">
+                        Test Firestore
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- System Status -->
+        <div class="mt-6 bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold mb-4 flex items-center">
+                <i class="fas fa-heartbeat mr-2 text-green-500"></i>
+                System Status
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="text-center">
+                    <div id="firebase-status" class="text-2xl mb-2">⏳</div>
+                    <div class="text-sm text-gray-600">Firebase</div>
+                </div>
+                <div class="text-center">
+                    <div id="auth-status" class="text-2xl mb-2">⏳</div>
+                    <div class="text-sm text-gray-600">Authentication</div>
+                </div>
+                <div class="text-center">
+                    <div id="firestore-status" class="text-2xl mb-2">⏳</div>
+                    <div class="text-sm text-gray-600">Firestore</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Debug logging function
+        function debugLog(message, type = 'info') {
+            const logDiv = document.getElementById('debug-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                info: 'text-green-400',
+                error: 'text-red-400',
+                warning: 'text-yellow-400',
+                success: 'text-blue-400'
+            };
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = colors[type] || 'text-green-400';
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearDebugLog() {
+            document.getElementById('debug-log').innerHTML = '<div class="text-yellow-400">[DEBUG] Log cleared...</div>';
+        }
+
+        function updateStatus(element, status) {
+            const statusDiv = document.getElementById(element);
+            const icons = {
+                success: '✅',
+                error: '❌',
+                loading: '⏳',
+                warning: '⚠️'
+            };
+            statusDiv.textContent = icons[status] || '❓';
+        }
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBVpuDI_YJI7mxtT6-igSL7ZX3s-cqMRnc",
+            authDomain: "disciplined-disciples-1.firebaseapp.com",
+            projectId: "disciplined-disciples-1",
+            storageBucket: "disciplined-disciples-1.firebasestorage.app",
+            messagingSenderId: "565996965931",
+            appId: "1:565996965931:web:b9d18489caa790e7afda6e",
+            measurementId: "G-2J1GWH59V4"
+        };
+
+        // Initialize Firebase
+        debugLog('Initializing Firebase...', 'info');
+        try {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+                debugLog('Firebase initialized successfully', 'success');
+                updateStatus('firebase-status', 'success');
+            } else {
+                debugLog('Firebase already initialized', 'info');
+                updateStatus('firebase-status', 'success');
+            }
+        } catch (error) {
+            debugLog(`Firebase initialization error: ${error.message}`, 'error');
+            updateStatus('firebase-status', 'error');
+        }
+
+        // Test functions
+        function testFirebaseInit() {
+            debugLog('Testing Firebase initialization...', 'info');
+            try {
+                const app = firebase.app();
+                debugLog(`Firebase app name: ${app.name}`, 'success');
+                debugLog(`Firebase project ID: ${app.options.projectId}`, 'success');
+                updateStatus('firebase-status', 'success');
+            } catch (error) {
+                debugLog(`Firebase test error: ${error.message}`, 'error');
+                updateStatus('firebase-status', 'error');
+            }
+        }
+
+        function testAuthState() {
+            debugLog('Checking authentication state...', 'info');
+            try {
+                const auth = firebase.auth();
+                const user = auth.currentUser;
+                
+                if (user) {
+                    debugLog(`User logged in: ${user.email} (${user.uid})`, 'success');
+                    updateStatus('auth-status', 'success');
+                } else {
+                    debugLog('No user currently logged in', 'warning');
+                    updateStatus('auth-status', 'warning');
+                }
+                
+                // Set up auth state listener
+                auth.onAuthStateChanged((user) => {
+                    if (user) {
+                        debugLog(`Auth state changed: User ${user.email} signed in`, 'success');
+                        updateStatus('auth-status', 'success');
+                    } else {
+                        debugLog('Auth state changed: User signed out', 'warning');
+                        updateStatus('auth-status', 'warning');
+                    }
+                });
+                
+            } catch (error) {
+                debugLog(`Auth state check error: ${error.message}`, 'error');
+                updateStatus('auth-status', 'error');
+            }
+        }
+
+        async function testFirestore() {
+            debugLog('Testing Firestore connection...', 'info');
+            try {
+                const db = firebase.firestore();
+                const testDoc = db.collection('test').doc('connection');
+                
+                await testDoc.set({
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    test: 'connection'
+                });
+                
+                const doc = await testDoc.get();
+                if (doc.exists) {
+                    debugLog('Firestore connection successful', 'success');
+                    updateStatus('firestore-status', 'success');
+                    
+                    // Clean up
+                    await testDoc.delete();
+                    debugLog('Test document cleaned up', 'info');
+                } else {
+                    throw new Error('Document not found after write');
+                }
+                
+            } catch (error) {
+                debugLog(`Firestore test error: ${error.message}`, 'error');
+                updateStatus('firestore-status', 'error');
+            }
+        }
+
+        // Login form handler
+        document.getElementById('debug-login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('debug-email').value;
+            const password = document.getElementById('debug-password').value;
+            
+            debugLog(`Attempting login with email: ${email}`, 'info');
+            
+            try {
+                const auth = firebase.auth();
+                debugLog('Firebase auth object obtained', 'info');
+                
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                debugLog(`Login successful! User ID: ${userCredential.user.uid}`, 'success');
+                debugLog(`User email: ${userCredential.user.email}`, 'success');
+                debugLog(`Email verified: ${userCredential.user.emailVerified}`, 'info');
+                
+                updateStatus('auth-status', 'success');
+                
+                // Test Firestore access
+                debugLog('Testing Firestore access with authenticated user...', 'info');
+                const db = firebase.firestore();
+                const userDoc = await db.collection('artifacts').doc('default-app-id')
+                    .collection('users').doc(userCredential.user.uid).get();
+                
+                if (userDoc.exists) {
+                    debugLog('User profile found in Firestore', 'success');
+                    debugLog(`Profile data: ${JSON.stringify(userDoc.data(), null, 2)}`, 'info');
+                } else {
+                    debugLog('No user profile found in Firestore', 'warning');
+                }
+                
+            } catch (error) {
+                debugLog(`Login error: ${error.code} - ${error.message}`, 'error');
+                updateStatus('auth-status', 'error');
+                
+                // Log additional error details
+                if (error.code) {
+                    debugLog(`Error code: ${error.code}`, 'error');
+                }
+                if (error.stack) {
+                    debugLog(`Stack trace: ${error.stack}`, 'error');
+                }
+            }
+        });
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            debugLog('Page loaded, running initial tests...', 'info');
+            setTimeout(() => {
+                testFirebaseInit();
+                testAuthState();
+            }, 1000);
+        });
+
+        // Global error handler
+        window.addEventListener('error', (event) => {
+            debugLog(`Global error: ${event.error.message}`, 'error');
+            debugLog(`At: ${event.filename}:${event.lineno}:${event.colno}`, 'error');
+        });
+
+        // Unhandled promise rejection handler
+        window.addEventListener('unhandledrejection', (event) => {
+            debugLog(`Unhandled promise rejection: ${event.reason}`, 'error');
+        });
+    </script>
+</body>
+</html>

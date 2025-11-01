@@ -219,20 +219,46 @@
     <script>
         let allOrders = [];
         let currentFilter = 'all';
+        let eventsBound = false;
         
         document.addEventListener('DOMContentLoaded', async () => {
             await window.firebaseInitialized;
-            
-            if (!window.currentUserId) {
-                document.getElementById('login-prompt').classList.remove('hidden');
+
+            const auth = window.auth || (window.firebase && window.firebase.auth && window.firebase.auth());
+            if (!auth) {
+                showError('Authentication service is unavailable. Please refresh and try again.');
                 return;
             }
-            
-            document.getElementById('login-prompt').classList.add('hidden');
-            document.getElementById('order-history-content').classList.remove('hidden');
-            
-            await loadOrderHistory();
-            setupEventListeners();
+
+            const initializeForUser = async (user) => {
+                if (!user) {
+                    allOrders = [];
+                    renderOrders();
+                    document.getElementById('order-history-content').classList.add('hidden');
+                    document.getElementById('login-prompt').classList.remove('hidden');
+                    return;
+                }
+
+                window.currentUserId = user.uid;
+                document.getElementById('login-prompt').classList.add('hidden');
+                document.getElementById('order-history-content').classList.remove('hidden');
+
+                await loadOrderHistory();
+
+                if (!eventsBound) {
+                    setupEventListeners();
+                    eventsBound = true;
+                }
+            };
+
+            const currentUser = auth.currentUser;
+            if (currentUser) {
+                initializeForUser(currentUser);
+            } else {
+                auth.onAuthStateChanged(async (user) => {
+                    await initializeForUser(user);
+                });
+            }
         });
         
         async function loadOrderHistory() {

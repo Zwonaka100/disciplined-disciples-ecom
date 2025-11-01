@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Address Loading Test - Disciplined Disciples</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-2xl font-bold mb-6 text-center">Address Loading Test</h1>
+        
+        <!-- Status Display -->
+        <div class="bg-gray-50 p-4 rounded-lg mb-6">
+            <h3 class="font-bold mb-2">Current Status:</h3>
+            <div id="status-display" class="text-sm text-gray-600">
+                Not logged in
+            </div>
+        </div>
+        
+        <!-- Test Address Form (similar to checkout) -->
+        <div class="border rounded-lg p-4 mb-6">
+            <h3 class="font-bold mb-4">Delivery Address</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Address Line 1</label>
+                    <input type="text" id="address-line1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Address Line 2</label>
+                    <input type="text" id="address-line2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                    <input type="text" id="city" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Province</label>
+                    <input type="text" id="province" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
+                    <input type="text" id="postal-code" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                    <input type="text" id="phone-number" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+            <div class="mt-4">
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="save-address" class="rounded">
+                    <span class="text-sm text-gray-700">Save this address for future orders</span>
+                </label>
+            </div>
+        </div>
+        
+        <!-- Test Controls -->
+        <div class="space-y-4 mb-6">
+            <button onclick="testLogin()" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700">
+                <i class="fas fa-sign-in-alt mr-2"></i>Login & Load Address
+            </button>
+            
+            <button onclick="testLoadAddress()" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700">
+                <i class="fas fa-map-marker-alt mr-2"></i>Test Load Address Function
+            </button>
+            
+            <button onclick="testSaveAddress()" class="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700">
+                <i class="fas fa-save mr-2"></i>Test Save Address Function
+            </button>
+            
+            <button onclick="clearForm()" class="w-full bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700">
+                <i class="fas fa-eraser mr-2"></i>Clear Form
+            </button>
+        </div>
+        
+        <!-- Debug Log -->
+        <div>
+            <h3 class="font-bold mb-2">Debug Log:</h3>
+            <div id="debug-log" class="bg-gray-900 text-green-400 p-4 rounded-lg h-60 overflow-y-auto font-mono text-sm">
+                <div class="text-yellow-400">[DEBUG] Address loading test initialized...</div>
+            </div>
+            <button onclick="clearLog()" class="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                Clear Log
+            </button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Load main script.js -->
+    <script src="script.js"></script>
+
+    <script>
+        function debugLog(message, type = 'info') {
+            const logDiv = document.getElementById('debug-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                info: 'text-green-400',
+                error: 'text-red-400',
+                warning: 'text-yellow-400',
+                success: 'text-blue-400'
+            };
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = colors[type] || 'text-green-400';
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(message) {
+            document.getElementById('status-display').textContent = message;
+        }
+
+        function clearLog() {
+            document.getElementById('debug-log').innerHTML = '<div class="text-yellow-400">[DEBUG] Log cleared...</div>';
+        }
+
+        function clearForm() {
+            document.getElementById('address-line1').value = '';
+            document.getElementById('address-line2').value = '';
+            document.getElementById('city').value = '';
+            document.getElementById('province').value = '';
+            document.getElementById('postal-code').value = '';
+            document.getElementById('phone-number').value = '';
+            document.getElementById('save-address').checked = false;
+            debugLog('Form cleared', 'info');
+        }
+
+        async function testLogin() {
+            try {
+                debugLog('Testing login...', 'info');
+                updateStatus('Logging in...');
+                
+                const userCredential = await firebase.auth().signInWithEmailAndPassword('zmabege@gmail.com', 'testpassword123');
+                debugLog(`Login successful: ${userCredential.user.email}`, 'success');
+                updateStatus(`Logged in as: ${userCredential.user.email}`);
+                
+                // Wait a moment for the auth state to propagate
+                setTimeout(async () => {
+                    debugLog('Attempting to load address after login...', 'info');
+                    await testLoadAddress();
+                }, 1000);
+                
+            } catch (error) {
+                debugLog(`Login error: ${error.message}`, 'error');
+                updateStatus(`Login error: ${error.message}`);
+            }
+        }
+
+        async function testLoadAddress() {
+            debugLog('Testing loadUserDeliveryAddress function...', 'info');
+            
+            // Check if function exists
+            if (typeof window.loadUserDeliveryAddress !== 'function') {
+                debugLog('loadUserDeliveryAddress function not found!', 'error');
+                return;
+            }
+            
+            // Check required variables
+            debugLog(`window.db exists: ${!!window.db}`, 'info');
+            debugLog(`window.currentUserId: ${window.currentUserId || 'undefined'}`, 'info');
+            
+            if (!window.currentUserId) {
+                debugLog('No current user ID - please login first', 'warning');
+                return;
+            }
+            
+            try {
+                await window.loadUserDeliveryAddress();
+                debugLog('loadUserDeliveryAddress completed successfully', 'success');
+                
+                // Check if form was populated
+                const hasData = document.getElementById('address-line1').value || 
+                               document.getElementById('city').value || 
+                               document.getElementById('phone-number').value;
+                               
+                if (hasData) {
+                    debugLog('Form populated with saved address data', 'success');
+                } else {
+                    debugLog('No saved address found or form not populated', 'warning');
+                }
+                
+            } catch (error) {
+                debugLog(`Error calling loadUserDeliveryAddress: ${error.message}`, 'error');
+                debugLog(`Stack trace: ${error.stack}`, 'error');
+            }
+        }
+
+        async function testSaveAddress() {
+            debugLog('Testing address saving...', 'info');
+            
+            if (!window.currentUserId) {
+                debugLog('No current user ID - please login first', 'warning');
+                return;
+            }
+            
+            // Create test address data
+            const addressData = {
+                line1: document.getElementById('address-line1').value || '123 Test Street',
+                line2: document.getElementById('address-line2').value || 'Unit 456',
+                city: document.getElementById('city').value || 'Johannesburg',
+                province: document.getElementById('province').value || 'Gauteng',
+                postalCode: document.getElementById('postal-code').value || '2000',
+                phoneNumber: document.getElementById('phone-number').value || '+27123456789'
+            };
+            
+            debugLog(`Saving address: ${JSON.stringify(addressData, null, 2)}`, 'info');
+            
+            try {
+                // Populate form if empty
+                if (!document.getElementById('address-line1').value) {
+                    Object.keys(addressData).forEach(key => {
+                        const element = document.getElementById(key === 'phoneNumber' ? 'phone-number' : 
+                                                               key === 'postalCode' ? 'postal-code' : 
+                                                               key.replace(/([A-Z])/g, '-$1').toLowerCase());
+                        if (element) element.value = addressData[key];
+                    });
+                    document.getElementById('save-address').checked = true;
+                }
+                
+                // Test the save function if it exists
+                if (typeof window.saveUserDeliveryAddress === 'function') {
+                    await window.saveUserDeliveryAddress(addressData, true);
+                    debugLog('Address saved successfully', 'success');
+                } else {
+                    // Manual save to test Firestore connection
+                    const userDocRef = firebase.firestore().collection('artifacts').doc('default-app-id')
+                        .collection('users').doc(window.currentUserId);
+                    
+                    await userDocRef.update({
+                        deliveryAddress: addressData
+                    });
+                    
+                    debugLog('Address saved directly to Firestore', 'success');
+                }
+                
+            } catch (error) {
+                debugLog(`Error saving address: ${error.message}`, 'error');
+                debugLog(`Stack trace: ${error.stack}`, 'error');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            debugLog('Page loaded, initializing...', 'info');
+            
+            // Wait for Firebase to be initialized
+            const checkFirebase = setInterval(() => {
+                if (window.firebase && firebase.apps.length > 0) {
+                    clearInterval(checkFirebase);
+                    debugLog('Firebase initialized', 'success');
+                    
+                    // Set up auth state listener
+                    firebase.auth().onAuthStateChanged((user) => {
+                        if (user) {
+                            debugLog(`Auth state: User ${user.email} signed in`, 'success');
+                            updateStatus(`Logged in as: ${user.email}`);
+                            window.currentUserId = user.uid;
+                        } else {
+                            debugLog('Auth state: User signed out', 'info');
+                            updateStatus('Not logged in');
+                            window.currentUserId = null;
+                        }
+                    });
+                    
+                    // Check if required functions exist
+                    setTimeout(() => {
+                        debugLog(`loadUserDeliveryAddress function exists: ${typeof window.loadUserDeliveryAddress === 'function'}`, 'info');
+                        debugLog(`window.db exists: ${!!window.db}`, 'info');
+                    }, 1000);
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>

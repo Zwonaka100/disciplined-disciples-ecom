@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Avatar Shape Test - Disciplined Disciples</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="profile-avatar-fix.css">
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-2xl font-bold mb-6 text-center">Profile Avatar Shape Test</h1>
+        
+        <!-- Test different avatar scenarios -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Avatar with initials -->
+            <div class="bg-gray-50 p-4 rounded-lg text-center">
+                <h3 class="font-bold mb-4">Avatar with Initials</h3>
+                <div id="profile-ribbon-avatar-1" class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 text-gray-700 font-bold text-lg border-2 border-gray-300 overflow-hidden mx-auto">
+                    ZM
+                </div>
+                <p class="text-sm text-gray-600 mt-2">Should be a perfect circle with initials</p>
+            </div>
+            
+            <!-- Avatar with image (using a placeholder) -->
+            <div class="bg-gray-50 p-4 rounded-lg text-center">
+                <h3 class="font-bold mb-4">Avatar with Image</h3>
+                <div id="profile-ribbon-avatar-2" class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 text-gray-700 font-bold text-lg border-2 border-gray-300 overflow-hidden mx-auto">
+                    <img src="https://via.placeholder.com/40x40/4F46E5/ffffff?text=ZM" alt="Profile" class="w-full h-full object-cover rounded-full">
+                </div>
+                <p class="text-sm text-gray-600 mt-2">Should be a perfect circle with image</p>
+            </div>
+            
+            <!-- Avatar smaller size (like on login page) -->
+            <div class="bg-gray-50 p-4 rounded-lg text-center">
+                <h3 class="font-bold mb-4">Small Avatar (Login)</h3>
+                <div id="profile-ribbon-avatar-3" class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-200 text-gray-700 font-bold text-xs border-2 border-gray-300 overflow-hidden mx-auto">
+                    ZM
+                </div>
+                <p class="text-sm text-gray-600 mt-2">Should be a smaller perfect circle</p>
+            </div>
+        </div>
+        
+        <!-- Live Header Test -->
+        <div class="border-t pt-6">
+            <h3 class="font-bold mb-4">Live Header Test</h3>
+            <div class="bg-white border rounded-lg p-4">
+                <!-- Simulated header -->
+                <div class="flex items-center justify-between">
+                    <div class="text-lg font-bold">Disciplined Disciples</div>
+                    
+                    <!-- Login Button (initially visible) -->
+                    <a href="login-signup.html" id="login-signup-link" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-sign-in-alt"></i> Login/Signup
+                    </a>
+                    
+                    <!-- Profile Ribbon (initially hidden) -->
+                    <div id="profile-ribbon" class="relative flex items-center space-x-2 cursor-pointer select-none" style="display:none;">
+                        <span id="profile-ribbon-name" class="font-semibold text-gray-700"></span>
+                        <div id="profile-ribbon-avatar" class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 text-gray-700 font-bold text-lg border-2 border-gray-300 overflow-hidden"></div>
+                        <div id="profile-dropdown" class="absolute right-0 top-12 bg-white border rounded shadow-lg min-w-[160px] hidden z-50">
+                            <a href="profile.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-user mr-2"></i>Profile
+                            </a>
+                            <a href="profile.html#account" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-cog mr-2"></i>Account Settings
+                            </a>
+                            <a href="profile.html#orders" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-shopping-bag mr-2"></i>My Orders
+                            </a>
+                            <hr class="my-1">
+                            <button id="dropdown-logout-btn" class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Test Controls -->
+        <div class="mt-6 space-y-4">
+            <button onclick="testWithInitials()" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700">
+                <i class="fas fa-user mr-2"></i>Test Login with Initials
+            </button>
+            
+            <button onclick="testWithImage()" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700">
+                <i class="fas fa-image mr-2"></i>Test Login with Profile Image
+            </button>
+            
+            <button onclick="testLogout()" class="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700">
+                <i class="fas fa-sign-out-alt mr-2"></i>Test Logout
+            </button>
+            
+            <button onclick="toggleDropdown()" class="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700">
+                <i class="fas fa-chevron-down mr-2"></i>Toggle Dropdown
+            </button>
+        </div>
+        
+        <!-- Debug Info -->
+        <div class="mt-6 bg-gray-50 p-4 rounded-lg">
+            <h3 class="font-bold mb-2">Debug Info:</h3>
+            <div id="debug-info" class="text-sm text-gray-600">
+                Ready for testing...
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Load main script.js -->
+    <script src="script.js"></script>
+
+    <script>
+        function updateDebugInfo(message) {
+            document.getElementById('debug-info').innerHTML = message;
+        }
+
+        function testWithInitials() {
+            updateDebugInfo('Testing avatar with initials...');
+            
+            const loginLink = document.getElementById('login-signup-link');
+            const profileRibbon = document.getElementById('profile-ribbon');
+            const profileName = document.getElementById('profile-ribbon-name');
+            const profileAvatar = document.getElementById('profile-ribbon-avatar');
+            
+            // Hide login, show profile
+            loginLink.style.display = 'none';
+            profileRibbon.style.display = 'flex';
+            
+            // Set user info
+            profileName.textContent = 'Zwonaka Mabege';
+            profileAvatar.innerHTML = 'ZM';
+            
+            updateDebugInfo(`
+                <strong>Test: Initials Avatar</strong><br>
+                Profile Ribbon Display: ${profileRibbon.style.display}<br>
+                Avatar Content: ${profileAvatar.innerHTML}<br>
+                Avatar Classes: ${profileAvatar.className}<br>
+                Status: Should show circular avatar with "ZM" initials
+            `);
+        }
+
+        function testWithImage() {
+            updateDebugInfo('Testing avatar with profile image...');
+            
+            const loginLink = document.getElementById('login-signup-link');
+            const profileRibbon = document.getElementById('profile-ribbon');
+            const profileName = document.getElementById('profile-ribbon-name');
+            const profileAvatar = document.getElementById('profile-ribbon-avatar');
+            
+            // Hide login, show profile
+            loginLink.style.display = 'none';
+            profileRibbon.style.display = 'flex';
+            
+            // Set user info with image
+            profileName.textContent = 'Zwonaka Mabege';
+            profileAvatar.innerHTML = `<img src="https://via.placeholder.com/40x40/4F46E5/ffffff?text=ZM" alt="Profile" class="w-full h-full object-cover rounded-full">`;
+            
+            updateDebugInfo(`
+                <strong>Test: Image Avatar</strong><br>
+                Profile Ribbon Display: ${profileRibbon.style.display}<br>
+                Avatar Content: ${profileAvatar.innerHTML.substring(0, 50)}...<br>
+                Avatar Classes: ${profileAvatar.className}<br>
+                Status: Should show circular avatar with profile image
+            `);
+        }
+
+        function testLogout() {
+            updateDebugInfo('Testing logout...');
+            
+            const loginLink = document.getElementById('login-signup-link');
+            const profileRibbon = document.getElementById('profile-ribbon');
+            const profileDropdown = document.getElementById('profile-dropdown');
+            
+            // Show login, hide profile
+            loginLink.style.display = 'inline-block';
+            profileRibbon.style.display = 'none';
+            profileDropdown.classList.add('hidden');
+            
+            updateDebugInfo(`
+                <strong>Test: Logout</strong><br>
+                Login Link Display: ${loginLink.style.display}<br>
+                Profile Ribbon Display: ${profileRibbon.style.display}<br>
+                Status: Should show login button, hide profile
+            `);
+        }
+
+        function toggleDropdown() {
+            const profileDropdown = document.getElementById('profile-dropdown');
+            const isHidden = profileDropdown.classList.contains('hidden');
+            
+            profileDropdown.classList.toggle('hidden');
+            
+            updateDebugInfo(`
+                <strong>Test: Dropdown Toggle</strong><br>
+                Was Hidden: ${isHidden}<br>
+                Now Hidden: ${profileDropdown.classList.contains('hidden')}<br>
+                Status: Dropdown ${isHidden ? 'shown' : 'hidden'}
+            `);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDebugInfo('Avatar shape test initialized. Use the buttons to test different scenarios.');
+            
+            // Set up dropdown click handler
+            const profileRibbon = document.getElementById('profile-ribbon');
+            profileRibbon.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleDropdown();
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                const profileDropdown = document.getElementById('profile-dropdown');
+                if (!profileRibbon.contains(e.target)) {
+                    profileDropdown.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'zmabege@gmail.com' ||
+  request.auth.token.email == 'nomaqhizazolile@gmail.com'
+      );
+    }
+
+    function isUserSelf(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Allow authenticated users to read and write their own user profile; admins can manage all profiles
+    match /artifacts/default-app-id/users/{userId} {
+      allow read: if isUserSelf(userId) || isAdmin();
+      allow write: if isUserSelf(userId) || isAdmin();
+    }
+
+    // Allow authenticated users to read/write their own orders; admins get full visibility/control
+    match /artifacts/default-app-id/orders/{orderId} {
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow read: if (isSignedIn() && request.auth.uid == resource.data.userId) || isAdmin();
+      allow update: if (isSignedIn() && request.auth.uid == resource.data.userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Allow authenticated users to create and read their own support requests; admins can assist
+    match /artifacts/default-app-id/support-requests/{requestId} {
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow read: if (isSignedIn() && request.auth.uid == resource.data.userId) || isAdmin();
+      allow update: if (isSignedIn() && request.auth.uid == resource.data.userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Allow read access to products (public data)
+    match /products/{productId} {
+      allow read: if true;
+    }
+
+    // Test document for connectivity checks
+    match /test/{document} {
+      allow read, write: if true;
+    }
+
+    // Default rule - deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

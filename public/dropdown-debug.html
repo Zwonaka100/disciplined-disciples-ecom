@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dropdown Debug - Disciplined Disciples</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header with Profile Dropdown -->
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 flex items-center justify-between h-16">
+            <div class="text-xl font-bold">Dropdown Test</div>
+            
+            <!-- Login/Signup Link -->
+            <a href="login-signup.html" id="login-signup-link" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                <i class="fas fa-sign-in-alt"></i> Login/Signup
+            </a>
+            
+            <!-- Profile Ribbon with Dropdown -->
+            <div id="profile-ribbon" class="relative flex items-center space-x-2 cursor-pointer select-none" style="display:none;">
+                <span id="profile-ribbon-name" class="font-semibold text-gray-700"></span>
+                <div id="profile-ribbon-avatar" class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-200 text-gray-700 font-bold text-lg border-2 border-gray-300 overflow-hidden"></div>
+                <div id="profile-dropdown" class="absolute right-0 top-12 bg-white border rounded shadow-lg min-w-[160px] hidden z-50">
+                    <a href="profile.html" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-user mr-2"></i>Profile
+                    </a>
+                    <a href="profile.html#account" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-cog mr-2"></i>Account Settings
+                    </a>
+                    <a href="profile.html#orders" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                        <i class="fas fa-shopping-bag mr-2"></i>My Orders
+                    </a>
+                    <hr class="my-1">
+                    <button id="dropdown-logout-btn" class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h1 class="text-2xl font-bold mb-4">Profile Dropdown Debug</h1>
+                <p class="text-gray-600 mb-4">This page tests the profile dropdown functionality specifically.</p>
+                
+                <!-- Status Panel -->
+                <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                    <h3 class="font-bold mb-2">Current Status:</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <strong>Authentication:</strong> <span id="auth-status">Checking...</span>
+                        </div>
+                        <div>
+                            <strong>Profile Visible:</strong> <span id="profile-visible">Checking...</span>
+                        </div>
+                        <div>
+                            <strong>Dropdown State:</strong> <span id="dropdown-state">Hidden</span>
+                        </div>
+                        <div>
+                            <strong>Click Events:</strong> <span id="click-events">Not set up</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Controls -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <h3 class="font-bold mb-2">Authentication Tests:</h3>
+                        <div class="space-y-2">
+                            <button onclick="testLogin()" class="w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">
+                                Quick Login
+                            </button>
+                            <button onclick="testLogout()" class="w-full bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700">
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-bold mb-2">Dropdown Tests:</h3>
+                        <div class="space-y-2">
+                            <button onclick="manualToggleDropdown()" class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
+                                Manual Toggle Dropdown
+                            </button>
+                            <button onclick="checkDropdownElements()" class="w-full bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700">
+                                Check Dropdown Elements
+                            </button>
+                            <button onclick="setupDropdownDebug()" class="w-full bg-orange-600 text-white py-2 px-4 rounded hover:bg-orange-700">
+                                Re-setup Dropdown
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Debug Log -->
+                <div>
+                    <h3 class="font-bold mb-2">Debug Log:</h3>
+                    <div id="debug-log" class="bg-gray-900 text-green-400 p-4 rounded-lg h-60 overflow-y-auto font-mono text-sm">
+                        <!-- Debug messages will appear here -->
+                    </div>
+                    <button onclick="clearLog()" class="mt-2 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+                        Clear Log
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Load main script.js -->
+    <script src="script.js"></script>
+
+    <script>
+        let debugCount = 0;
+        
+        function debugLog(message, type = 'info') {
+            const logDiv = document.getElementById('debug-log');
+            const timestamp = new Date().toLocaleTimeString();
+            debugCount++;
+            
+            const colors = {
+                info: 'text-green-400',
+                error: 'text-red-400',
+                warning: 'text-yellow-400',
+                success: 'text-blue-400'
+            };
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = colors[type] || 'text-green-400';
+            logEntry.innerHTML = `[${debugCount}] [${timestamp}] ${message}`;
+            
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('debug-log').innerHTML = '';
+            debugCount = 0;
+        }
+
+        function updateStatus(elementId, value, color = 'text-gray-800') {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = value;
+                element.className = color;
+            }
+        }
+
+        function checkDropdownElements() {
+            debugLog('=== Checking Dropdown Elements ===', 'info');
+            
+            const profileRibbon = document.getElementById('profile-ribbon');
+            const profileDropdown = document.getElementById('profile-dropdown');
+            const profileName = document.getElementById('profile-ribbon-name');
+            const profileAvatar = document.getElementById('profile-ribbon-avatar');
+            const logoutBtn = document.getElementById('dropdown-logout-btn');
+            
+            debugLog(`Profile Ribbon: ${profileRibbon ? 'Found' : 'NOT FOUND'}`, profileRibbon ? 'success' : 'error');
+            debugLog(`Profile Dropdown: ${profileDropdown ? 'Found' : 'NOT FOUND'}`, profileDropdown ? 'success' : 'error');
+            debugLog(`Profile Name: ${profileName ? 'Found' : 'NOT FOUND'}`, profileName ? 'success' : 'error');
+            debugLog(`Profile Avatar: ${profileAvatar ? 'Found' : 'NOT FOUND'}`, profileAvatar ? 'success' : 'error');
+            debugLog(`Logout Button: ${logoutBtn ? 'Found' : 'NOT FOUND'}`, logoutBtn ? 'success' : 'error');
+            
+            if (profileRibbon) {
+                debugLog(`Profile Ribbon Style: ${profileRibbon.style.display}`, 'info');
+                debugLog(`Profile Ribbon Classes: ${profileRibbon.className}`, 'info');
+            }
+            
+            if (profileDropdown) {
+                debugLog(`Dropdown Classes: ${profileDropdown.className}`, 'info');
+                const isHidden = profileDropdown.classList.contains('hidden');
+                debugLog(`Dropdown Hidden: ${isHidden}`, isHidden ? 'warning' : 'success');
+                updateStatus('dropdown-state', isHidden ? 'Hidden' : 'Visible', isHidden ? 'text-red-600' : 'text-green-600');
+            }
+        }
+
+        function manualToggleDropdown() {
+            debugLog('Manual dropdown toggle triggered', 'info');
+            const profileDropdown = document.getElementById('profile-dropdown');
+            
+            if (profileDropdown) {
+                const wasHidden = profileDropdown.classList.contains('hidden');
+                profileDropdown.classList.toggle('hidden');
+                const isNowHidden = profileDropdown.classList.contains('hidden');
+                
+                debugLog(`Dropdown was: ${wasHidden ? 'Hidden' : 'Visible'}`, 'info');
+                debugLog(`Dropdown now: ${isNowHidden ? 'Hidden' : 'Visible'}`, isNowHidden ? 'warning' : 'success');
+                updateStatus('dropdown-state', isNowHidden ? 'Hidden' : 'Visible', isNowHidden ? 'text-red-600' : 'text-green-600');
+            } else {
+                debugLog('Dropdown element not found!', 'error');
+            }
+        }
+
+        function setupDropdownDebug() {
+            debugLog('Setting up dropdown with debug logging...', 'info');
+            
+            const profileRibbon = document.getElementById('profile-ribbon');
+            const profileDropdown = document.getElementById('profile-dropdown');
+            const logoutBtn = document.getElementById('dropdown-logout-btn');
+            
+            if (!profileRibbon || !profileDropdown) {
+                debugLog('Missing required elements for dropdown setup', 'error');
+                return;
+            }
+            
+            // Remove existing event listeners
+            const newProfileRibbon = profileRibbon.cloneNode(true);
+            profileRibbon.parentNode.replaceChild(newProfileRibbon, profileRibbon);
+            
+            // Add click handler with debug logging
+            newProfileRibbon.addEventListener('click', (e) => {
+                e.stopPropagation();
+                debugLog('Profile ribbon clicked!', 'success');
+                
+                const dropdown = document.getElementById('profile-dropdown');
+                if (dropdown) {
+                    const wasHidden = dropdown.classList.contains('hidden');
+                    dropdown.classList.toggle('hidden');
+                    const isNowHidden = dropdown.classList.contains('hidden');
+                    
+                    debugLog(`Dropdown toggled: ${wasHidden ? 'Hidden' : 'Visible'} → ${isNowHidden ? 'Hidden' : 'Visible'}`, 'info');
+                    updateStatus('dropdown-state', isNowHidden ? 'Hidden' : 'Visible', isNowHidden ? 'text-red-600' : 'text-green-600');
+                } else {
+                    debugLog('Dropdown not found during click!', 'error');
+                }
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                const dropdown = document.getElementById('profile-dropdown');
+                const ribbon = document.getElementById('profile-ribbon');
+                
+                if (dropdown && ribbon && !ribbon.contains(e.target)) {
+                    if (!dropdown.classList.contains('hidden')) {
+                        debugLog('Closing dropdown (clicked outside)', 'info');
+                        dropdown.classList.add('hidden');
+                        updateStatus('dropdown-state', 'Hidden', 'text-red-600');
+                    }
+                }
+            });
+            
+            // Setup logout button
+            const newLogoutBtn = document.getElementById('dropdown-logout-btn');
+            if (newLogoutBtn) {
+                newLogoutBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    debugLog('Logout button clicked!', 'success');
+                    const dropdown = document.getElementById('profile-dropdown');
+                    if (dropdown) {
+                        dropdown.classList.add('hidden');
+                        updateStatus('dropdown-state', 'Hidden', 'text-red-600');
+                    }
+                    
+                    // Call logout function if available
+                    if (typeof handleLogout === 'function') {
+                        debugLog('Calling handleLogout function...', 'info');
+                        handleLogout();
+                    } else {
+                        debugLog('handleLogout function not found', 'warning');
+                    }
+                });
+            }
+            
+            debugLog('Dropdown setup complete!', 'success');
+            updateStatus('click-events', 'Set up', 'text-green-600');
+        }
+
+        async function testLogin() {
+            try {
+                debugLog('Testing login...', 'info');
+                const userCredential = await firebase.auth().signInWithEmailAndPassword('zmabege@gmail.com', 'testpassword123');
+                debugLog(`Login successful: ${userCredential.user.email}`, 'success');
+                updateStatus('auth-status', `Logged in as ${userCredential.user.email}`, 'text-green-600');
+                
+                // Check if profile becomes visible
+                setTimeout(() => {
+                    const profileRibbon = document.getElementById('profile-ribbon');
+                    const isVisible = profileRibbon && profileRibbon.style.display !== 'none';
+                    updateStatus('profile-visible', isVisible ? 'Yes' : 'No', isVisible ? 'text-green-600' : 'text-red-600');
+                    
+                    if (isVisible) {
+                        setupDropdownDebug();
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                debugLog(`Login error: ${error.message}`, 'error');
+                updateStatus('auth-status', `Error: ${error.message}`, 'text-red-600');
+            }
+        }
+
+        async function testLogout() {
+            try {
+                debugLog('Testing logout...', 'info');
+                await firebase.auth().signOut();
+                debugLog('Logout successful', 'success');
+                updateStatus('auth-status', 'Logged out', 'text-gray-600');
+                updateStatus('profile-visible', 'No', 'text-red-600');
+                updateStatus('dropdown-state', 'Hidden', 'text-red-600');
+                
+            } catch (error) {
+                debugLog(`Logout error: ${error.message}`, 'error');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            debugLog('Page loaded, initializing...', 'info');
+            
+            // Wait for Firebase to be initialized
+            const checkFirebase = setInterval(() => {
+                if (window.firebase && firebase.apps.length > 0) {
+                    clearInterval(checkFirebase);
+                    debugLog('Firebase initialized', 'success');
+                    
+                    // Set up auth state listener
+                    firebase.auth().onAuthStateChanged((user) => {
+                        if (user) {
+                            debugLog(`Auth state: User ${user.email} signed in`, 'success');
+                            updateStatus('auth-status', `Logged in as ${user.email}`, 'text-green-600');
+                            
+                            // Check profile visibility
+                            const profileRibbon = document.getElementById('profile-ribbon');
+                            const isVisible = profileRibbon && profileRibbon.style.display !== 'none';
+                            updateStatus('profile-visible', isVisible ? 'Yes' : 'No', isVisible ? 'text-green-600' : 'text-red-600');
+                            
+                            if (isVisible) {
+                                setupDropdownDebug();
+                            }
+                        } else {
+                            debugLog('Auth state: User signed out', 'info');
+                            updateStatus('auth-status', 'Not logged in', 'text-gray-600');
+                            updateStatus('profile-visible', 'No', 'text-red-600');
+                        }
+                    });
+                    
+                    // Initial element check
+                    setTimeout(() => {
+                        checkDropdownElements();
+                    }, 1000);
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>

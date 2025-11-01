@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard • Disciplined Disciples</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        (function () {
+            const redirectToLogin = () => {
+                window.location.replace('login-signup.html?redirect=admin-dashboard.html');
+            };
+
+            const hasSession = sessionStorage.getItem('userLoggedIn') && sessionStorage.getItem('userId');
+            if (hasSession) {
+                return;
+            }
+
+            window.addEventListener('DOMContentLoaded', () => {
+                try {
+                    const auth = window.firebase?.auth?.() || window.auth;
+                    if (auth && typeof auth.onAuthStateChanged === 'function') {
+                        auth.onAuthStateChanged((user) => {
+                            if (!user) {
+                                redirectToLogin();
+                            }
+                        });
+                    } else {
+                        redirectToLogin();
+                    }
+                } catch (error) {
+                    console.error('Admin guard error:', error);
+                    redirectToLogin();
+                }
+            });
+        })();
+    </script>
+</head>
+<body class="bg-slate-100 text-slate-900 min-h-screen">
+    <div id="admin-loading" class="fixed inset-0 bg-white bg-opacity-80 flex items-center justify-center z-40 hidden">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-blue-600 mx-auto mb-4"></div>
+            <p class="text-sm text-slate-600">Syncing latest store data…</p>
+        </div>
+    </div>
+
+    <header class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <img src="Assets/logo.jpg" alt="Disciplined Disciples" class="h-10 w-10 rounded object-cover" data-admin-logo>
+                <div>
+                    <h1 class="text-xl font-semibold text-slate-900">Disciplined Disciples Admin</h1>
+                    <p class="text-sm text-slate-500">Order management &amp; customer insights</p>
+                </div>
+            </div>
+            <nav class="flex items-center space-x-3">
+                <a href="index.html" class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition">View Storefront</a>
+                <a href="profile.html" class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition">Customer Profile</a>
+                <button id="admin-logout" type="button" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition">Logout</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 space-y-8">
+        <div id="admin-alert" class="hidden"></div>
+
+        <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+            <article class="bg-white rounded-xl shadow p-6">
+                <p class="text-sm text-slate-500">Total Orders</p>
+                <p id="admin-total-orders" class="text-3xl font-semibold mt-2">0</p>
+            </article>
+            <article class="bg-white rounded-xl shadow p-6">
+                <p class="text-sm text-slate-500">Pending Orders</p>
+                <p id="admin-pending-orders" class="text-3xl font-semibold mt-2">0</p>
+            </article>
+            <article class="bg-white rounded-xl shadow p-6">
+                <p class="text-sm text-slate-500">Total Revenue</p>
+                <p id="admin-total-revenue" class="text-3xl font-semibold mt-2">R0.00</p>
+            </article>
+            <article class="bg-white rounded-xl shadow p-6">
+                <p class="text-sm text-slate-500">Registered Customers</p>
+                <p id="admin-total-customers" class="text-3xl font-semibold mt-2">0</p>
+            </article>
+        </section>
+
+        <section class="bg-white rounded-xl shadow">
+            <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 px-6 py-5 border-b border-slate-200">
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-900">Orders</h2>
+                    <p class="text-sm text-slate-500">Track, update, and export the latest purchases</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <select id="admin-status-filter" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">All statuses</option>
+                        <option value="awaiting payment">Awaiting payment</option>
+                        <option value="order placed">Order placed</option>
+                        <option value="out for delivery">Out for delivery</option>
+                        <option value="arriving soon">Estimated arrival</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                    <button id="admin-refresh" class="px-4 py-2 text-sm font-medium border border-slate-200 rounded hover:bg-slate-50 transition">
+                        <i class="fas fa-rotate-right mr-2"></i>Refresh
+                    </button>
+                    <button id="admin-export" class="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+                        <i class="fas fa-file-export mr-2"></i>Export CSV
+                    </button>
+                    <button id="admin-export-pdf" class="px-4 py-2 text-sm font-medium bg-emerald-600 text-white rounded hover:bg-emerald-700 transition">
+                        <i class="fas fa-file-pdf mr-2"></i>Export PDF
+                    </button>
+                </div>
+            </header>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-50 text-left uppercase text-xs text-slate-500">
+                        <tr>
+                            <th class="px-4 py-3">Order</th>
+                            <th class="px-4 py-3">Date</th>
+                            <th class="px-4 py-3">Customer</th>
+                            <th class="px-4 py-3">Total</th>
+                            <th class="px-4 py-3">Status</th>
+                            <th class="px-4 py-3">Payment</th>
+                            <th class="px-4 py-3">Items</th>
+                            <th class="px-4 py-3">Customer updates</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-orders-body">
+                        <tr>
+                            <td colspan="8" class="px-4 py-6 text-center text-slate-500">Loading orders...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-xl shadow">
+            <header class="px-6 py-5 border-b border-slate-200">
+                <h2 class="text-lg font-semibold text-slate-900">Top Customers</h2>
+                <p class="text-sm text-slate-500">Highest value shoppers across the storefront</p>
+            </header>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-50 text-left uppercase text-xs text-slate-500">
+                        <tr>
+                            <th class="px-4 py-3">Customer</th>
+                            <th class="px-4 py-3">Email</th>
+                            <th class="px-4 py-3">Orders</th>
+                            <th class="px-4 py-3">Revenue</th>
+                            <th class="px-4 py-3">Last Order</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-customers-body">
+                        <tr>
+                            <td colspan="5" class="px-4 py-6 text-center text-slate-500">Loading customers...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+<!-- Footer Section -->
+    <footer class="footer bg-gray-800 text-white py-8 mt-12">
+        <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="footer-col">
+                <h3 class="footer-heading">Disciplined Disciples</h3>
+                <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
+                <div class="social-links">
+                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="social-link"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Quick Links</h3>
+                <ul>
+                    <li><a href="index.html" class="footer-link">Home</a></li>
+                    <li><a href="shop.html" class="footer-link">Shop</a></li>
+                    <li><a href="blog.html" class="footer-link">Blog</a></li>
+                    <li><a href="contact.html" class="footer-link">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Support</h3>
+                <ul>
+                    <li><a href="faq.html" class="footer-link">FAQs</a></li>
+                    <li><a href="shipping-returns.html" class="footer-link">Shipping & Returns</a></li>
+                    <li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li>
+                    <li><a href="terms-of-service.html" class="footer-link">Terms of Service</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading text-lg font-semibold mb-4">Contact Us</h3>
+                <p class="footer-text text-gray-300 text-sm mb-2">Email: nomaqhizazolile@gmail.com</p>
+                <p class="footer-text text-gray-300 text-sm mb-2">Phone: +27 69 206 0618</p>
+                <p class="footer-text text-gray-300 text-sm">Johannesburg, South Africa</p>
+            </div>
+        </div>
+        <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
+            <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
+            <p>Built by Zande Technologies (Pty) Ltd</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.AdminApp) {
+                window.AdminApp.init();
+            }
+        });
+    </script>
+</body>
+</html>

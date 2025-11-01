@@ -25,7 +25,7 @@
     <header class="header bg-white shadow">
         <div class="container flex justify-between items-center py-4">
             <a href="index.html" class="logo flex items-center">
-                <img src="Assets/logo.jpg" alt="Disciplined Disciples Logo" style="height:40px; width:auto; margin-right:10px;">
+                <img src="Assets/logo.jpg" alt="Disciplined Disciples Logo" style="height:40px; width:auto; margin-right:10px;" data-brand-logo>
                 <span class="font-bold text-xl">Disciplined Disciples</span>
             </a>
             <nav class="nav-menu">
@@ -95,27 +95,32 @@
         </div>
     </div>
 
-    <main class="container mx-auto px-4 py-10">
+    <main class="container mx-auto px-4 py-10 space-y-8">
         <div id="profile-alert" class="hidden mb-6 p-4 rounded border"></div>
 
-        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <article class="lg:col-span-2 bg-white rounded-xl shadow p-6">
-                <h2 class="text-lg font-semibold mb-4">Account Overview</h2>
-                <div class="space-y-2">
-                    <p class="text-2xl font-bold" id="customer-name">Loading...</p>
-                    <p class="text-sm text-gray-500" id="customer-email"></p>
-                    <p class="text-sm text-gray-500" id="customer-joined"></p>
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <h2 class="text-lg font-semibold">Account Overview</h2>
+                        <div class="mt-3 space-y-1">
+                            <p class="text-2xl font-bold" id="customer-name">Loading...</p>
+                            <p class="text-sm text-gray-500" id="customer-email"></p>
+                            <p class="text-sm text-gray-500" id="customer-joined"></p>
+                        </div>
+                    </div>
                 </div>
-                <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="bg-blue-50 rounded-lg p-4">
+
+                <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div class="rounded-lg bg-blue-50 p-4">
                         <p class="text-sm text-gray-500">Total Orders</p>
                         <p class="text-2xl font-semibold" id="stat-total-orders">0</p>
                     </div>
-                    <div class="bg-green-50 rounded-lg p-4">
+                    <div class="rounded-lg bg-green-50 p-4">
                         <p class="text-sm text-gray-500">Lifetime Spend</p>
                         <p class="text-2xl font-semibold" id="stat-total-spend">R0.00</p>
                     </div>
-                    <div class="bg-yellow-50 rounded-lg p-4">
+                    <div class="rounded-lg bg-yellow-50 p-4">
                         <p class="text-sm text-gray-500">Pending Orders</p>
                         <p class="text-2xl font-semibold" id="stat-pending-orders">0</p>
                     </div>
@@ -124,39 +129,60 @@
 
             <article class="bg-white rounded-xl shadow p-6">
                 <h2 class="text-lg font-semibold mb-4">Delivery Address</h2>
-                <form id="address-form" class="space-y-3">
+                <form id="address-form" class="space-y-4">
                     <div>
                         <label for="address-line1" class="text-sm text-gray-600">Address Line 1</label>
-                        <input id="address-line1" type="text" class="mt-1 w-full border rounded px-3 py-2" placeholder="Street address">
+                        <input id="address-line1" type="text" class="mt-1 w-full rounded border px-3 py-2" placeholder="Street address">
                     </div>
                     <div>
                         <label for="address-line2" class="text-sm text-gray-600">Address Line 2</label>
-                        <input id="address-line2" type="text" class="mt-1 w-full border rounded px-3 py-2" placeholder="Apartment, suite, etc.">
+                        <input id="address-line2" type="text" class="mt-1 w-full rounded border px-3 py-2" placeholder="Apartment, suite, etc.">
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <label for="address-city" class="text-sm text-gray-600">City</label>
-                            <input id="address-city" type="text" class="mt-1 w-full border rounded px-3 py-2">
+                            <input id="address-city" type="text" class="mt-1 w-full rounded border px-3 py-2" placeholder="City">
                         </div>
                         <div>
                             <label for="address-province" class="text-sm text-gray-600">Province</label>
-                            <input id="address-province" type="text" class="mt-1 w-full border rounded px-3 py-2">
+                            <input id="address-province" type="text" class="mt-1 w-full rounded border px-3 py-2" placeholder="Province">
                         </div>
-                        <div>
-                            <label for="address-city" class="block text-gray-700">City</label>
-                            <input type="text" id="address-city" class="form-input w-full" placeholder="City">
-                        </div>
-                        <div>
-                            <label for="address-province" class="block text-gray-700">Province</label>
-                            <input type="text" id="address-province" class="form-input w-full" placeholder="Province">
-                        </div>
-                        <div>
-                            <label for="address-postal" class="block text-gray-700">Postal Code</label>
-                            <input type="text" id="address-postal" class="form-input w-full" placeholder="Postal Code">
-                        </div>
-                        <button type="submit" class="btn btn-primary w-full">Save Address</button>
-                        <div id="address-update-message" class="text-green-600 mt-2"></div>
-                    </form>
+                    </div>
+                    <div>
+                        <label for="address-postal" class="text-sm text-gray-600">Postal Code</label>
+                        <input id="address-postal" type="text" class="mt-1 w-full rounded border px-3 py-2" placeholder="Postal Code">
+                    </div>
+                    <button type="submit" class="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">Save Address</button>
+                    <p id="address-update-message" class="text-sm text-green-600"></p>
+                </form>
+            </article>
+        </section>
+
+        <section id="orders" class="bg-white rounded-xl shadow">
+            <header class="flex flex-col gap-4 px-6 py-5 border-b border-gray-200 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Order History</h2>
+                    <p id="orders-subtitle" class="text-sm text-gray-500">Showing 0 orders (All orders)</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <select id="order-filter" class="rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">All orders</option>
+                        <option value="pending">Pending</option>
+                        <option value="awaiting payment">Awaiting payment</option>
+                        <option value="order placed">Order placed</option>
+                        <option value="out for delivery">Out for delivery</option>
+                        <option value="arriving">Arriving soon</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                    <button id="download-orders" type="button" class="inline-flex items-center gap-2 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-700">
+                        <i class="fas fa-download"></i>
+                        Download CSV
+                    </button>
+                    <button id="download-orders-pdf" type="button" class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">
+                        <i class="fas fa-file-pdf"></i>
+                        Download PDF
+                    </button>
                 </div>
             </header>
             <div class="overflow-x-auto">
@@ -223,6 +249,7 @@
         </div>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="script.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {

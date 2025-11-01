@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Account - Disciplined Disciples</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- 🚨 SIMPLE AUTH CHECK - RUNS IMMEDIATELY -->
+    <script>
+        // Instant auth check using localStorage
+        (function() {
+            const userKey = 'firebase:authUser:AIzaSyBVpuDI_YJI7mxtT6-igSL7ZX3s-cqMRnc:[DEFAULT]';
+            const user = localStorage.getItem(userKey);
+            
+            if (!user) {
+                console.log('🚫 No user found - redirecting to login');
+                window.location.replace('login-signup.html');
+                throw new Error('Redirecting to login');
+            }
+            
+            console.log('✅ User found - allowing page to load');
+        })();
+    </script>
+    
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="profile-avatar-fix.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/jpeg" href="Assets/logo.jpg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        .profile-tab {
+            color: #6b7280;
+            background-color: transparent;
+        }
+        .profile-tab:hover {
+            color: #374151;
+            background-color: #f3f4f6;
+        }
+        .profile-tab.active {
+            color: #2563eb;
+            background-color: #dbeafe;
+        }
+        .tab-content {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .order-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-pending { background-color: #fef3c7; color: #92400e; }
+        .status-processing { background-color: #dbeafe; color: #1e40af; }
+        .status-shipped { background-color: #d1fae5; color: #065f46; }
+        .status-delivered { background-color: #dcfce7; color: #166534; }
+        .status-cancelled { background-color: #fee2e2; color: #991b1b; }
+        
+        .invoice-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .invoice-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .track-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .track-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="header bg-white shadow">
+        <div class="container flex justify-between items-center py-4">
+            <a href="index.html" class="logo flex items-center">
+                <img src="Assets/logo.jpg" alt="Disciplined Disciples Logo" style="height:40px; width:auto; margin-right:10px;">
+                <span class="font-bold text-xl">Disciplined Disciples</span>
+            </a>
+            <nav class="nav-menu">
+                <ul class="flex space-x-6">
+                    <li><a href="index.html" class="nav-link">Home</a></li>
+                    <li><a href="shop.html" class="nav-link">Shop</a></li>
+                    <li><a href="blog.html" class="nav-link">Blog</a></li>
+                    <li><a href="contact.html" class="nav-link">Contact</a></li>
+                    <li><a href="cart.html" class="nav-link"><i class="fas fa-shopping-cart"></i></a></li>
+                </ul>
+                <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
+                <!-- Standardized Profile Dropdown -->
+                <div id="profile-ribbon" class="relative" style="display: none;">
+                    <div class="flex items-center space-x-2 cursor-pointer select-none hover:bg-gray-50 rounded-lg px-2 py-1 transition-colors">
+                        <span id="profile-ribbon-name" class="font-semibold text-gray-700 text-sm"></span>
+                        <div id="profile-ribbon-avatar" class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-200 text-gray-700 font-bold text-xs border-2 border-gray-300 overflow-hidden"></div>
+                        <i class="fas fa-chevron-down text-gray-500 text-xs"></i>
+                    </div>
+                </div>
+                <!-- Profile Dropdown - ultra compact size, positioned in body top-right -->
+                <div id="profile-dropdown" class="fixed right-2 bg-white border border-gray-200 rounded shadow-sm min-w-[100px] z-[9999] overflow-hidden hidden" style="top: 55px;">
+                        <div class="py-0">
+                            <a href="profile.html" class="flex items-center px-1 py-0.5 text-xs text-gray-700 hover:bg-gray-50 transition-colors">
+                                <i class="fas fa-user mr-1 text-gray-400" style="font-size: 7px;"></i>
+                                Profile
+                            </a>
+                            <a href="profile.html#orders" class="flex items-center px-1 py-0.5 text-xs text-gray-700 hover:bg-gray-50 transition-colors">
+                                <i class="fas fa-shopping-bag mr-1 text-gray-400" style="font-size: 7px;"></i>
+                                Orders
+                            </a>
+                            <a href="profile.html#account" class="flex items-center px-1 py-0.5 text-xs text-gray-700 hover:bg-gray-50 transition-colors">
+                                <i class="fas fa-cog mr-1 text-gray-400" style="font-size: 7px;"></i>
+                                Settings
+                            </a>
+                            <div class="border-t border-gray-100 my-0.5"></div>
+                            <button id="dropdown-logout-btn" class="flex items-center w-full px-1 py-0.5 text-xs text-red-600 hover:bg-red-50 transition-colors">
+                                <i class="fas fa-sign-out-alt mr-1 text-red-500" style="font-size: 7px;"></i>
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg p-8 text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p class="text-gray-600">Loading your profile...</p>
+        </div>
+    </div>
+
+    <main class="bg-gray-50 min-h-screen py-8">
+        <!-- Profile Header -->
+        <div class="container mx-auto px-4 mb-8">
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-gray-900 to-gray-700 px-8 py-12">
+                    <div class="flex flex-col md:flex-row items-center md:items-end space-y-4 md:space-y-0 md:space-x-8">
+                        <div id="dashboard-avatar" class="w-32 h-32 rounded-full bg-white flex items-center justify-center text-gray-800 font-bold text-4xl shadow-lg overflow-hidden border-4 border-white"></div>
+                        <div class="text-center md:text-left text-white">
+                            <h1 class="text-3xl font-bold mb-2" id="dashboard-name">Loading...</h1>
+                            <p class="text-gray-300 mb-2" id="dashboard-email">Loading...</p>
+                            <p class="text-gray-400 text-sm" id="dashboard-member-since">Member since Loading...</p>
+                            <div class="flex flex-wrap justify-center md:justify-start gap-3 mt-4">
+                                <button id="edit-profile-btn" class="px-4 py-2 bg-white text-gray-800 rounded-lg font-medium hover:bg-gray-100 transition-colors">
+                                    <i class="fas fa-edit mr-2"></i>Edit Profile
+                                </button>
+                                <button id="edit-address-btn" class="px-4 py-2 bg-transparent border border-white text-white rounded-lg font-medium hover:bg-white hover:text-gray-800 transition-colors">
+                                    <i class="fas fa-map-marker-alt mr-2"></i>Update Address
+                                </button>
+                            </div>
+                        </div>
+                        <div class="ml-auto hidden md:block">
+                            <button id="logout-btn" class="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="container mx-auto px-4 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-2">
+                <nav class="flex space-x-1">
+                    <button class="profile-tab active px-6 py-3 rounded-lg font-medium transition-colors" data-tab="overview">
+                        <i class="fas fa-chart-line mr-2"></i>Overview
+                    </button>
+                    <button class="profile-tab px-6 py-3 rounded-lg font-medium transition-colors" data-tab="orders">
+                        <i class="fas fa-shopping-bag mr-2"></i>Orders
+                    </button>
+                    <button class="profile-tab px-6 py-3 rounded-lg font-medium transition-colors" data-tab="account">
+                        <i class="fas fa-user-cog mr-2"></i>Account
+                    </button>
+                    <button class="profile-tab px-6 py-3 rounded-lg font-medium transition-colors" data-tab="support">
+                        <i class="fas fa-headset mr-2"></i>Support
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="container mx-auto px-4">
+            <!-- Overview Tab -->
+            <div id="overview-tab" class="tab-content">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- Stats Cards -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm font-medium">Total Orders</p>
+                                <p class="text-2xl font-bold text-gray-900" id="total-orders">0</p>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-shopping-cart text-blue-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm font-medium">Total Spent</p>
+                                <p class="text-2xl font-bold text-gray-900" id="total-spent">R0.00</p>
+                            </div>
+                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-rand-sign text-green-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm font-medium">Pending Orders</p>
+                                <p class="text-2xl font-bold text-gray-900" id="pending-orders">0</p>
+                            </div>
+                            <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm font-medium">Rewards Points</p>
+                                <p class="text-2xl font-bold text-gray-900" id="rewards-points">0</p>
+                            </div>
+                            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-star text-purple-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Orders & Quick Actions -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2">
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-xl font-bold text-gray-900">Recent Orders</h3>
+                                <button class="text-blue-600 hover:text-blue-700 font-medium" onclick="showTab('orders')">View All</button>
+                            </div>
+                            <div id="recent-orders-list" class="space-y-4">
+                                <!-- Recent orders will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                            <h3 class="text-xl font-bold text-gray-900 mb-4">Quick Actions</h3>
+                            <div class="space-y-3">
+                                <button class="w-full text-left px-4 py-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                                    <i class="fas fa-redo mr-3 text-gray-600"></i>Reorder Items
+                                </button>
+                                <button class="w-full text-left px-4 py-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                                    <i class="fas fa-truck mr-3 text-gray-600"></i>Track Delivery
+                                </button>
+                                <button class="w-full text-left px-4 py-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                                    <i class="fas fa-file-invoice mr-3 text-gray-600"></i>Download Invoice
+                                </button>
+                                <button class="w-full text-left px-4 py-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                                    <i class="fas fa-headset mr-3 text-gray-600"></i>Contact Support
+                                </button>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <h3 class="text-lg font-bold text-gray-900 mb-4">Delivery Address</h3>
+                            <div id="dashboard-address" class="text-gray-600 text-sm leading-relaxed mb-4">
+                                <!-- Address will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Tab -->
+            <div id="orders-tab" class="tab-content hidden">
+                <div class="bg-white rounded-xl shadow-lg">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                            <h3 class="text-xl font-bold text-gray-900 mb-4 md:mb-0">Order History</h3>
+                            <div class="flex space-x-3">
+                                <select id="order-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="all">All Orders</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="processing">Processing</option>
+                                    <option value="shipped">Shipped</option>
+                                    <option value="delivered">Delivered</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                                <button id="download-orders" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                    <i class="fas fa-download mr-2"></i>Export
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="orders-list" class="divide-y divide-gray-200">
+                        <!-- Orders will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Tab -->
+            <div id="account-tab" class="tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-6">Personal Information</h3>
+                        <div id="account-info" class="space-y-4">
+                            <!-- Account info will be populated here -->
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-6">Settings</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                <div>
+                                    <h4 class="font-medium text-gray-900">Email Notifications</h4>
+                                    <p class="text-sm text-gray-600">Receive order updates via email</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="email-notifications" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                <div>
+                                    <h4 class="font-medium text-gray-900">SMS Notifications</h4>
+                                    <p class="text-sm text-gray-600">Receive delivery updates via SMS</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="sms-notifications" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Support Tab -->
+            <div id="support-tab" class="tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-6">Contact Support</h3>
+                        <form id="support-form" class="space-y-4">
+                            <div>
+                                <label for="support-subject" class="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                                <select id="support-subject" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="">Select a topic</option>
+                                    <option value="order-inquiry">Order Inquiry</option>
+                                    <option value="delivery-issue">Delivery Issue</option>
+                                    <option value="product-question">Product Question</option>
+                                    <option value="return-exchange">Return/Exchange</option>
+                                    <option value="payment-issue">Payment Issue</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="support-message" class="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                                <textarea id="support-message" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Describe your issue..."></textarea>
+                            </div>
+                            <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-paper-plane mr-2"></i>Send Message
+                            </button>
+                        </form>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-6">Support History</h3>
+                        <div id="support-history" class="space-y-4">
+                            <!-- Support tickets will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+            <!-- Profile Edit Modal -->
+            <div id="profile-modal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+                <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-md relative">
+                    <button id="close-profile-modal" class="absolute top-2 right-2 text-gray-500 hover:text-gray-800">&times;</button>
+                    <h3 class="text-xl font-semibold mb-4">Edit Profile</h3>
+                    <form id="profile-form" class="space-y-4">
+                        <div>
+                            <label for="profile-name" class="block text-gray-700">Name</label>
+                            <input type="text" id="profile-name" class="form-input w-full" placeholder="Your name">
+                        </div>
+                        <div>
+                            <label for="profile-phone" class="block text-gray-700">Phone</label>
+                            <input type="text" id="profile-phone" class="form-input w-full" placeholder="Phone number">
+                        </div>
+                        <div>
+                            <label for="profile-avatar-upload" class="block text-gray-700">Profile Picture</label>
+                            <input type="file" id="profile-avatar-upload" accept="image/*" class="form-input w-full">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-full">Save Changes</button>
+                        <div id="profile-update-message" class="text-green-600 mt-2"></div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Address Edit Modal -->
+            <div id="address-modal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+                <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-md relative">
+                    <button id="close-address-modal" class="absolute top-2 right-2 text-gray-500 hover:text-gray-800">&times;</button>
+                    <h3 class="text-xl font-semibold mb-4">Edit Address</h3>
+                    <form id="address-form" class="space-y-4">
+                        <div>
+                            <label for="address-line1" class="block text-gray-700">Address Line 1</label>
+                            <input type="text" id="address-line1" class="form-input w-full" placeholder="Street address">
+                        </div>
+                        <div>
+                            <label for="address-line2" class="block text-gray-700">Address Line 2</label>
+                            <input type="text" id="address-line2" class="form-input w-full" placeholder="Apartment, suite, etc.">
+                        </div>
+                        <div>
+                            <label for="address-city" class="block text-gray-700">City</label>
+                            <input type="text" id="address-city" class="form-input w-full" placeholder="City">
+                        </div>
+                        <div>
+                            <label for="address-province" class="block text-gray-700">Province</label>
+                            <input type="text" id="address-province" class="form-input w-full" placeholder="Province">
+                        </div>
+                        <div>
+                            <label for="address-postal" class="block text-gray-700">Postal Code</label>
+                            <input type="text" id="address-postal" class="form-input w-full" placeholder="Postal Code">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-full">Save Address</button>
+                        <div id="address-update-message" class="text-green-600 mt-2"></div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="footer bg-gray-800 text-white py-8 mt-12">
+        <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="footer-col">
+                <h3 class="footer-heading">Disciplined Disciples</h3>
+                <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
+                <div class="social-links">
+                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="social-link"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Quick Links</h3>
+                <ul>
+                    <li><a href="index.html" class="footer-link">Home</a></li>
+                    <li><a href="shop.html" class="footer-link">Shop</a></li>
+                    <li><a href="blog.html" class="footer-link">Blog</a></li>
+                    <li><a href="contact.html" class="footer-link">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Support</h3>
+                <ul>
+                    <li><a href="faq.html" class="footer-link">FAQs</a></li>
+                    <li><a href="shipping-returns.html" class="footer-link">Shipping & Returns</a></li>
+                    <li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li>
+                    <li><a href="terms-of-service.html" class="footer-link">Terms of Service</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading text-lg font-semibold mb-4">Contact Us</h3>
+                <p class="footer-text text-gray-300 text-sm mb-2">Email: nomaqhizazolile@gmail.com</p>
+                <p class="footer-text text-gray-300 text-sm mb-2">Phone: +27 69 206 0618</p>
+                <p class="footer-text text-gray-300 text-sm">Johannesburg, South Africa</p>
+            </div>
+        </div>
+        <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
+            <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
+            <p>Built by Zande Technologies (Pty) Ltd</p>
+        </div>
+    </footer>
+
+    <!-- ✅ SIMPLE PROFILE INITIALIZATION - ALL LOGIC IN SCRIPT.JS -->
+    <script>
+        
+        function initializeProfilePage() {
+            if (profileInitialized) {
+                console.log('Profile already initialized, skipping');
+                return;
+            }
+            
+            console.log('Initializing profile page...');
+            profileInitialized = true;
+            
+            const currentUser = firebase.auth().currentUser;
+            if (currentUser) {
+                window.currentUserId = currentUser.uid;
+                console.log('Initializing profile for user:', currentUser.uid);
+                
+                // Store user session info for better persistence
+                sessionStorage.setItem('userLoggedIn', 'true');
+                sessionStorage.setItem('userId', currentUser.uid);
+                
+                initializeProfile();
+                
+                // Hide loading overlay
+                const loadingOverlay = document.getElementById('loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'none';
+                }
+            } else {
+                console.error('No user found during profile initialization, redirecting to login');
+                profileInitialized = false; // Reset flag
+                sessionStorage.clear(); // Clear any stale session data
+                window.location.href = 'login-signup.html?redirect=profile.html';
+            }
+        }
+        
+        // SIMPLE PROFILE LOADING - AUTH ALREADY VERIFIED AT TOP OF PAGE
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Profile page starting (user already verified)...');
+            
+            // Initialize ProfileManager
+            try {
+                profileManager = new ProfileManager();
+                console.log('ProfileManager created');
+            } catch (error) {
+                console.error('ProfileManager error:', error);
+            }
+            
+            // Handle URL fragments for direct navigation (like profile.html#orders)
+            function handleURLFragment() {
+                const hash = window.location.hash.substring(1); // Remove the #
+                console.log('URL fragment:', hash);
+                
+                if (hash && ['overview', 'orders', 'account', 'support'].includes(hash)) {
+                    // Show the requested tab immediately
+                    setTimeout(() => {
+                        console.log('Showing tab:', hash);
+                        const tab = document.querySelector(`[data-tab="${hash}"]`);
+                        if (tab) {
+                            tab.click();
+                        } else {
+                            console.log('Tab not found, trying global showTab function');
+                            if (typeof showTab === 'function') {
+                                showTab(hash);
+                            }
+                        }
+                    }, 500); // Fast tab switching
+                }
+            }
+            
+            // Simple Firebase auth setup (user already verified at page top)
+            if (typeof firebase !== 'undefined' && firebase.auth) {
+                firebase.auth().onAuthStateChanged((user) => {
+                    if (user) {
+                        console.log('✅ Firebase user confirmed:', user.email);
+                        window.currentUserId = user.uid;
+                        
+                        if (!profileInitialized) {
+                            console.log('Initializing profile...');
+                            initializeProfilePage();
+                            
+                            // Handle URL fragment after profile loads
+                            setTimeout(handleURLFragment, 300);
+                        }
+                    }
+                    // Note: No else clause needed since user already verified at top
+                });
+            }
+            
+            // Also handle fragment changes (if user navigates with back/forward)
+            window.addEventListener('hashchange', handleURLFragment);
+        });
+        
+        function initializeProfile() {
+            console.log('Initializing profile for user:', window.currentUserId);
+            
+            // Ensure currentUserId is set if auth.currentUser exists
+            if (!window.currentUserId && window.auth?.currentUser) {
+                window.currentUserId = window.auth.currentUser.uid;
+            }
+            
+            console.log('Profile page loaded for user:', window.currentUserId);
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const paymentStatus = urlParams.get('payment');
+            
+            if (paymentStatus === 'success') {
+                window.showMessage('Payment successful! Your order has been confirmed.', 'success');
+                handlePaymentSuccess();
+                // Clean up URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else if (paymentStatus === 'cancelled') {
+                window.showMessage('Payment was cancelled. Your order is still pending.', 'error');
+                // Clean up URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            
+            // Load and display order history
+            loadOrderHistory();
+            
+            // Initialize basic profile display immediately
+            console.log('Setting up basic profile display...');
+            setupBasicProfileDisplay();
+            
+            // Initialize the ProfileManager class to load user profile data
+            console.log('Checking ProfileManager availability...');
+            if (typeof profileManager !== 'undefined' && profileManager) {
+                console.log('ProfileManager found, initializing...');
+                try {
+                    profileManager.init(); // Remove await since we're not in async function
+                } catch (error) {
+                    console.error('Error initializing ProfileManager:', error);
+                }
+            } else {
+                console.log('ProfileManager not available yet, waiting...');
+                // Wait for ProfileManager to be ready
+                setTimeout(async () => {
+                    if (typeof profileManager !== 'undefined' && profileManager) {
+                        console.log('ProfileManager now available, initializing...');
+                        try {
+                            await profileManager.init();
+                        } catch (error) {
+                            console.error('Error initializing ProfileManager (delayed):', error);
+                        }
+                    } else {
+                        console.error('ProfileManager still not available after delay');
+                    }
+                }, 1000);
+            }
+        }
+        
+        // Simple profile display function for immediate feedback
+        function setupBasicProfileDisplay() {
+            console.log('Setting up basic profile display');
+            const currentUser = firebase.auth().currentUser;
+            
+            if (currentUser) {
+                // Update basic profile information immediately
+                const nameElement = document.getElementById('dashboard-name');
+                const emailElement = document.getElementById('dashboard-email');
+                const avatarElement = document.getElementById('dashboard-avatar');
+                const memberSinceElement = document.getElementById('dashboard-member-since');
+                
+                if (nameElement) {
+                    nameElement.textContent = currentUser.displayName || currentUser.email.split('@')[0] || 'User';
+                }
+                if (emailElement) {
+                    emailElement.textContent = currentUser.email || 'No email';
+                }
+                if (avatarElement) {
+                    const displayName = currentUser.displayName || currentUser.email;
+                    const initials = displayName
+                        ? displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                        : 'U';
+                    avatarElement.textContent = initials;
+                }
+                if (memberSinceElement) {
+                    const creationTime = currentUser.metadata?.creationTime;
+                    if (creationTime) {
+                        const memberDate = new Date(creationTime);
+                        memberSinceElement.textContent = `Member since ${memberDate.toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' })}`;
+                    } else {
+                        memberSinceElement.textContent = 'Member since 2025';
+                    }
+                }
+                
+                console.log('Basic profile display updated');
+            } else {
+                console.error('No current user for basic profile display');
+            }
+        }
+        
+        
+        async function handlePaymentSuccess() {
+            const pendingOrderId = localStorage.getItem('pendingOrderId');
+            if (pendingOrderId && window.currentUserId) {
+                try {
+                    // Update order status to paid
+                    const ordersRef = window.db.collection("artifacts").doc("default-app-id").collection("orders");
+                    const querySnapshot = await ordersRef.where("orderId", "==", pendingOrderId).get();
+                    
+                    if (!querySnapshot.empty) {
+                        const orderDoc = querySnapshot.docs[0];
+                        await orderDoc.ref.update({
+                            status: "Processing",
+                            paymentStatus: "Paid",
+                            paymentDate: window.serverTimestamp(),
+                            estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
+                        });
+                        
+                        // Send confirmation email (mock - in real app, this would be server-side)
+                        await sendOrderConfirmationEmail(orderDoc.data());
+                        
+                        localStorage.removeItem('pendingOrderId');
+                    }
+                } catch (error) {
+                    console.error('Error updating order status:', error);
+                }
+            }
+        }
+        
+        async function loadOrderHistory() {
+            console.log('Loading order history for user:', window.currentUserId);
+            if (!window.currentUserId) {
+                console.log('No current user ID, cannot load orders');
+                return;
+            }
+            
+            if (!window.db) {
+                console.error('Firebase DB not initialized');
+                return;
+            }
+            
+            try {
+                const ordersRef = window.db.collection("artifacts").doc("default-app-id").collection("orders");
+                const querySnapshot = await ordersRef
+                    .where("userId", "==", window.currentUserId)
+                    .orderBy("orderDate", "desc")
+                    .get();
+                
+                const ordersList = document.getElementById('orders-list');
+                ordersList.innerHTML = '';
+                
+                if (querySnapshot.empty) {
+                    ordersList.innerHTML = '<p class="text-gray-500">No orders found.</p>';
+                    return;
+                }
+                
+                querySnapshot.forEach(doc => {
+                    const order = doc.data();
+                    const orderElement = createOrderElement(order);
+                    ordersList.appendChild(orderElement);
+                });
+            } catch (error) {
+                console.error('Error loading order history:', error);
+                document.getElementById('orders-list').innerHTML = '<p class="text-red-500">Error loading order history.</p>';
+            }
+        }
+        
+        function createOrderElement(order) {
+            const orderDiv = document.createElement('div');
+            orderDiv.className = 'border rounded-lg p-4 bg-white shadow-sm';
+            
+            const orderDate = order.orderDate?.toDate ? order.orderDate.toDate().toLocaleDateString() : 'N/A';
+            const statusColor = getStatusColor(order.status);
+            const paymentStatusColor = getStatusColor(order.paymentStatus);
+            
+            orderDiv.innerHTML = `
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <h4 class="font-semibold text-lg">Order #${order.orderId}</h4>
+                        <p class="text-gray-600 text-sm">Placed on ${orderDate}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-lg">R ${order.totalAmount?.toFixed(2) || '0.00'}</p>
+                        <span class="inline-block px-2 py-1 rounded text-xs font-medium ${statusColor}">${order.status || 'Unknown'}</span>
+                        <span class="inline-block px-2 py-1 rounded text-xs font-medium ${paymentStatusColor} ml-1">${order.paymentStatus || 'Unknown'}</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <h5 class="font-medium mb-2">Items:</h5>
+                    <ul class="space-y-1">
+                        ${order.items?.map(item => `
+                            <li class="text-sm text-gray-700">
+                                ${item.name} - Size: ${item.selectedSize} - Qty: ${item.quantity} - R ${(item.price * item.quantity).toFixed(2)}
+                            </li>
+                        `).join('') || '<li class="text-sm text-gray-500">No items found</li>'}
+                    </ul>
+                </div>
+                <div class="text-sm text-gray-600">
+                    <p><strong>Delivery Address:</strong> ${formatAddress(order.deliveryAddress)}</p>
+                    ${order.trackingNumber ? `<p><strong>Tracking Number:</strong> ${order.trackingNumber}</p>` : ''}
+                    ${order.estimatedDelivery ? `<p><strong>Estimated Delivery:</strong> ${new Date(order.estimatedDelivery.seconds * 1000).toLocaleDateString()}</p>` : ''}
+                </div>
+                ${order.status === 'Processing' || order.status === 'Shipped' ? `
+                    <div class="mt-3 pt-3 border-t">
+                        <p class="text-sm text-green-600">
+                            <i class="fas fa-check-circle mr-1"></i>
+                            Your order is being processed. You will receive email updates.
+                        </p>
+                    </div>
+                ` : ''}
+            `;
+            
+            return orderDiv;
+        }
+        
+        function getStatusColor(status) {
+            switch (status?.toLowerCase()) {
+                case 'paid': case 'processing': return 'bg-green-100 text-green-800';
+                case 'shipped': return 'bg-blue-100 text-blue-800';
+                case 'delivered': return 'bg-purple-100 text-purple-800';
+                case 'cancelled': return 'bg-red-100 text-red-800';
+                case 'pending': case 'pending payment': return 'bg-yellow-100 text-yellow-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+        
+        function formatAddress(address) {
+            if (!address) return 'N/A';
+            return `${address.line1}, ${address.line2 ? address.line2 + ', ' : ''}${address.city}, ${address.province}, ${address.postalCode}`;
+        }
+        
+        async function sendOrderConfirmationEmail(orderData) {
+            // In a real application, this would be handled by a server-side function
+            // For now, we'll just log that an email would be sent
+            console.log('Order confirmation email would be sent for order:', orderData.orderId);
+            
+            // You would typically call a cloud function or API endpoint here
+            // that handles email sending with proper templates and order details
+            
+            // Mock email content that would be sent:
+            const emailContent = {
+                to: orderData.customerEmail,
+                subject: `Order Confirmation - Disciplined Disciples Order #${orderData.orderId}`,
+                html: generateOrderEmailTemplate(orderData)
+            };
+            
+            console.log('Email content:', emailContent);
+            return true;
+        }
+        
+        function generateOrderEmailTemplate(order) {
+            return `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #333;">Thank you for your order!</h2>
+                    <p>Hi ${order.deliveryAddress?.name || 'Valued Customer'},</p>
+                    <p>Your order #${order.orderId} has been confirmed and is being processed.</p>
+                    
+                    <div style="background: #f9f9f9; padding: 20px; margin: 20px 0;">
+                        <h3>Order Summary</h3>
+                        <p><strong>Order Total:</strong> R ${order.totalAmount?.toFixed(2)}</p>
+                        <p><strong>Order Date:</strong> ${new Date().toLocaleDateString()}</p>
+                        <p><strong>Payment Status:</strong> Paid</p>
+                    </div>
+                    
+                    <div style="margin: 20px 0;">
+                        <h3>Items Ordered</h3>
+                        ${order.items?.map(item => `
+                            <p>${item.name} - Size: ${item.selectedSize} - Qty: ${item.quantity} - R ${(item.price * item.quantity).toFixed(2)}</p>
+                        `).join('') || ''}
+                    </div>
+                    
+                    <div style="margin: 20px 0;">
+                        <h3>Delivery Address</h3>
+                        <p>${formatAddress(order.deliveryAddress)}</p>
+                    </div>
+                    
+                    <p>You will receive email updates when your order ships.</p>
+                    <p>Thank you for shopping with Disciplined Disciples!</p>
+                    
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                        <p style="font-size: 12px; color: #666;">
+                            Disciplined Disciples<br>
+                            Email: nomaqhizazolile@gmail.com<br>
+                            Phone: +27 69 206 0618
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+    
+    <!-- Enhanced Profile System Script -->
+    <script>
+        // Enhanced Profile System
+        class ProfileManager {
+            constructor() {
+                this.currentUser = null;
+                this.userProfile = null;
+                this.orders = [];
+                // Don't auto-init, wait for explicit call
+            }
+
+            async init() {
+                try {
+                    console.log('ProfileManager.init() called');
+                    console.log('window.currentUserId:', window.currentUserId);
+                    
+                    // Ensure we have the current user
+                    this.currentUser = firebase.auth().currentUser;
+                    if (!window.currentUserId && this.currentUser) {
+                        window.currentUserId = this.currentUser.uid;
+                    }
+                    
+                    if (!window.currentUserId) {
+                        console.error('No user ID available for ProfileManager');
+                        return;
+                    }
+                    
+                    console.log('Loading user profile and data...');
+                    await this.loadUserProfile();
+                    await this.loadOrders();
+                    this.setupTabNavigation();
+                    this.setupEventListeners();
+                    this.renderProfile();
+                    console.log('ProfileManager initialization complete');
+                } catch (error) {
+                    console.error('Profile initialization error:', error);
+                    // Don't redirect on ProfileManager errors, just log them
+                }
+            }
+
+            async loadUserProfile() {
+                try {
+                    console.log('Loading user profile for:', window.currentUserId);
+                    const db = firebase.firestore();
+                    const userDoc = await db.collection('artifacts').doc('default-app-id')
+                        .collection('users').doc(window.currentUserId).get();
+                    
+                    if (userDoc.exists) {
+                        this.userProfile = userDoc.data();
+                    } else {
+                        // Create default profile
+                        this.userProfile = {
+                            email: this.currentUser.email,
+                            name: this.currentUser.displayName || '',
+                            phone: '',
+                            avatarUrl: '',
+                            memberSince: new Date(),
+                            deliveryAddress: {},
+                            preferences: {
+                                emailNotifications: true,
+                                smsNotifications: true
+                            }
+                        };
+                    }
+                } catch (error) {
+                    console.error('Error loading user profile:', error);
+                }
+            }
+
+            async loadOrders() {
+                try {
+                    console.log('Loading orders for user:', window.currentUserId);
+                    const db = firebase.firestore();
+                    const ordersQuery = await db.collection('artifacts').doc('default-app-id')
+                        .collection('orders')
+                        .where('userId', '==', window.currentUserId)
+                        .orderBy('orderDate', 'desc')
+                        .get();
+                    
+                    this.orders = [];
+                    ordersQuery.forEach(doc => {
+                        this.orders.push({ id: doc.id, ...doc.data() });
+                    });
+                } catch (error) {
+                    console.error('Error loading orders:', error);
+                    this.orders = [];
+                }
+            }
+
+            renderProfile() {
+                this.renderProfileHeader();
+                this.renderOverviewTab();
+                this.renderOrdersTab();
+                this.renderAccountTab();
+            }
+
+            renderProfileHeader() {
+                const avatar = document.getElementById('dashboard-avatar');
+                const name = document.getElementById('dashboard-name');
+                const email = document.getElementById('dashboard-email');
+                const memberSince = document.getElementById('dashboard-member-since');
+
+                if (this.userProfile.avatarUrl) {
+                    avatar.innerHTML = `<img src="${this.userProfile.avatarUrl}" alt="Profile" class="w-full h-full object-cover rounded-full">`;
+                } else {
+                    const initials = this.userProfile.name 
+                        ? this.userProfile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                        : this.userProfile.email[0].toUpperCase();
+                    avatar.textContent = initials;
+                }
+
+                name.textContent = this.userProfile.name || 'User';
+                email.textContent = this.userProfile.email;
+                
+                const memberDate = this.userProfile.memberSince 
+                    ? new Date(this.userProfile.memberSince.toDate ? this.userProfile.memberSince.toDate() : this.userProfile.memberSince)
+                    : new Date();
+                memberSince.textContent = `Member since ${memberDate.toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' })}`;
+            }
+
+            renderOverviewTab() {
+                // Calculate stats
+                const totalOrders = this.orders.length;
+                const totalSpent = this.orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+                const pendingOrders = this.orders.filter(order => ['Pending Payment', 'Processing', 'Shipped'].includes(order.status)).length;
+                const rewardsPoints = Math.floor(totalSpent * 0.1); // 10% back as points
+
+                document.getElementById('total-orders').textContent = totalOrders;
+                document.getElementById('total-spent').textContent = `R${totalSpent.toFixed(2)}`;
+                document.getElementById('pending-orders').textContent = pendingOrders;
+                document.getElementById('rewards-points').textContent = rewardsPoints;
+
+                // Render recent orders
+                this.renderRecentOrders();
+                this.renderDeliveryAddress();
+            }
+
+            renderRecentOrders() {
+                const container = document.getElementById('recent-orders-list');
+                const recentOrders = this.orders.slice(0, 3);
+
+                if (recentOrders.length === 0) {
+                    container.innerHTML = '<p class="text-gray-500 text-center py-8">No orders yet. <a href="shop.html" class="text-blue-600 hover:underline">Start shopping!</a></p>';
+                    return;
+                }
+
+                container.innerHTML = recentOrders.map(order => `
+                    <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-shopping-bag text-gray-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900">Order #${order.id.substring(0, 8)}</h4>
+                                    <p class="text-sm text-gray-600">${new Date(order.orderDate.toDate()).toLocaleDateString('en-ZA')}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-medium text-gray-900">R${order.totalAmount.toFixed(2)}</p>
+                            <span class="order-status status-${order.status.toLowerCase().replace(' ', '-')}">${order.status}</span>
+                        </div>
+                        <div class="ml-4 flex space-x-2">
+                            <button class="invoice-btn" onclick="profileManager.downloadInvoice('${order.id}')">
+                                <i class="fas fa-file-pdf mr-1"></i>Invoice
+                            </button>
+                            ${order.status === 'Shipped' || order.status === 'Processing' ? 
+                                `<button class="track-btn" onclick="profileManager.trackOrder('${order.id}')">
+                                    <i class="fas fa-truck mr-1"></i>Track
+                                </button>` : ''
+                            }
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            renderOrdersTab() {
+                const container = document.getElementById('orders-list');
+                
+                if (this.orders.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-16">
+                            <i class="fas fa-shopping-bag text-gray-300 text-6xl mb-4"></i>
+                            <h3 class="text-xl font-medium text-gray-900 mb-2">No orders yet</h3>
+                            <p class="text-gray-600 mb-6">Start shopping to see your orders here</p>
+                            <a href="shop.html" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-shopping-cart mr-2"></i>Start Shopping
+                            </a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = this.orders.map(order => `
+                    <div class="p-6 hover:bg-gray-50 transition-colors">
+                        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-4 mb-4 lg:mb-0">
+                                    <div class="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-shopping-bag text-gray-600 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-medium text-gray-900">Order #${order.id.substring(0, 8)}</h4>
+                                        <p class="text-sm text-gray-600">${new Date(order.orderDate.toDate()).toLocaleDateString('en-ZA', { 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}</p>
+                                        <p class="text-sm text-gray-600">${order.items.length} item${order.items.length > 1 ? 's' : ''}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col lg:flex-row lg:items-center lg:space-x-6">
+                                <div class="text-right mb-4 lg:mb-0">
+                                    <p class="text-xl font-bold text-gray-900">R${order.totalAmount.toFixed(2)}</p>
+                                    <span class="order-status status-${order.status.toLowerCase().replace(' ', '-')}">${order.status}</span>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="invoice-btn" onclick="profileManager.downloadInvoice('${order.id}')">
+                                        <i class="fas fa-file-pdf mr-1"></i>Invoice
+                                    </button>
+                                    ${order.status === 'Shipped' || order.status === 'Processing' ? 
+                                        `<button class="track-btn" onclick="profileManager.trackOrder('${order.id}')">
+                                            <i class="fas fa-truck mr-1"></i>Track
+                                        </button>` : ''
+                                    }
+                                    <button class="px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors" onclick="profileManager.reorderItems('${order.id}')">
+                                        <i class="fas fa-redo mr-1"></i>Reorder
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 pl-20 hidden" id="order-details-${order.id}">
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <h5 class="font-medium text-gray-900 mb-3">Order Items</h5>
+                                <div class="space-y-2">
+                                    ${order.items.map(item => `
+                                        <div class="flex items-center justify-between text-sm">
+                                            <span>${item.name} (${item.size}, ${item.color}) x${item.quantity}</span>
+                                            <span>R${(item.price * item.quantity).toFixed(2)}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            renderAccountTab() {
+                const container = document.getElementById('account-info');
+                const address = this.userProfile.deliveryAddress || {};
+                
+                container.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                <p class="text-gray-900">${this.userProfile.name || 'Not provided'}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                <p class="text-gray-900">${this.userProfile.email}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                <p class="text-gray-900">${this.userProfile.phone || 'Not provided'}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Member Since</label>
+                                <p class="text-gray-900">${new Date(this.userProfile.memberSince?.toDate ? this.userProfile.memberSince.toDate() : this.userProfile.memberSince || new Date()).toLocaleDateString('en-ZA')}</p>
+                            </div>
+                        </div>
+                        <div class="pt-4 border-t border-gray-200">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Delivery Address</label>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                ${address.line1 ? `
+                                    <p class="text-gray-900">${address.line1}</p>
+                                    ${address.line2 ? `<p class="text-gray-900">${address.line2}</p>` : ''}
+                                    <p class="text-gray-900">${address.city}, ${address.province} ${address.postalCode}</p>
+                                ` : '<p class="text-gray-500">No delivery address added</p>'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderDeliveryAddress() {
+                const container = document.getElementById('dashboard-address');
+                const address = this.userProfile.deliveryAddress || {};
+                
+                if (address.line1) {
+                    container.innerHTML = `
+                        <p class="mb-1">${address.line1}</p>
+                        ${address.line2 ? `<p class="mb-1">${address.line2}</p>` : ''}
+                        <p class="mb-1">${address.city}, ${address.province}</p>
+                        <p>${address.postalCode}</p>
+                    `;
+                } else {
+                    container.innerHTML = '<p class="text-gray-500">No delivery address added</p>';
+                }
+            }
+
+            setupTabNavigation() {
+                const tabs = document.querySelectorAll('.profile-tab');
+                const contents = document.querySelectorAll('.tab-content');
+
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const targetTab = tab.dataset.tab;
+                        this.showTab(targetTab);
+                        
+                        // Update URL hash without triggering hashchange event
+                        if (targetTab !== 'overview') {
+                            history.replaceState(null, null, `#${targetTab}`);
+                        } else {
+                            history.replaceState(null, null, window.location.pathname);
+                        }
+                    });
+                });
+
+                // Handle hash changes (from dropdown navigation)
+                window.addEventListener('hashchange', () => {
+                    this.handleHashNavigation();
+                });
+
+                // Handle initial hash on page load
+                this.handleHashNavigation();
+            }
+
+            showTab(tabName) {
+                const tabs = document.querySelectorAll('.profile-tab');
+                const contents = document.querySelectorAll('.tab-content');
+                
+                // Update active tab
+                tabs.forEach(t => t.classList.remove('active'));
+                const targetTab = document.querySelector(`[data-tab="${tabName}"]`);
+                if (targetTab) {
+                    targetTab.classList.add('active');
+                }
+                
+                // Show target content
+                contents.forEach(content => {
+                    content.classList.add('hidden');
+                });
+                const targetContent = document.getElementById(`${tabName}-tab`);
+                if (targetContent) {
+                    targetContent.classList.remove('hidden');
+                }
+            }
+
+            handleHashNavigation() {
+                const hash = window.location.hash.substring(1); // Remove #
+                const validTabs = ['overview', 'orders', 'account', 'support'];
+                
+                if (hash && validTabs.includes(hash)) {
+                    this.showTab(hash);
+                } else {
+                    // Default to overview tab
+                    this.showTab('overview');
+                }
+            }
+
+            setupEventListeners() {
+                // Profile edit
+                document.getElementById('edit-profile-btn').addEventListener('click', () => {
+                    document.getElementById('profile-modal').classList.remove('hidden');
+                });
+
+                // Address edit
+                document.getElementById('edit-address-btn').addEventListener('click', () => {
+                    document.getElementById('address-modal').classList.remove('hidden');
+                });
+
+                // Support form
+                document.getElementById('support-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.submitSupportRequest();
+                });
+            }
+
+            async downloadInvoice(orderId) {
+                try {
+                    showMessage('Generating invoice...', 'info');
+                    // Here you would implement PDF generation
+                    // For now, we'll create a simple invoice
+                    const order = this.orders.find(o => o.id === orderId);
+                    if (!order) return;
+
+                    // Generate PDF invoice (simplified version)
+                    this.generateInvoicePDF(order);
+                } catch (error) {
+                    console.error('Error downloading invoice:', error);
+                    showMessage('Failed to download invoice', 'error');
+                }
+            }
+
+            generateInvoicePDF(order) {
+                // Simple invoice generation - in production you'd use a proper PDF library
+                const invoiceWindow = window.open('', '_blank');
+                const invoiceHTML = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Invoice - Order #${order.id.substring(0, 8)}</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 40px; }
+                            .header { border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+                            .company-info { float: right; text-align: right; }
+                            .invoice-details { margin: 30px 0; }
+                            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                            th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+                            th { background-color: #f5f5f5; }
+                            .total { font-weight: bold; background-color: #f9f9f9; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <h1>INVOICE</h1>
+                            <div class="company-info">
+                                <strong>Disciplined Disciples</strong><br>
+                                Johannesburg, South Africa<br>
+                                Email: nomaqhizazolile@gmail.com<br>
+                                Phone: +27 69 206 0618
+                            </div>
+                        </div>
+                        
+                        <div class="invoice-details">
+                            <p><strong>Invoice #:</strong> DD-${order.id.substring(0, 8)}</p>
+                            <p><strong>Order Date:</strong> ${new Date(order.orderDate.toDate()).toLocaleDateString('en-ZA')}</p>
+                            <p><strong>Customer:</strong> ${this.userProfile.name}</p>
+                            <p><strong>Email:</strong> ${this.userProfile.email}</p>
+                        </div>
+
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Size</th>
+                                    <th>Color</th>
+                                    <th>Quantity</th>
+                                    <th>Unit Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${order.items.map(item => `
+                                    <tr>
+                                        <td>${item.name}</td>
+                                        <td>${item.size}</td>
+                                        <td>${item.color}</td>
+                                        <td>${item.quantity}</td>
+                                        <td>R${item.price.toFixed(2)}</td>
+                                        <td>R${(item.price * item.quantity).toFixed(2)}</td>
+                                    </tr>
+                                `).join('')}
+                                <tr class="total">
+                                    <td colspan="5"><strong>Total</strong></td>
+                                    <td><strong>R${order.totalAmount.toFixed(2)}</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div style="margin-top: 30px;">
+                            <p><strong>Delivery Address:</strong></p>
+                            <p>
+                                ${order.deliveryAddress?.line1 || ''}<br>
+                                ${order.deliveryAddress?.line2 ? order.deliveryAddress.line2 + '<br>' : ''}
+                                ${order.deliveryAddress?.city || ''}, ${order.deliveryAddress?.province || ''} ${order.deliveryAddress?.postalCode || ''}
+                            </p>
+                        </div>
+
+                        <div style="margin-top: 30px; text-align: center; color: #666;">
+                            <p>Thank you for your business!</p>
+                        </div>
+                    </body>
+                    </html>
+                `;
+                
+                invoiceWindow.document.write(invoiceHTML);
+                invoiceWindow.document.close();
+                setTimeout(() => {
+                    invoiceWindow.print();
+                }, 1000);
+            }
+
+            trackOrder(orderId) {
+                // Implement order tracking
+                alert(`Order tracking for #${orderId.substring(0, 8)} - Feature coming soon!`);
+            }
+
+            reorderItems(orderId) {
+                const order = this.orders.find(o => o.id === orderId);
+                if (!order) return;
+                
+                // Add items to cart and redirect
+                order.items.forEach(item => {
+                    window.addToCart(item.productId, item.quantity, item.size, item.color);
+                });
+                
+                showMessage(`${order.items.length} items added to cart!`, 'success');
+                setTimeout(() => {
+                    window.location.href = 'cart.html';
+                }, 1500);
+            }
+
+            async submitSupportRequest() {
+                const subject = document.getElementById('support-subject').value;
+                const message = document.getElementById('support-message').value;
+                
+                if (!subject || !message) {
+                    showMessage('Please fill in all fields', 'error');
+                    return;
+                }
+
+                try {
+                    // Save support request to Firestore
+                    await window.db.collection('artifacts').doc('default-app-id')
+                        .collection('support-requests').add({
+                            userId: window.currentUserId,
+                            userEmail: this.userProfile.email,
+                            userName: this.userProfile.name,
+                            subject: subject,
+                            message: message,
+                            status: 'open',
+                            createdAt: window.serverTimestamp()
+                        });
+
+                    showMessage('Support request submitted successfully!', 'success');
+                    document.getElementById('support-form').reset();
+                } catch (error) {
+                    console.error('Error submitting support request:', error);
+                    showMessage('Failed to submit support request', 'error');
+                }
+            }
+        }
+    </script>
+
+    <!-- ✅ SIMPLE PROFILE INITIALIZATION - ALL LOGIC IN SCRIPT.JS -->
+    <script>
+        // Initialize profile when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Profile page loaded - initializing with centralized system');
+            
+            // Use centralized profile system from script.js
+            if (window.ProfileSystem) {
+                window.ProfileSystem.init();
+            } else {
+                console.log('ProfileSystem not ready, waiting...');
+                setTimeout(() => {
+                    if (window.ProfileSystem) {
+                        window.ProfileSystem.init();
+                    } else {
+                        console.error('ProfileSystem still not available');
+                    }
+                }, 1000);
+            }
+        });
+    </script>
+    
+    <script src="script.js"></script>
+</body>
+</html>

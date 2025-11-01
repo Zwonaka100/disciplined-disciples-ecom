@@ -8,6 +8,70 @@ window.serverTimestamp = null; // To store Firestore's serverTimestamp function
 
 const ADMIN_EMAILS = ['zmabege@gmail.com', 'nomaqhizazolile@gmail.com'];
 
+function isAdminEmail(candidate) {
+    if (!candidate) {
+        return false;
+    }
+
+    const normalized = String(candidate).trim().toLowerCase();
+    return ADMIN_EMAILS.some(adminEmail => adminEmail.toLowerCase() === normalized);
+}
+
+let resolveFirebaseInitialized = null;
+let firebaseInitializationPromise = new Promise(resolve => {
+    resolveFirebaseInitialized = resolve;
+});
+let firebaseInitializationResult = null;
+
+function settleFirebaseInitialization(result) {
+    firebaseInitializationResult = result;
+    if (resolveFirebaseInitialized) {
+        resolveFirebaseInitialized(result);
+        resolveFirebaseInitialized = null;
+    }
+}
+
+async function waitForFirebaseReady(timeoutMs = 10000) {
+    if (firebaseInitializationResult !== null) {
+        return firebaseInitializationResult;
+    }
+
+    if (window.auth && window.db) {
+        firebaseInitializationResult = true;
+        return true;
+    }
+
+    if (!firebaseInitializationPromise) {
+        firebaseInitializationPromise = new Promise(resolve => {
+            resolveFirebaseInitialized = resolve;
+        });
+    }
+
+    if (timeoutMs === Infinity || timeoutMs <= 0) {
+        const result = await firebaseInitializationPromise;
+        firebaseInitializationResult = typeof result === 'boolean' ? result : true;
+        return firebaseInitializationResult;
+    }
+
+    let timerId = null;
+    const timeoutPromise = new Promise(resolve => {
+        timerId = setTimeout(() => resolve(false), timeoutMs);
+    });
+
+    const result = await Promise.race([firebaseInitializationPromise, timeoutPromise]);
+    if (timerId) {
+        clearTimeout(timerId);
+    }
+
+    if (typeof result === 'boolean') {
+        firebaseInitializationResult = result;
+        return result;
+    }
+
+    firebaseInitializationResult = true;
+    return true;
+}
+
 const ORDER_STATUS_TEMPLATES = Object.freeze({
     pendingPayment: {
         key: 'pending_payment',
@@ -15,8 +79,8 @@ const ORDER_STATUS_TEMPLATES = Object.freeze({
         label: 'Awaiting payment',
         icon: '⌛',
         buttonLabel: '⌛ Awaiting payment',
-        message: '⌛ We have created your order and are waiting for your secure payment confirmation.',
-        notifyAdmin: true
+        message: 'We have received your order and are awaiting payment confirmation.',
+        statusMessage: 'Awaiting payment confirmation from your bank.'
     },
     orderPlaced: {
         key: 'order_placed',
@@ -24,8 +88,8 @@ const ORDER_STATUS_TEMPLATES = Object.freeze({
         label: 'Order placed',
         icon: '🎉',
         buttonLabel: '🎉 Order placed',
-        message: '🎉 Thank you, {{firstName}}! Your Disciplined Disciples order is officially locked in. Our team is preparing each piece with care.',
-        notifyAdmin: true
+        message: 'Your order is confirmed and is being prepared for dispatch.',
+        statusMessage: 'Your order has been confirmed and will be on its way soon.'
     },
     outForDelivery: {
         key: 'out_for_delivery',
@@ -33,155 +97,50 @@ const ORDER_STATUS_TEMPLATES = Object.freeze({
         label: 'Out for delivery',
         icon: '🚚',
         buttonLabel: '🚚 Out for delivery',
-        message: '🚚 Woohoo! Your delivery hero just left our warehouse and is headed towards {{city}}. Keep an eye out 😄',
-        notifyAdmin: false
+        message: 'Great news! Your order is on the way.',
+        statusMessage: 'Your order has left our warehouse and is heading to you.'
     },
     eta: {
-        key: 'eta_update',
+        key: 'eta',
         status: 'Arriving Soon',
-        label: 'ETA update',
-        icon: '⏰',
-        buttonLabel: '⏰ ETA update',
-        message: '⏰ Fresh update - expect your parcel around {{eta}}. We\'ll keep you posted every step of the way.',
+        label: 'Share ETA',
+        icon: '🗓️',
+        buttonLabel: '🗓️ Share ETA',
+        message: 'Your order is on track and should arrive {{eta}}.',
+        statusMessage: 'Your delivery is on track for {{eta}}.',
         requiresInput: {
             field: 'eta',
-            prompt: 'Enter the estimated arrival time (e.g. Friday 3pm or 2-3 working days):',
+            prompt: 'When should the customer expect their parcel?',
             placeholderFallback: 'soon'
-        },
-        notifyAdmin: false
+        }
     },
     delivered: {
         key: 'delivered',
         status: 'Delivered',
         label: 'Delivered',
-        icon: '📦',
-        buttonLabel: '📦 Delivered',
-        message: '📦 It\'s landed! We hope you love your new gear. Thank you for choosing Disciplined Disciples 💛',
-        notifyAdmin: true
+        icon: '🎁',
+        buttonLabel: '🎁 Mark delivered',
+        message: 'Your order has arrived. We hope you love it!',
+        statusMessage: 'Order delivered successfully.'
+    },
+    cancelled: {
+        key: 'cancelled',
+        status: 'Cancelled',
+        label: 'Cancelled',
+        icon: '⚠️',
+        buttonLabel: '⚠️ Cancel order',
+        message: 'Your order has been cancelled. Please contact support if this was unexpected.',
+        statusMessage: 'Order cancelled at your request.'
     }
 });
 
 window.ORDER_STATUS_TEMPLATES = ORDER_STATUS_TEMPLATES;
 
-function isAdminEmail(email) {
-    return ADMIN_EMAILS.includes((email || '').toLowerCase());
-}
-
-// === CENTRALIZED AUTHENTICATION SYSTEM ===
-window.AuthGuard = {
-    // Check if user is authenticated (used by protected pages)
-    checkAuth: function() {
-        // Check both sessionStorage and Firebase persistence
-        const userLoggedIn = sessionStorage.getItem('userLoggedIn');
-        const userId = sessionStorage.getItem('userId');
-        
-        // Also check Firebase auth state
-        const currentUser = firebase.auth && firebase.auth().currentUser;
-        
-        return (userLoggedIn && userId) || !!currentUser;
-    },
-    
-    // Redirect to login if not authenticated (call this in protected pages)
-    requireAuth: function() {
-        if (!this.checkAuth()) {
-            console.log('🚫 No user found - redirecting to login');
-            window.location.replace('login-signup.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.search));
-            return false;
-        }
-        console.log('✅ User authenticated');
-        return true;
-    },
-    
-    // Initialize profile page (call this in profile.html)
-    initProfilePage: function() {
-        if (!this.requireAuth()) return;
-        
-        console.log('🚀 Initializing profile page...');
-        
-        // Initialize the customer profile experience
-        if (window.ProfileApp) {
-            window.ProfileApp.init();
-        } else {
-            console.log('ProfileApp not ready, waiting...');
-            setTimeout(() => {
-                if (window.ProfileApp) {
-                    window.ProfileApp.init();
-                } else {
-                    console.error('ProfileApp still not available');
-                }
-            }, 1000);
-        }
-        
-        return true;
-    }
-};
-
-// Promise that resolves when Firebase is fully initialized and ready
-let resolveFirebaseInitialized;
-window.firebaseInitialized = new Promise(resolve => {
-    resolveFirebaseInitialized = resolve; // Capture the resolve function
-});
-
-async function waitForFirebaseReady() {
-    if (window.firebaseInitialized && typeof window.firebaseInitialized.then === 'function') {
-        try {
-            await window.firebaseInitialized;
-        } catch (error) {
-            console.warn('Firebase failed to initialize:', error);
-        }
-    }
-}
-
-function coerceToDate(value) {
-    if (!value) {
-        return null;
-    }
-    if (value instanceof Date) {
-        return Number.isNaN(value.getTime()) ? null : value;
-    }
-    if (typeof value === 'object' && typeof value.toDate === 'function') {
-        const converted = value.toDate();
-        return Number.isNaN(converted.getTime()) ? null : converted;
-    }
-    if (typeof value === 'number' || typeof value === 'string') {
-        const converted = new Date(value);
-        return Number.isNaN(converted.getTime()) ? null : converted;
-    }
-    return null;
-}
-
-function formatDate(value, options) {
-    const date = coerceToDate(value);
-    if (!date) {
-        return 'N/A';
-    }
-    return date.toLocaleDateString('en-ZA', options || {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-    });
-}
-
-function formatCurrency(value) {
-    const amount = Number(value);
-    if (Number.isFinite(amount)) {
-        return `R${amount.toFixed(2)}`;
-    }
-    return 'R0.00';
-}
-
-function quoteCsv(value) {
-    const safe = value == null ? '' : String(value);
-    if (safe.includes(',') || safe.includes('"') || safe.includes('\n')) {
-        return `"${safe.replace(/"/g, '""')}"`;
-    }
-    return safe;
-}
-
 function escapeHtml(value) {
-    if (value == null) {
+    if (value === undefined || value === null) {
         return '';
     }
+
     return String(value)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -190,79 +149,279 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
-function getOrderFirstName(order) {
-    const name = (order && (order.customerName || order.deliveryAddress?.name || order.name || '')).trim();
-    if (!name) {
-        return 'friend';
+function quoteCsv(value) {
+    const text = value === undefined || value === null ? '' : String(value);
+    const escaped = text.replace(/"/g, '""');
+    if (/[",\n\r]/.test(escaped)) {
+        return `"${escaped}"`;
     }
-    return name.split(/\s+/)[0];
+    return escaped;
 }
 
-function getOrderCity(order) {
-    return (order && (order.deliveryAddress?.city || order.customerCity || '')).trim() || 'your area';
+function coerceToDate(value) {
+    if (!value) {
+        return null;
+    }
+
+    if (value instanceof Date) {
+        return Number.isNaN(value.getTime()) ? null : value;
+    }
+
+    if (typeof value === 'object') {
+        if (typeof value.toDate === 'function') {
+            try {
+                const converted = value.toDate();
+                return Number.isNaN(converted.getTime()) ? null : converted;
+            } catch (error) {
+                console.warn('Failed to convert Firestore timestamp via toDate:', error);
+            }
+        }
+
+        if (typeof value.seconds === 'number') {
+            const millis = value.seconds * 1000 + (value.nanoseconds || value.nanosecond || 0) / 1e6;
+            const timestampDate = new Date(millis);
+            return Number.isNaN(timestampDate.getTime()) ? null : timestampDate;
+        }
+    }
+
+    if (typeof value === 'string' || typeof value === 'number') {
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    return null;
 }
 
-function interpolateStatusMessage(template, replacements) {
-    let message = template.message || '';
-    Object.entries(replacements || {}).forEach(([token, value]) => {
-        const safeValue = value || value === 0 ? String(value) : '';
-        const pattern = new RegExp(`{{${token}}}`, 'gi');
-        message = message.replace(pattern, safeValue);
+function formatCurrency(value) {
+    const amount = Number(value);
+    if (!Number.isFinite(amount)) {
+        return 'R0.00';
+    }
+    return `R${amount.toFixed(2)}`;
+}
+
+function formatDate(value, options) {
+    const date = coerceToDate(value);
+    if (!date) {
+        return 'N/A';
+    }
+
+    try {
+        return date.toLocaleDateString('en-ZA', options || {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    } catch (error) {
+        console.warn('Failed to format date:', error);
+        return date.toISOString().split('T')[0];
+    }
+}
+
+let cachedPrimaryLogoDataUrl = null;
+
+async function getPrimaryLogoDataUrl(preferredSelectors) {
+    if (cachedPrimaryLogoDataUrl) {
+        return cachedPrimaryLogoDataUrl;
+    }
+
+    const selectorsSource = Array.isArray(preferredSelectors)
+        ? preferredSelectors.slice()
+        : (preferredSelectors ? [preferredSelectors] : []);
+    const fallbackSelectors = ['[data-brand-logo]', '[data-admin-logo]'];
+    const selectors = selectorsSource.concat(fallbackSelectors).filter(Boolean);
+
+    for (const selector of selectors) {
+        const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
+        if (!element) {
+            continue;
+        }
+
+        try {
+            const dataUrl = await convertImageElementToDataUrl(element);
+            if (dataUrl) {
+                cachedPrimaryLogoDataUrl = dataUrl;
+                return dataUrl;
+            }
+        } catch (error) {
+            console.warn('Unable to convert logo element to data URL:', error);
+        }
+    }
+
+    return null;
+}
+
+async function convertImageElementToDataUrl(element) {
+    if (!(element instanceof HTMLImageElement)) {
+        return null;
+    }
+
+    await ensureImageElementLoaded(element);
+
+    const width = element.naturalWidth || element.width;
+    const height = element.naturalHeight || element.height;
+
+    if (!width || !height) {
+        throw new Error('Logo image has invalid dimensions.');
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+    context.drawImage(element, 0, 0, width, height);
+    return canvas.toDataURL('image/png');
+}
+
+function ensureImageElementLoaded(img) {
+    if (!(img instanceof HTMLImageElement)) {
+        return Promise.resolve();
+    }
+
+    if (img.complete && img.naturalWidth) {
+        return Promise.resolve();
+    }
+
+    return new Promise((resolve, reject) => {
+        const cleanup = () => {
+            img.removeEventListener('load', handleLoad);
+            img.removeEventListener('error', handleError);
+        };
+
+        const handleLoad = () => {
+            cleanup();
+            resolve();
+        };
+
+        const handleError = () => {
+            cleanup();
+            reject(new Error('Failed to load logo image.'));
+        };
+
+        img.addEventListener('load', handleLoad, { once: true });
+        img.addEventListener('error', handleError, { once: true });
     });
-    return message;
 }
 
-function buildStatusMessage(template, order, overrides) {
-    const replacements = {
-        firstname: getOrderFirstName(order),
-        firstName: getOrderFirstName(order),
-        city: overrides?.city || getOrderCity(order),
-        eta: overrides?.eta || template?.requiresInput?.placeholderFallback || 'soon'
-    };
-    return interpolateStatusMessage(template, replacements);
-}
+function hexToRgb(hex) {
+    if (!hex) {
+        return { r: 0, g: 0, b: 0 };
+    }
 
-function composeStatusHistoryEntry(template, message, overrides, actorLabel) {
+    let sanitized = String(hex).replace('#', '').trim();
+    if (sanitized.length === 3) {
+        sanitized = sanitized.split('').map((char) => char + char).join('');
+    }
+
+    if (sanitized.length !== 6) {
+        return { r: 0, g: 0, b: 0 };
+    }
+
+    const numeric = Number.parseInt(sanitized, 16);
+    if (Number.isNaN(numeric)) {
+        return { r: 0, g: 0, b: 0 };
+    }
+
     return {
-        statusKey: template.key,
-        status: template.status,
-        label: template.label,
-        message,
-        icon: template.icon,
-        createdAt: new Date().toISOString(),
-        updatedBy: actorLabel,
-        meta: overrides || {}
+        r: (numeric >> 16) & 255,
+        g: (numeric >> 8) & 255,
+        b: numeric & 255
     };
 }
 
-function buildStatusUpdatePayload(template, order, overrides, actor) {
-    const actorLabel = (actor && (actor.email || actor.uid || actor.name)) || 'system';
-    const message = buildStatusMessage(template, order, overrides);
-    const historyEntry = composeStatusHistoryEntry(template, message, overrides, actorLabel);
+function renderTemplateString(templateString, data = {}) {
+    if (!templateString) {
+        return '';
+    }
+
+    return templateString.replace(/{{\s*([\w.]+)\s*}}/g, (match, key) => {
+        const value = data[key];
+        if (value === undefined || value === null) {
+            return '';
+        }
+        return String(value);
+    });
+}
+
+function buildStatusUpdatePayload(template, context = {}, overrides = {}, actor = {}) {
+    if (!template) {
+        throw new Error('Status template is required to build an update payload.');
+    }
+
+    const now = new Date();
+    const timestamp = window.serverTimestamp ? window.serverTimestamp() : now;
+    const resolvedContext = Object.assign(
+        {
+            customerName: context.customerName || context.name || context.email || 'Customer',
+            eta: overrides.eta || context.estimatedArrivalText || 'soon',
+            orderId: context.orderId || context.docId || '',
+            trackingNumber: context.trackingNumber || ''
+        },
+        context,
+        overrides
+    );
+
+    const amount = Number(resolvedContext.totalAmount);
+    if (Number.isFinite(amount)) {
+        resolvedContext.totalAmountFormatted = `R${amount.toFixed(2)}`;
+    }
+
+    const templateString = template.customerMessage || template.message || template.statusMessage || '';
+    const resolvedMessage = templateString
+        ? renderTemplateString(templateString, resolvedContext)
+        : (template.statusMessage || template.label || template.status || '');
+
+    const historyEntry = {
+        statusKey: template.key,
+        status: template.status || template.label || '',
+        label: template.label || template.status || '',
+        icon: template.icon || '',
+        message: resolvedMessage,
+        createdAt: now.toISOString ? now.toISOString() : now,
+        updatedAt: now.toISOString ? now.toISOString() : now,
+        updatedBy: actor.email || actor.uid || 'system'
+    };
 
     const payload = {
+        status: template.status || template.label || '',
         statusKey: template.key,
-        status: template.status,
-        statusLabel: template.label,
-        statusMessage: message,
-        statusIcon: template.icon,
-        statusUpdatedBy: actorLabel,
-        statusUpdatedAt: window.serverTimestamp ? window.serverTimestamp() : new Date(),
-        lastCustomerMessage: message
+        statusLabel: template.label || template.status || '',
+        statusIcon: template.icon || '',
+        statusMessage: resolvedMessage,
+        lastCustomerMessage: resolvedMessage,
+        updatedAt: timestamp,
+        statusUpdatedAt: timestamp,
+        lastCustomerMessageAt: timestamp,
+        updatedBy: actor.email || actor.uid || 'system'
     };
+
+    const historySource = Array.isArray(context.statusHistory) ? context.statusHistory.slice() : [];
+    historySource.push(historyEntry);
+
+    const noteEntry = Object.assign({ type: 'status' }, historyEntry);
+    const notesSource = Array.isArray(context.notes) ? context.notes.slice() : [];
+    notesSource.push(noteEntry);
 
     if (window.arrayUnion) {
         payload.statusHistory = window.arrayUnion(historyEntry);
-        payload.notes = window.arrayUnion(Object.assign({ type: 'status' }, historyEntry));
+        payload.notes = window.arrayUnion(noteEntry);
+    } else {
+        payload.statusHistory = historySource;
+        payload.notes = notesSource;
     }
 
     if (template.key === 'order_placed') {
         payload.paymentStatus = 'Paid';
-        payload.paymentCompletedAt = window.serverTimestamp ? window.serverTimestamp() : new Date();
+        payload.paymentCompletedAt = timestamp;
+    }
+
+    if (template.key === 'pending_payment') {
+        payload.paymentStatus = 'Pending Payment';
     }
 
     if (template.key === 'delivered') {
-        payload.deliveredAt = window.serverTimestamp ? window.serverTimestamp() : new Date();
+        payload.deliveredAt = timestamp;
+        payload.paymentStatus = context.paymentStatus || 'Paid';
     }
 
     if (template.requiresInput && overrides && overrides.eta) {
@@ -271,7 +430,7 @@ function buildStatusUpdatePayload(template, order, overrides, actor) {
 
     return {
         payload,
-        message,
+        message: resolvedMessage,
         historyEntry
     };
 }
@@ -323,13 +482,29 @@ console.log("firebaseConfig.apiKey present:", !!firebaseConfig.apiKey);
 
 // --- Global Authentication Functions ---
 async function handleLogout() {
+    const notify = typeof showMessage === 'function' ? showMessage : (msg) => window.alert(msg);
+
     try {
-        await window.auth.signOut();
-        showMessage("Logged out successfully.", "success");
-        window.location.href = "index.html";
+        if (window.auth && typeof window.auth.signOut === 'function') {
+            await window.auth.signOut();
+        } else if (window.firebase?.auth && typeof window.firebase.auth().signOut === 'function') {
+            await window.firebase.auth().signOut();
+        }
+
+        sessionStorage.removeItem('userLoggedIn');
+        sessionStorage.removeItem('userId');
+
+        notify('Logged out successfully.', 'success');
+
+        setTimeout(() => {
+            const redirectTarget = window.location.pathname.includes('admin-dashboard.html')
+                ? 'login-signup.html?redirect=admin-dashboard.html'
+                : 'index.html';
+            window.location.replace(redirectTarget);
+        }, 350);
     } catch (error) {
         console.error('Logout error:', error);
-        showMessage("Logout failed.", "error");
+        notify('Logout failed. Please try again.', 'error');
     }
 }
 
@@ -1589,10 +1764,7 @@ async function initFirebase() {
     if (typeof window.firebase === 'undefined') {
         console.log("Firebase SDK not loaded. Running in offline mode.");
         updateAuthUI(false);
-        if (resolveFirebaseInitialized) {
-            resolveFirebaseInitialized(false);
-            resolveFirebaseInitialized = null;
-        }
+        settleFirebaseInitialization(false);
         return false;
     }
     
@@ -1600,10 +1772,7 @@ async function initFirebase() {
     if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey) {
         console.log("Firebase config not available. Running in offline mode.");
         updateAuthUI(false);
-        if (resolveFirebaseInitialized) {
-            resolveFirebaseInitialized(false);
-            resolveFirebaseInitialized = null;
-        }
+        settleFirebaseInitialization(false);
         return false;
     }
 
@@ -1652,24 +1821,19 @@ async function initFirebase() {
                     updateAuthUI(false);
                 }
             });
+            settleFirebaseInitialization(true);
             return true;
         } else {
             console.log("Firebase Auth not available. Running in offline mode.");
             updateAuthUI(false);
-            if (resolveFirebaseInitialized) {
-                resolveFirebaseInitialized(false);
-                resolveFirebaseInitialized = null;
-            }
+            settleFirebaseInitialization(false);
             return false;
         }
 
     } catch (error) {
         console.error("Error during Firebase initialization:", error.message);
         updateAuthUI(false);
-        if (resolveFirebaseInitialized) {
-            resolveFirebaseInitialized(false);
-            resolveFirebaseInitialized = null;
-        }
+        settleFirebaseInitialization(false);
         return false;
     }
 }
@@ -1684,17 +1848,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (firebaseReady) {
         console.log("Firebase is ready. Proceeding with UI and event listeners.");
-        if (resolveFirebaseInitialized) {
-            resolveFirebaseInitialized(true);
-            resolveFirebaseInitialized = null;
-        }
+        settleFirebaseInitialization(true);
         updateAuthUI(!!window.auth.currentUser);
     } else {
         console.log("Firebase initialization failed. Using offline mode.");
-        if (resolveFirebaseInitialized) {
-            resolveFirebaseInitialized(false);
-            resolveFirebaseInitialized = null;
-        }
+        settleFirebaseInitialization(false);
         updateAuthUI(false);
     }
 
@@ -2307,6 +2465,7 @@ window.ProfileApp = (function() {
         ordersTableBody: () => document.getElementById('orders-table-body'),
         orderFilter: () => document.getElementById('order-filter'),
         downloadOrdersBtn: () => document.getElementById('download-orders'),
+        downloadOrdersPdfBtn: () => document.getElementById('download-orders-pdf'),
         addressForm: () => document.getElementById('address-form'),
         addressInputs: {
             line1: () => document.getElementById('address-line1'),
@@ -2318,24 +2477,43 @@ window.ProfileApp = (function() {
         logoutBtn: () => document.getElementById('logout-btn')
     };
 
+    let cachedBrandLogoDataUrl = null;
+
     async function init() {
         if (state.initialized) {
             return;
         }
-        state.initialized = true;
 
         if (!isProfilePage()) {
             return;
         }
 
-        if (!window.AuthGuard || !window.AuthGuard.requireAuth || !window.AuthGuard.requireAuth()) {
+        let guardApproved = true;
+        if (window.AuthGuard && typeof window.AuthGuard.requireAuth === 'function') {
+            try {
+                const guardResult = window.AuthGuard.requireAuth();
+                guardApproved = typeof guardResult?.then === 'function' ? await guardResult : !!guardResult;
+            } catch (error) {
+                console.error('AuthGuard.requireAuth failed:', error);
+                guardApproved = false;
+            }
+        }
+
+        if (!guardApproved) {
             return;
         }
 
         hideAlert();
         showLoading(true);
 
-    await waitForFirebaseReady();
+        const firebaseReady = await waitForFirebaseReady();
+        if (!firebaseReady) {
+            showAlert('error', 'We could not connect to the store right now. Please refresh to try again.');
+            showLoading(false);
+            return;
+        }
+
+        state.initialized = true;
 
         const auth = window.auth || (window.firebase && window.firebase.auth && window.firebase.auth());
         if (!auth) {
@@ -2356,695 +2534,6 @@ window.ProfileApp = (function() {
                     window.location.replace('login-signup.html?redirect=profile.html');
                 }
             });
-
-            window.AdminApp = (function() {
-                const STATUS_OPTIONS = ['Awaiting Payment', 'Order Placed', 'Out for Delivery', 'Arriving Soon', 'Delivered', 'Cancelled'];
-                const PAYMENT_OPTIONS = ['Pending Payment', 'Paid', 'Refunded', 'Failed', 'Cancelled'];
-                const STATUS_ACTION_KEYS = ['orderPlaced', 'outForDelivery', 'eta', 'delivered'];
-                const STATUS_ACTION_TEMPLATES = STATUS_ACTION_KEYS
-                    .map(key => window.ORDER_STATUS_TEMPLATES?.[key])
-                    .filter(Boolean);
-
-                const state = {
-                    initialized: false,
-                    eventsBound: false,
-                    user: null,
-                    orders: [],
-                    filteredOrders: [],
-                    customers: [],
-                    customersById: {},
-                    customerStats: {},
-                    customerList: [],
-                    metrics: {
-                        totalOrders: 0,
-                        pendingOrders: 0,
-                        totalRevenue: 0,
-                        totalCustomers: 0
-                    }
-                };
-
-                const selectors = {
-                    loadingOverlay: () => document.getElementById('admin-loading'),
-                    alert: () => document.getElementById('admin-alert'),
-                    totalOrders: () => document.getElementById('admin-total-orders'),
-                    pendingOrders: () => document.getElementById('admin-pending-orders'),
-                    totalRevenue: () => document.getElementById('admin-total-revenue'),
-                    totalCustomers: () => document.getElementById('admin-total-customers'),
-                    statusFilter: () => document.getElementById('admin-status-filter'),
-                    refreshBtn: () => document.getElementById('admin-refresh'),
-                    exportBtn: () => document.getElementById('admin-export'),
-                    ordersBody: () => document.getElementById('admin-orders-body'),
-                    customersBody: () => document.getElementById('admin-customers-body'),
-                    logoutBtn: () => document.getElementById('admin-logout')
-                };
-
-                function getTemplateByKey(key) {
-                    if (!key) {
-                        return null;
-                    }
-                    const normalized = key.replace(/-/g, '_');
-                    return STATUS_ACTION_TEMPLATES.find(template => template.key === normalized);
-                }
-
-                function getTemplateByStatusLabel(label) {
-                    if (!label) {
-                        return null;
-                    }
-                    const normalized = label.toLowerCase();
-                    return STATUS_ACTION_TEMPLATES.find(template =>
-                        template.status.toLowerCase() === normalized || template.label.toLowerCase() === normalized
-                    );
-                }
-
-                function buildHistoryList(order) {
-                    const history = Array.isArray(order.statusHistory) ? order.statusHistory.slice() : [];
-                    if (!history.length) {
-                        return '<li class="text-xs text-slate-400">No updates yet.</li>';
-                    }
-
-                    const sorted = history.sort((a, b) => {
-                        const aTime = new Date(a.createdAt || 0).getTime();
-                        const bTime = new Date(b.createdAt || 0).getTime();
-                        return bTime - aTime;
-                    }).slice(0, 4);
-
-                    return sorted.map(entry => {
-                        const icon = entry.icon || '';
-                        const when = formatDate(entry.createdAt) || '';
-                        const message = escapeHtml(entry.message || entry.status || 'Update');
-                        return `<li class="flex items-start gap-2">
-                            <span class="text-lg leading-none">${icon}</span>
-                            <div class="text-xs text-slate-500">
-                                <div class="font-semibold text-slate-600">${escapeHtml(entry.status || entry.label || 'Update')}</div>
-                                <div>${message}</div>
-                                <div class="text-[10px] uppercase tracking-wide text-slate-400">${escapeHtml(when)} • ${escapeHtml(entry.updatedBy || 'team')}</div>
-                            </div>
-                        </li>`;
-                    }).join('');
-                }
-
-                function buildStatusActions(order) {
-                    const docId = escapeHtml(order.docId);
-                    return STATUS_ACTION_TEMPLATES.map(template => `<button type="button" data-doc-id="${docId}" data-status-action="${template.key}" class="px-2 py-1 text-xs rounded border border-slate-200 hover:border-blue-400 hover:text-blue-600 transition">${escapeHtml(template.buttonLabel || template.label)}</button>`).join('<span class="text-slate-200">|</span>');
-                }
-
-                function isAdminPage() {
-                    return window.location.pathname.includes('admin-dashboard.html');
-                }
-
-                async function init() {
-                    if (!isAdminPage()) {
-                        return;
-                    }
-
-                    if (state.initialized) {
-                        return;
-                    }
-                    state.initialized = true;
-
-                    hideAlert();
-                    showLoading(true);
-
-                    await waitForFirebaseReady();
-
-                    const auth = window.auth || (window.firebase && window.firebase.auth && window.firebase.auth());
-                    if (!auth) {
-                        showAlert('error', 'Unable to connect to Firebase. Please try again later.');
-                        showLoading(false);
-                        return;
-                    }
-
-                    const currentUser = auth.currentUser;
-                    if (currentUser) {
-                        await handleAuthenticatedAdmin(currentUser);
-                    } else {
-                        auth.onAuthStateChanged(async (user) => {
-                            if (user) {
-                                await handleAuthenticatedAdmin(user);
-                            } else {
-                                showLoading(false);
-                                window.location.replace('login-signup.html?redirect=admin-dashboard.html');
-                            }
-                        });
-                    }
-                }
-
-                async function handleAuthenticatedAdmin(user) {
-                    if (!isAdminEmail(user.email)) {
-                        showLoading(false);
-                        window.location.replace('profile.html');
-                        return;
-                    }
-
-                    state.user = user;
-                    window.currentUserId = user.uid;
-                    sessionStorage.setItem('userLoggedIn', 'true');
-                    sessionStorage.setItem('userId', user.uid);
-
-                    try {
-                        await loadCustomers();
-                        await loadOrders();
-                        composeCustomerList();
-                        updateMetrics();
-                        bindEvents();
-                        renderAll();
-                    } catch (error) {
-                        console.error('AdminApp initialization error:', error);
-                        showAlert('error', 'We could not load the admin dashboard. Please refresh and try again.');
-                    } finally {
-                        showLoading(false);
-                    }
-                }
-
-                async function loadCustomers() {
-                    state.customers = [];
-                    state.customersById = {};
-
-                    if (!window.db) {
-                        throw new Error('Firestore is not available.');
-                    }
-
-                    const snapshot = await usersCollection().get();
-                    snapshot.forEach(doc => {
-                        const data = doc.data() || {};
-                        const record = {
-                            id: doc.id,
-                            name: (data.name || '').trim() || 'Customer',
-                            email: (data.email || '').trim(),
-                            phone: (data.phone || '').trim(),
-                            createdAt: coerceToDate(data.createdAt || data.memberSince)
-                        };
-
-                        state.customers.push(record);
-                        state.customersById[doc.id] = record;
-                    });
-                }
-
-                async function loadOrders() {
-                    state.orders = [];
-                    state.filteredOrders = [];
-                    state.customerStats = {};
-
-                    if (!window.db) {
-                        throw new Error('Firestore is not available.');
-                    }
-
-                    const snapshot = await ordersCollection().orderBy('orderDate', 'desc').get();
-                    snapshot.forEach(doc => {
-                        const data = doc.data() || {};
-                        const orderDate = coerceToDate(data.orderDate);
-                        const order = {
-                            docId: doc.id,
-                            orderId: data.orderId || doc.id,
-                            userId: data.userId || '',
-                            statusKey: data.statusKey || '',
-                            status: data.status || 'Pending',
-                            statusLabel: data.statusLabel || data.status || 'Pending',
-                            statusMessage: data.statusMessage || data.lastCustomerMessage || '',
-                            statusIcon: data.statusIcon || '',
-                            statusUpdatedAt: coerceToDate(data.statusUpdatedAt),
-                            statusHistory: Array.isArray(data.statusHistory) ? data.statusHistory : [],
-                            paymentStatus: data.paymentStatus || data.payment_status || 'Pending Payment',
-                            orderDate,
-                            totalAmount: Number(data.totalAmount) || 0,
-                            items: Array.isArray(data.items) ? data.items : [],
-                            shippingFee: Number(data.shippingFee || data.shippingCost || 0),
-                            trackingNumber: data.trackingNumber || '',
-                            estimatedArrivalText: data.estimatedArrivalText || data.estimatedDelivery || '',
-                            customerName: data.customerName || (data.customer && data.customer.name) || '',
-                            customerEmail: data.customerEmail || (data.customer && data.customer.email) || '',
-                            lastCustomerMessage: data.lastCustomerMessage || data.statusMessage || ''
-                        };
-
-                        state.orders.push(order);
-                        accumulateCustomerStats(order);
-                    });
-
-                    state.filteredOrders = [...state.orders];
-                }
-
-                function accumulateCustomerStats(order) {
-                    const key = order.userId || 'unknown';
-                    const stats = state.customerStats[key] || { orders: 0, revenue: 0, lastOrder: null };
-
-                    stats.orders += 1;
-                    stats.revenue += Number(order.totalAmount) || 0;
-
-                    const orderDate = coerceToDate(order.orderDate);
-                    if (orderDate && (!stats.lastOrder || orderDate > stats.lastOrder)) {
-                        stats.lastOrder = orderDate;
-                    }
-
-                    state.customerStats[key] = stats;
-                }
-
-                function updateMetrics() {
-                    state.metrics.totalOrders = state.orders.length;
-                    state.metrics.pendingOrders = state.orders.filter(order => (order.status || '').toLowerCase().includes('pending')).length;
-                    state.metrics.totalRevenue = state.orders.reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0);
-                    state.metrics.totalCustomers = state.customers.length;
-                }
-
-                function composeCustomerList() {
-                    const combined = [];
-                    const seen = new Set();
-
-                    state.customers.forEach(customer => {
-                        const stats = state.customerStats[customer.id] || { orders: 0, revenue: 0, lastOrder: null };
-                        combined.push({
-                            id: customer.id,
-                            name: customer.name || customer.email || 'Customer',
-                            email: customer.email || '—',
-                            phone: customer.phone || '—',
-                            orders: stats.orders,
-                            revenue: stats.revenue,
-                            lastOrder: stats.lastOrder
-                        });
-                        seen.add(customer.id);
-                    });
-
-                    Object.entries(state.customerStats).forEach(([userId, stats]) => {
-                        if (seen.has(userId)) {
-                            return;
-                        }
-                        combined.push({
-                            id: userId,
-                            name: userId === 'unknown' ? 'Guest Checkout' : 'Customer',
-                            email: userId === 'unknown' ? '—' : userId,
-                            phone: '—',
-                            orders: stats.orders,
-                            revenue: stats.revenue,
-                            lastOrder: stats.lastOrder
-                        });
-                    });
-
-                    state.customerList = combined.sort((a, b) => b.revenue - a.revenue);
-                }
-
-                function bindEvents() {
-                    if (state.eventsBound) {
-                        return;
-                    }
-                    state.eventsBound = true;
-
-                    const statusFilter = selectors.statusFilter();
-                    if (statusFilter) {
-                        statusFilter.addEventListener('change', () => {
-                            renderOrders();
-                        });
-                    }
-
-                    const refreshBtn = selectors.refreshBtn();
-                    if (refreshBtn) {
-                        refreshBtn.addEventListener('click', () => {
-                            refreshData();
-                        });
-                    }
-
-                    const exportBtn = selectors.exportBtn();
-                    if (exportBtn) {
-                        exportBtn.addEventListener('click', () => {
-                            exportOrders();
-                        });
-                    }
-
-                    const logoutBtn = selectors.logoutBtn();
-                    if (logoutBtn) {
-                        logoutBtn.addEventListener('click', () => {
-                            handleLogout();
-                        });
-                    }
-
-                    const ordersBody = selectors.ordersBody();
-                    if (ordersBody && !ordersBody.dataset.bound) {
-                        ordersBody.addEventListener('change', async (event) => {
-                            const select = event.target.closest('select[data-doc-id]');
-                            if (!select) {
-                                return;
-                            }
-
-                            const docId = select.dataset.docId;
-                            const field = select.dataset.field;
-                            const value = select.value;
-
-                            await updateOrderField(docId, field, value);
-                        });
-                        ordersBody.addEventListener('click', async (event) => {
-                            const button = event.target.closest('button[data-status-action]');
-                            if (!button) {
-                                return;
-                            }
-                            const docId = button.dataset.docId;
-                            const actionKey = button.dataset.statusAction;
-                            await applyStatusTemplate(docId, actionKey);
-                        });
-                        ordersBody.dataset.bound = 'true';
-                    }
-                }
-
-                async function refreshData() {
-                    showLoading(true);
-                    try {
-                        await loadOrders();
-                        composeCustomerList();
-                        updateMetrics();
-                        renderAll();
-                        showAlert('success', 'Dashboard data refreshed.', true);
-                    } catch (error) {
-                        console.error('Failed to refresh admin data:', error);
-                        showAlert('error', 'Could not refresh data. Please try again later.');
-                    } finally {
-                        showLoading(false);
-                    }
-                }
-
-                async function applyStatusTemplate(docId, actionKey) {
-                    const template = getTemplateByKey(actionKey) || getTemplateByStatusLabel(actionKey);
-                    if (!template) {
-                        showAlert('info', 'No quick message template found for that action yet.', true);
-                        return;
-                    }
-
-                    const order = state.orders.find(candidate => candidate.docId === docId);
-                    if (!order) {
-                        showAlert('error', 'Unable to locate that order. Please refresh and try again.');
-                        return;
-                    }
-
-                    let overrides = {};
-                    if (template.requiresInput) {
-                        const userInput = window.prompt(template.requiresInput.prompt, template.requiresInput.placeholderFallback || 'soon');
-                        if (userInput === null) {
-                            return;
-                        }
-                        overrides = {
-                            [template.requiresInput.field]: userInput.trim() || template.requiresInput.placeholderFallback || 'soon'
-                        };
-                    }
-
-                    try {
-                        showLoading(true);
-                        const actor = { email: state.user?.email, uid: state.user?.uid };
-                        const { payload } = buildStatusUpdatePayload(template, order, overrides, actor);
-                        await ordersCollection().doc(docId).set(payload, { merge: true });
-                        await loadOrders();
-                        composeCustomerList();
-                        updateMetrics();
-                        renderAll();
-                        const successLabel = `${template.icon || ''} ${template.label} update shared with the customer.`.trim();
-                        showAlert('success', successLabel, true);
-                    } catch (error) {
-                        console.error('Failed to apply status template:', error);
-                        showAlert('error', 'Could not send that update. Please try again.');
-                    } finally {
-                        showLoading(false);
-                    }
-                }
-
-                async function updateOrderField(docId, field, value) {
-                    if (!docId || !field) {
-                        return;
-                    }
-
-                    if (field === 'status') {
-                        const template = getTemplateByStatusLabel(value);
-                        if (template) {
-                            await applyStatusTemplate(docId, template.key);
-                            return;
-                        }
-                    }
-
-                    try {
-                        await ordersCollection().doc(docId).set({
-                            [field]: value,
-                            updatedAt: window.serverTimestamp ? window.serverTimestamp() : new Date()
-                        }, { merge: true });
-
-                        await loadOrders();
-                        composeCustomerList();
-                        updateMetrics();
-                        renderAll();
-                        showAlert('success', 'Order updated successfully.', true);
-                    } catch (error) {
-                        console.error('Failed to update order:', error);
-                        showAlert('error', 'Could not update this order. Please retry.');
-                    }
-                }
-
-                function renderAll() {
-                    renderMetrics();
-                    renderOrders();
-                    renderCustomers();
-                }
-
-                function renderMetrics() {
-                    const totalOrdersEl = selectors.totalOrders();
-                    const pendingOrdersEl = selectors.pendingOrders();
-                    const totalRevenueEl = selectors.totalRevenue();
-                    const totalCustomersEl = selectors.totalCustomers();
-
-                    if (totalOrdersEl) totalOrdersEl.textContent = state.metrics.totalOrders;
-                    if (pendingOrdersEl) pendingOrdersEl.textContent = state.metrics.pendingOrders;
-                    if (totalRevenueEl) totalRevenueEl.textContent = formatCurrency(state.metrics.totalRevenue);
-                    if (totalCustomersEl) totalCustomersEl.textContent = state.metrics.totalCustomers;
-                }
-
-                function renderOrders() {
-                    const tbody = selectors.ordersBody();
-                    if (!tbody) {
-                        return;
-                    }
-
-                    const filter = selectors.statusFilter();
-                    const filterValue = filter ? filter.value : 'all';
-                    state.filteredOrders = filterOrders(filterValue);
-
-                    tbody.innerHTML = '';
-
-                    if (!state.filteredOrders.length) {
-                        tbody.innerHTML = `
-                            <tr>
-                                <td colspan="8" class="px-4 py-6 text-center text-gray-500">No orders match this filter.</td>
-                            </tr>`;
-                        return;
-                    }
-
-                    state.filteredOrders.forEach(order => {
-                        tbody.appendChild(buildOrderRow(order));
-                    });
-                }
-
-                function filterOrders(filterValue) {
-                    if (!filterValue || filterValue === 'all') {
-                        return [...state.orders];
-                    }
-
-                    return state.orders.filter(order => (order.status || '').toLowerCase().includes(filterValue.toLowerCase()));
-                }
-
-                function buildOrderRow(order) {
-                    const row = document.createElement('tr');
-                    row.className = 'border-b last:border-0 hover:bg-gray-50 transition-colors';
-
-                    const customer = state.customersById[order.userId] || {};
-                    const customerName = customer.name || order.customerName || 'Customer';
-                    const customerEmail = customer.email || order.customerEmail || '—';
-
-                    const safeOrderId = escapeHtml(order.orderId);
-                    const safeDocId = escapeHtml(order.docId);
-                    const safeCustomerName = escapeHtml(customerName);
-                    const safeCustomerEmail = escapeHtml(customerEmail);
-                    const safeTracking = escapeHtml(order.trackingNumber || '');
-
-                    const statusOptions = buildOptions(STATUS_OPTIONS, order.status);
-                    const paymentOptions = buildOptions(PAYMENT_OPTIONS, order.paymentStatus);
-
-                    const items = (order.items || []).map(item => {
-                        const title = item.name || 'Item';
-                        const quantity = item.quantity || 1;
-                        const size = item.size && item.size !== 'N/A' ? ` (${item.size})` : '';
-                        const label = escapeHtml(`${title}${size}`);
-                        return `<li>${label} x${quantity}</li>`;
-                    }).join('');
-
-                    const latestMessage = escapeHtml(order.statusMessage || order.lastCustomerMessage || 'No message yet.');
-                    const statusActions = buildStatusActions(order);
-                    const historyList = buildHistoryList(order);
-                    const eta = order.estimatedArrivalText ? `<div class="mt-1 text-[11px] text-blue-600">ETA: ${escapeHtml(order.estimatedArrivalText)}</div>` : '';
-
-                    row.innerHTML = `
-                        <td class="px-4 py-3 text-sm font-semibold text-gray-800">
-                            <div>${safeOrderId}</div>
-                            <div class="text-xs text-gray-400">${safeDocId}</div>
-                        </td>
-                        <td class="px-4 py-3 text-sm text-gray-500">${formatDate(order.orderDate)}</td>
-                        <td class="px-4 py-3 text-sm text-gray-700">
-                            <div>${safeCustomerName}</div>
-                            <div class="text-xs text-gray-400">${safeCustomerEmail}</div>
-                        </td>
-                        <td class="px-4 py-3 text-sm text-gray-700">${formatCurrency(order.totalAmount)}</td>
-                        <td class="px-4 py-3 text-sm">
-                            <select class="border rounded px-2 py-1 text-sm" data-doc-id="${safeDocId}" data-field="status">
-                                ${statusOptions}
-                            </select>
-                        </td>
-                        <td class="px-4 py-3 text-sm">
-                            <select class="border rounded px-2 py-1 text-sm" data-doc-id="${safeDocId}" data-field="paymentStatus">
-                                ${paymentOptions}
-                            </select>
-                        </td>
-                        <td class="px-4 py-3 text-sm text-gray-600">
-                            <details class="group">
-                                <summary class="cursor-pointer text-blue-600 hover:underline text-sm">Items (${order.items.length})</summary>
-                                <ul class="mt-2 space-y-1 text-xs text-gray-500 group-open:animate-fade">${items || '<li>No items</li>'}</ul>
-                                ${safeTracking ? `<div class="mt-2 text-xs text-gray-500">Tracking: ${safeTracking}</div>` : ''}
-                            </details>
-                        </td>
-                        <td class="px-4 py-3 text-sm text-gray-600">
-                            <div class="text-xs text-gray-700 bg-slate-100 border border-slate-200 rounded px-3 py-2">${latestMessage}</div>
-                            ${eta}
-                            <ul class="mt-3 space-y-2">${historyList}</ul>
-                            <div class="mt-3 flex flex-wrap gap-2">${statusActions}</div>
-                        </td>
-                    `;
-
-                    return row;
-                }
-
-                function buildOptions(options, currentValue) {
-                    const normalized = (currentValue || '').toLowerCase();
-                    const unique = new Set(options.map(option => option.toLowerCase()));
-                    const rendered = [...options];
-
-                    if (currentValue && !unique.has(normalized)) {
-                        rendered.push(currentValue);
-                    }
-
-                    return rendered.map(option => {
-                        const selected = option.toLowerCase() === normalized ? 'selected' : '';
-                        const safeOption = escapeHtml(option);
-                        return `<option value="${safeOption}" ${selected}>${safeOption}</option>`;
-                    }).join('');
-                }
-
-                function renderCustomers() {
-                    const tbody = selectors.customersBody();
-                    if (!tbody) {
-                        return;
-                    }
-
-                    tbody.innerHTML = '';
-
-                    if (!state.customerList.length) {
-                        tbody.innerHTML = `
-                            <tr>
-                                <td colspan="5" class="px-4 py-6 text-center text-gray-500">No customers found.</td>
-                            </tr>`;
-                        return;
-                    }
-
-                    state.customerList.slice(0, 10).forEach(customer => {
-                        const row = document.createElement('tr');
-                        row.className = 'border-b last:border-0';
-                        row.innerHTML = `
-                            <td class="px-4 py-3 text-sm font-semibold text-gray-800">${escapeHtml(customer.name)}</td>
-                            <td class="px-4 py-3 text-sm text-gray-500">${escapeHtml(customer.email)}</td>
-                            <td class="px-4 py-3 text-sm text-gray-500">${customer.orders}</td>
-                            <td class="px-4 py-3 text-sm text-gray-700">${formatCurrency(customer.revenue)}</td>
-                            <td class="px-4 py-3 text-sm text-gray-500">${customer.lastOrder ? formatDate(customer.lastOrder) : '—'}</td>
-                        `;
-                        tbody.appendChild(row);
-                    });
-                }
-
-                function exportOrders() {
-                    if (!state.filteredOrders.length) {
-                        showAlert('info', 'There are no orders to export for this filter.', true);
-                        return;
-                    }
-
-                    const header = ['Order ID', 'Customer Name', 'Customer Email', 'Status', 'Status Message', 'Payment Status', 'Date', 'Total', 'Items'];
-                    const rows = state.filteredOrders.map(order => {
-                        const customer = state.customersById[order.userId] || {};
-                        const customerName = customer.name || order.customerName || 'Customer';
-                        const customerEmail = customer.email || order.customerEmail || '';
-                        const items = (order.items || []).map(item => `${item.name || 'Item'} x${item.quantity || 1}`).join('; ');
-
-                        return [
-                            quoteCsv(order.orderId),
-                            quoteCsv(customerName),
-                            quoteCsv(customerEmail),
-                            quoteCsv(order.status || ''),
-                            quoteCsv(order.statusMessage || order.lastCustomerMessage || ''),
-                            quoteCsv(order.paymentStatus || ''),
-                            quoteCsv(formatDate(order.orderDate)),
-                            quoteCsv(formatCurrency(order.totalAmount)),
-                            quoteCsv(items)
-                        ].join(',');
-                    });
-
-                    const csvContent = [header.join(','), ...rows].join('\n');
-                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = `disciplined-disciples-admin-orders-${Date.now()}.csv`;
-                    link.click();
-                    URL.revokeObjectURL(url);
-                }
-
-                function showLoading(isVisible) {
-                    const overlay = selectors.loadingOverlay();
-                    if (!overlay) {
-                        return;
-                    }
-                    overlay.classList.toggle('hidden', !isVisible);
-                }
-
-                function hideAlert() {
-                    const alertEl = selectors.alert();
-                    if (!alertEl) {
-                        return;
-                    }
-                    alertEl.classList.add('hidden');
-                    alertEl.textContent = '';
-                }
-
-                function showAlert(type, message, autoHide = false) {
-                    const alertEl = selectors.alert();
-                    if (!alertEl) {
-                        return;
-                    }
-
-                    const classMap = {
-                        success: 'bg-emerald-50 border border-emerald-200 text-emerald-700',
-                        error: 'bg-red-50 border border-red-200 text-red-700',
-                        info: 'bg-blue-50 border border-blue-200 text-blue-700'
-                    };
-
-                    alertEl.className = `mb-6 px-4 py-3 rounded ${classMap[type] || 'bg-gray-50 border border-gray-200 text-gray-700'}`;
-                    alertEl.textContent = message;
-                    alertEl.classList.remove('hidden');
-
-                    if (autoHide) {
-                        setTimeout(() => {
-                            alertEl.classList.add('hidden');
-                        }, 4000);
-                    }
-                }
-
-                function ordersCollection() {
-                    return window.db.collection('artifacts').doc('default-app-id').collection('orders');
-                }
-
-                function usersCollection() {
-                    return window.db.collection('artifacts').doc('default-app-id').collection('users');
-                }
-
-                return {
-                    init
-                };
-            })();
 
         }
     }
@@ -3180,11 +2669,36 @@ window.ProfileApp = (function() {
             downloadBtn.addEventListener('click', downloadOrderCsv);
         }
 
+        const downloadPdfBtn = selectors.downloadOrdersPdfBtn();
+        if (downloadPdfBtn) {
+            downloadPdfBtn.addEventListener('click', downloadOrdersPdf);
+        }
+
         const logout = selectors.logoutBtn();
         if (logout) {
             logout.addEventListener('click', () => {
                 handleLogout();
             });
+        }
+
+        const tableBody = selectors.ordersTableBody();
+        if (tableBody && !tableBody.dataset.bound) {
+            tableBody.addEventListener('click', async event => {
+                const button = event.target.closest('button[data-action="download-invoice"]');
+                if (!button) {
+                    return;
+                }
+
+                const docId = button.dataset.docId;
+                const order = state.orders.find(candidate => candidate.docId === docId);
+                if (!order) {
+                    showAlert('error', 'We could not find that order. Please refresh and try again.');
+                    return;
+                }
+
+                await downloadInvoicePdf(order);
+            });
+            tableBody.dataset.bound = 'true';
         }
     }
 
@@ -3302,6 +2816,12 @@ window.ProfileApp = (function() {
         const message = escapeHtml(order.statusMessage || order.lastCustomerMessage || 'We will update you soon.');
         const timeline = renderStatusTimeline(order);
         const eta = order.estimatedArrivalText ? `<div class="mt-1 text-xs text-blue-600">ETA: ${escapeHtml(order.estimatedArrivalText)}</div>` : '';
+        const invoiceButton = isInvoiceAvailable(order)
+            ? `<button type="button" class="mt-3 inline-flex items-center gap-2 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-600 hover:bg-blue-100 transition" data-action="download-invoice" data-doc-id="${escapeHtml(order.docId)}">
+                    <i class="fas fa-file-invoice"></i>
+                    Download Invoice
+               </button>`
+            : '';
 
         row.innerHTML = `
             <td class="px-4 py-3 font-medium text-gray-700">${order.orderId}</td>
@@ -3318,6 +2838,7 @@ window.ProfileApp = (function() {
                     <summary class="text-xs text-blue-600 cursor-pointer">See delivery journey</summary>
                     <ul class="mt-2 space-y-2">${timeline}</ul>
                 </details>
+                ${invoiceButton}
             </td>
         `;
 
@@ -3430,6 +2951,440 @@ window.ProfileApp = (function() {
         URL.revokeObjectURL(url);
     }
 
+    async function downloadOrdersPdf() {
+        if (!state.filteredOrders.length) {
+            showAlert('info', 'There are no orders to download right now.', true);
+            return;
+        }
+
+        const JsPdfCtor = await resolveJsPdfConstructor();
+        if (!JsPdfCtor) {
+            showAlert('error', 'PDF export is unavailable right now. Please try again.');
+            return;
+        }
+
+        const doc = new JsPdfCtor({ unit: 'pt', format: 'a4' });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 48;
+
+        const accent = hexToRgb('#111827');
+        const accentSecondary = hexToRgb('#2563EB');
+        const neutralText = hexToRgb('#1F2937');
+        const mutedText = hexToRgb('#4B5563');
+        const subtleBackground = hexToRgb('#F3F4F6');
+        const stripeBackground = hexToRgb('#F9FAFB');
+
+        const logoDataUrl = await getBrandLogoDataUrl();
+
+        doc.setFillColor(accent.r, accent.g, accent.b);
+        doc.rect(0, 0, pageWidth, 110, 'F');
+
+        if (logoDataUrl) {
+            doc.addImage(logoDataUrl, 'PNG', margin, 24, 72, 72);
+        }
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(22);
+        doc.text('Disciplined Disciples', margin + 92, 46);
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Order History Summary', margin + 92, 68);
+        doc.setFontSize(11);
+        doc.text(`Generated: ${new Date().toLocaleString('en-ZA')}`, pageWidth - margin, 46, { align: 'right' });
+
+        const customerName = state.profile?.name || state.user?.email || 'Customer';
+        const pendingCount = state.filteredOrders.filter(order => (order.status || '').toLowerCase().includes('pending')).length;
+        const totalSpend = state.filteredOrders.reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0);
+
+        let cursorY = 140;
+
+        doc.setFillColor(subtleBackground.r, subtleBackground.g, subtleBackground.b);
+        doc.roundedRect(margin, cursorY, pageWidth - 2 * margin, 88, 12, 12, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.setTextColor(accentSecondary.r, accentSecondary.g, accentSecondary.b);
+        doc.text('At a glance', margin + 20, cursorY + 28);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(11);
+        doc.setTextColor(mutedText.r, mutedText.g, mutedText.b);
+        doc.text(`Customer: ${customerName}`, margin + 20, cursorY + 48);
+        doc.text(`Orders in view: ${state.filteredOrders.length}`, margin + 20, cursorY + 66);
+        doc.text(`Pending orders: ${pendingCount}`, margin + 260, cursorY + 48);
+        doc.text(`Total spend (view): ${formatCurrency(totalSpend)}`, margin + 260, cursorY + 66);
+
+        cursorY += 120;
+
+        const tableWidth = pageWidth - 2 * margin;
+        const rowHeight = 30;
+        const headerHeight = 34;
+        let tableY = cursorY;
+
+        const columns = (() => {
+            const base = [
+                { title: 'Order ID', width: 150, getter: order => (order.orderId || order.docId || '').slice(0, 18) },
+                { title: 'Date', width: 90, getter: order => formatDate(order.orderDate) },
+                { title: 'Status', width: 140, getter: order => order.status || '—' },
+                { title: 'Payment', width: 120, getter: order => order.paymentStatus || '—' }
+            ];
+            const usedWidth = base.reduce((sum, col) => sum + col.width, 0);
+            base.push({ title: 'Total', width: tableWidth - usedWidth, getter: order => formatCurrency(order.totalAmount) });
+            return base;
+        })();
+
+        const renderTableHeader = () => {
+            doc.setFillColor(accent.r, accent.g, accent.b);
+            doc.roundedRect(margin, tableY, tableWidth, headerHeight, 8, 8, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.setTextColor(255, 255, 255);
+
+            let colX = margin;
+            columns.forEach((col, index) => {
+                const textX = index === columns.length - 1 ? colX + col.width - 14 : colX + 14;
+                const align = index === columns.length - 1 ? 'right' : 'left';
+                doc.text(col.title, textX, tableY + 22, { align });
+                colX += col.width;
+            });
+
+            tableY += headerHeight;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(neutralText.r, neutralText.g, neutralText.b);
+        };
+
+        const renderRow = (order, index) => {
+            if (tableY + rowHeight > pageHeight - margin) {
+                doc.addPage();
+                tableY = margin;
+                doc.setFillColor(255, 255, 255);
+                doc.setTextColor(neutralText.r, neutralText.g, neutralText.b);
+                renderTableHeader();
+            }
+
+            if (index % 2 === 0) {
+                doc.setFillColor(stripeBackground.r, stripeBackground.g, stripeBackground.b);
+                doc.rect(margin, tableY, tableWidth, rowHeight, 'F');
+            }
+
+            let colX = margin;
+            const textBaseline = tableY + 19;
+            columns.forEach((col, colIndex) => {
+                const value = col.getter(order) || '—';
+                if (colIndex === columns.length - 1) {
+                    doc.text(String(value), colX + col.width - 14, textBaseline, { align: 'right' });
+                } else {
+                    doc.text(String(value), colX + 14, textBaseline, { maxWidth: col.width - 28 });
+                }
+                colX += col.width;
+            });
+
+            tableY += rowHeight;
+        };
+
+        renderTableHeader();
+        state.filteredOrders.forEach(renderRow);
+
+        cursorY = tableY + 36;
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(10);
+        doc.setTextColor(mutedText.r, mutedText.g, mutedText.b);
+        doc.text('Need help with an order? Reach us at support@disciplineddisciples.com.', margin, cursorY);
+
+        doc.save(`disciplined-disciples-order-history-${Date.now()}.pdf`);
+        showAlert('success', 'Order history PDF downloaded.', true);
+    }
+
+    async function downloadInvoicePdf(order) {
+        const JsPdfCtor = await resolveJsPdfConstructor();
+        if (!JsPdfCtor) {
+            showAlert('error', 'PDF export is unavailable right now. Please try again.');
+            return;
+        }
+
+        const doc = new JsPdfCtor({ unit: 'pt', format: 'a4' });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 48;
+
+        const accent = hexToRgb('#111827');
+        const accentSecondary = hexToRgb('#2563EB');
+        const neutralText = hexToRgb('#1F2937');
+        const mutedText = hexToRgb('#4B5563');
+        const subtleBackground = hexToRgb('#F3F4F6');
+        const stripeBackground = hexToRgb('#F9FAFB');
+
+        const logoDataUrl = await getBrandLogoDataUrl();
+
+        doc.setFillColor(accent.r, accent.g, accent.b);
+        doc.rect(0, 0, pageWidth, 120, 'F');
+
+        if (logoDataUrl) {
+            doc.addImage(logoDataUrl, 'PNG', margin, 26, 90, 90);
+        }
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(28);
+        doc.text('Invoice', margin + 110, 56);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(12);
+        doc.text('Disciplined Disciples', margin + 110, 78);
+        doc.text('inspired@disciplineddisciples.com', margin + 110, 96);
+
+        const invoiceDateText = `Invoice Date: ${new Date().toLocaleDateString('en-ZA')}`;
+        const invoiceNumberText = `Invoice No: ${(order.orderId || order.docId || '').toUpperCase()}`;
+        doc.text(invoiceDateText, pageWidth - margin, 56, { align: 'right' });
+        doc.text(invoiceNumberText, pageWidth - margin, 78, { align: 'right' });
+
+        let cursorY = 150;
+        const rightColumnX = pageWidth / 2 + 10;
+
+        const customerEmail = state.user?.email || '';
+        const customerName = state.profile?.name || (customerEmail ? customerEmail.split('@')[0] : 'Customer');
+        const address = state.profile?.deliveryAddress || {};
+        const addressLines = [address.line1, address.line2, address.city, address.province, address.postalCode]
+            .filter(line => line && line.trim());
+
+        doc.setTextColor(neutralText.r, neutralText.g, neutralText.b);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(13);
+        doc.text('Billed To', margin, cursorY);
+        doc.text('Order Details', rightColumnX, cursorY);
+
+        cursorY += 20;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(11);
+        doc.setTextColor(mutedText.r, mutedText.g, mutedText.b);
+
+        const billingBlock = [customerName, customerEmail, ...addressLines, ''];
+        billingBlock.forEach(line => {
+            if (!line) {
+                cursorY += 2;
+                return;
+            }
+            doc.text(line, margin, cursorY);
+            cursorY += 16;
+        });
+
+        let orderDetailsY = 170;
+        const details = [
+            `Order ID: ${order.orderId || order.docId}`,
+            `Order Date: ${formatDate(order.orderDate)}`,
+            `Payment Status: ${order.paymentStatus || 'Pending'}`,
+            `Order Status: ${order.status || 'Pending'}`
+        ];
+        details.forEach(line => {
+            doc.text(line, rightColumnX, orderDetailsY);
+            orderDetailsY += 16;
+        });
+
+        cursorY = Math.max(cursorY, orderDetailsY) + 10;
+
+        doc.setTextColor(neutralText.r, neutralText.g, neutralText.b);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(13);
+        doc.text('Items', margin, cursorY);
+        cursorY += 14;
+
+        const tableWidth = pageWidth - 2 * margin;
+        const rowHeight = 28;
+        const headerHeight = 32;
+        let tableY = cursorY;
+
+        const itemColumns = (() => {
+            const itemWidth = Math.round(tableWidth * 0.46);
+            const qtyWidth = Math.round(tableWidth * 0.14);
+            const priceWidth = Math.round(tableWidth * 0.16);
+            const lineTotalWidth = tableWidth - itemWidth - qtyWidth - priceWidth;
+            return [
+                { title: 'Item', width: itemWidth, getter: item => buildItemLabel(item) },
+                { title: 'Qty', width: qtyWidth, getter: item => item.quantity || 1 },
+                { title: 'Price', width: priceWidth, getter: item => item.price ? formatCurrency(item.price) : '—' },
+                { title: 'Line Total', width: lineTotalWidth, getter: item => item.price ? formatCurrency((Number(item.price) || 0) * (Number(item.quantity) || 1)) : '—' }
+            ];
+        })();
+
+        const renderItemsHeader = () => {
+            doc.setFillColor(accent.r, accent.g, accent.b);
+            doc.roundedRect(margin, tableY, tableWidth, headerHeight, 8, 8, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.setTextColor(255, 255, 255);
+
+            let colX = margin;
+            itemColumns.forEach((col, index) => {
+                const textX = index === itemColumns.length - 1 ? colX + col.width - 14 : colX + 14;
+                const align = index === itemColumns.length - 1 ? 'right' : 'left';
+                doc.text(col.title, textX, tableY + 21, { align });
+                colX += col.width;
+            });
+
+            tableY += headerHeight;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(neutralText.r, neutralText.g, neutralText.b);
+        };
+
+        const renderItemRow = (item, index) => {
+            if (tableY + rowHeight > pageHeight - margin) {
+                doc.addPage();
+                tableY = margin;
+                renderItemsHeader();
+            }
+
+            if (index % 2 === 0) {
+                doc.setFillColor(stripeBackground.r, stripeBackground.g, stripeBackground.b);
+                doc.rect(margin, tableY, tableWidth, rowHeight, 'F');
+            }
+
+            let colX = margin;
+            const baseline = tableY + 18;
+            itemColumns.forEach((col, colIndex) => {
+                const value = col.getter(item) || '—';
+                if (colIndex === itemColumns.length - 1) {
+                    doc.text(String(value), colX + col.width - 14, baseline, { align: 'right' });
+                } else if (colIndex === 1) {
+                    doc.text(String(value), colX + col.width / 2, baseline, { align: 'center' });
+                } else {
+                    doc.text(String(value), colX + 14, baseline, { maxWidth: col.width - 28 });
+                }
+                colX += col.width;
+            });
+
+            tableY += rowHeight;
+        };
+
+        renderItemsHeader();
+
+        if (!order.items.length) {
+            doc.setFillColor(stripeBackground.r, stripeBackground.g, stripeBackground.b);
+            doc.rect(margin, tableY, tableWidth, rowHeight, 'F');
+            doc.setTextColor(mutedText.r, mutedText.g, mutedText.b);
+            doc.text('No line items are available for this order.', margin + 14, tableY + 18);
+            tableY += rowHeight;
+        } else {
+            order.items.forEach(renderItemRow);
+        }
+
+        cursorY = tableY + 24;
+
+        const subtotal = calculateSubtotal(order);
+        const shipping = Number(order.shippingFee) || 0;
+        const totalAmount = Number(order.totalAmount) || subtotal + shipping;
+
+        const summaryBoxWidth = 220;
+        doc.setFillColor(subtleBackground.r, subtleBackground.g, subtleBackground.b);
+        doc.roundedRect(pageWidth - margin - summaryBoxWidth, cursorY, summaryBoxWidth, 110, 10, 10, 'F');
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.setTextColor(accentSecondary.r, accentSecondary.g, accentSecondary.b);
+        doc.text('Payment Summary', pageWidth - margin - summaryBoxWidth + 16, cursorY + 24);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(11);
+        doc.setTextColor(neutralText.r, neutralText.g, neutralText.b);
+        let summaryY = cursorY + 44;
+        doc.text(`Subtotal: ${formatCurrency(subtotal)}`, pageWidth - margin - summaryBoxWidth + 16, summaryY);
+        summaryY += 20;
+        doc.text(`Shipping: ${formatCurrency(shipping)}`, pageWidth - margin - summaryBoxWidth + 16, summaryY);
+        summaryY += 20;
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(accent.r, accent.g, accent.b);
+        doc.text(`Total: ${formatCurrency(totalAmount)}`, pageWidth - margin - summaryBoxWidth + 16, summaryY);
+
+        cursorY += 140;
+
+        if (cursorY > pageHeight - margin) {
+            doc.addPage();
+            cursorY = margin;
+        }
+
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(11);
+        doc.setTextColor(mutedText.r, mutedText.g, mutedText.b);
+        doc.text('Thank you for shopping with Disciplined Disciples.', margin, cursorY);
+        cursorY += 18;
+        doc.text('If you have any questions about this invoice, reply to inspired@disciplineddisciples.com.', margin, cursorY);
+
+        doc.save(`disciplined-disciples-invoice-${order.orderId || order.docId}.pdf`);
+        showAlert('success', 'Invoice PDF downloaded.', true);
+    }
+
+    function buildItemLabel(item) {
+        const parts = [];
+        if (item?.name) {
+            parts.push(item.name);
+        } else {
+            parts.push('Item');
+        }
+        if (item?.size && item.size !== 'N/A') {
+            parts.push(`Size: ${item.size}`);
+        }
+        if (item?.color) {
+            parts.push(`Color: ${item.color}`);
+        }
+        return parts.join(' • ');
+    }
+
+    function calculateSubtotal(order) {
+        const items = Array.isArray(order.items) ? order.items : [];
+        const itemTotal = items.reduce((total, item) => {
+            const price = Number(item?.price);
+            const quantity = Number(item?.quantity) || 1;
+            if (Number.isFinite(price) && price > 0) {
+                return total + price * quantity;
+            }
+            return total;
+        }, 0);
+
+        if (itemTotal > 0) {
+            return itemTotal;
+        }
+
+        const shipping = Number(order.shippingFee) || 0;
+        const totalAmount = Number(order.totalAmount) || 0;
+        const fallback = totalAmount - shipping;
+        return fallback > 0 ? fallback : totalAmount;
+    }
+
+    function isInvoiceAvailable(order) {
+        const status = (order.status || '').toLowerCase();
+        const paymentStatus = (order.paymentStatus || '').toLowerCase();
+        return status.includes('order placed') || paymentStatus.includes('paid');
+    }
+
+    async function resolveJsPdfConstructor() {
+        if (window.jspdf && window.jspdf.jsPDF) {
+            return window.jspdf.jsPDF;
+        }
+        if (window.jsPDF) {
+            return window.jsPDF;
+        }
+        return null;
+    }
+
+    async function getBrandLogoDataUrl() {
+        if (cachedBrandLogoDataUrl) {
+            return cachedBrandLogoDataUrl;
+        }
+
+        try {
+            const dataUrl = await getPrimaryLogoDataUrl('[data-brand-logo]');
+            if (dataUrl) {
+                cachedBrandLogoDataUrl = dataUrl;
+            }
+            return cachedBrandLogoDataUrl;
+        } catch (error) {
+            console.warn('Unable to embed brand logo into PDF export:', error);
+            return null;
+        }
+    }
+
     function showLoading(isVisible) {
         const overlay = selectors.loadingOverlay();
         if (!overlay) {
@@ -3470,38 +3425,6 @@ window.ProfileApp = (function() {
         }
     }
 
-    function formatCurrency(value) {
-        const amount = Number(value) || 0;
-        return `R${amount.toFixed(2)}`;
-    }
-
-    function formatDate(value, options) {
-        if (!value) {
-            return 'N/A';
-        }
-
-        let date;
-        if (value instanceof Date) {
-            date = value;
-        } else if (typeof value === 'object' && typeof value.toDate === 'function') {
-            date = value.toDate();
-        } else if (typeof value === 'string' || typeof value === 'number') {
-            date = new Date(value);
-        } else {
-            return 'N/A';
-        }
-
-        if (Number.isNaN(date.getTime())) {
-            return 'N/A';
-        }
-
-        return date.toLocaleDateString('en-ZA', options || {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-    }
-
     function showTab(targetId) {
         if (!targetId) {
             return;
@@ -3515,6 +3438,950 @@ window.ProfileApp = (function() {
     return {
         init,
         showTab
+    };
+})();
+
+window.AdminApp = (function() {
+    const STATUS_OPTIONS = ['Awaiting Payment', 'Order Placed', 'Out for Delivery', 'Arriving Soon', 'Delivered', 'Cancelled'];
+    const PAYMENT_OPTIONS = ['Pending Payment', 'Paid', 'Refunded', 'Failed', 'Cancelled'];
+    const STATUS_ACTION_KEYS = ['orderPlaced', 'outForDelivery', 'eta', 'delivered'];
+    const STATUS_ACTION_TEMPLATES = STATUS_ACTION_KEYS
+        .map(key => window.ORDER_STATUS_TEMPLATES?.[key])
+        .filter(Boolean);
+
+    const state = {
+        initialized: false,
+        eventsBound: false,
+        user: null,
+        orders: [],
+        filteredOrders: [],
+        customers: [],
+        customersById: {},
+        customerStats: {},
+        customerList: [],
+        metrics: {
+            totalOrders: 0,
+            pendingOrders: 0,
+            totalRevenue: 0,
+            totalCustomers: 0
+        },
+        loadingOrdersError: null,
+        loadingCustomersError: null,
+        cachedLogoDataUrl: null
+    };
+
+    const selectors = {
+        loadingOverlay: () => document.getElementById('admin-loading'),
+        alert: () => document.getElementById('admin-alert'),
+        totalOrders: () => document.getElementById('admin-total-orders'),
+        pendingOrders: () => document.getElementById('admin-pending-orders'),
+        totalRevenue: () => document.getElementById('admin-total-revenue'),
+        totalCustomers: () => document.getElementById('admin-total-customers'),
+        statusFilter: () => document.getElementById('admin-status-filter'),
+        refreshBtn: () => document.getElementById('admin-refresh'),
+        exportBtn: () => document.getElementById('admin-export'),
+        exportPdfBtn: () => document.getElementById('admin-export-pdf'),
+        ordersBody: () => document.getElementById('admin-orders-body'),
+        customersBody: () => document.getElementById('admin-customers-body'),
+        logoutBtn: () => document.getElementById('admin-logout')
+    };
+
+    function getTemplateByKey(key) {
+        if (!key) {
+            return null;
+        }
+        const normalized = key.replace(/-/g, '_');
+        return STATUS_ACTION_TEMPLATES.find(template => template.key === normalized);
+    }
+
+    function getTemplateByStatusLabel(label) {
+        if (!label) {
+            return null;
+        }
+        const normalized = label.toLowerCase();
+        return STATUS_ACTION_TEMPLATES.find(template =>
+            template.status.toLowerCase() === normalized || template.label.toLowerCase() === normalized
+        );
+    }
+
+    function buildHistoryList(order) {
+        const history = Array.isArray(order.statusHistory) ? order.statusHistory.slice() : [];
+        if (!history.length) {
+            return '<li class="text-xs text-slate-400">No updates yet.</li>';
+        }
+
+        const sorted = history.sort((a, b) => {
+            const aTime = new Date(a.createdAt || 0).getTime();
+            const bTime = new Date(b.createdAt || 0).getTime();
+            return bTime - aTime;
+        }).slice(0, 4);
+
+        return sorted.map(entry => {
+            const icon = entry.icon || '';
+            const when = formatDate(entry.createdAt) || '';
+            const message = escapeHtml(entry.message || entry.status || 'Update');
+            return `<li class="flex items-start gap-2">
+                <span class="text-lg leading-none">${icon}</span>
+                <div class="text-xs text-slate-500">
+                    <div class="font-semibold text-slate-600">${escapeHtml(entry.status || entry.label || 'Update')}</div>
+                    <div>${message}</div>
+                    <div class="text-[10px] uppercase tracking-wide text-slate-400">${escapeHtml(when)} • ${escapeHtml(entry.updatedBy || 'team')}</div>
+                </div>
+            </li>`;
+        }).join('');
+    }
+
+    function buildStatusActions(order) {
+        const docId = escapeHtml(order.docId);
+        return STATUS_ACTION_TEMPLATES.map(template => `<button type="button" data-doc-id="${docId}" data-status-action="${template.key}" class="px-2 py-1 text-xs rounded border border-slate-200 hover:border-blue-400 hover:text-blue-600 transition">${escapeHtml(template.buttonLabel || template.label)}</button>`).join('<span class="text-slate-200">|</span>');
+    }
+
+    function isAdminPage() {
+        return window.location.pathname.includes('admin-dashboard.html');
+    }
+
+    async function init() {
+        if (!isAdminPage()) {
+            return;
+        }
+
+        if (state.initialized) {
+            return;
+        }
+        state.initialized = true;
+
+        hideAlert();
+        showLoading(true);
+
+        await waitForFirebaseReady();
+
+        const auth = window.auth || (window.firebase && window.firebase.auth && window.firebase.auth());
+        if (!auth) {
+            showAlert('error', 'Unable to connect to Firebase. Please try again later.');
+            showLoading(false);
+            return;
+        }
+
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+            await handleAuthenticatedAdmin(currentUser);
+        } else {
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    await handleAuthenticatedAdmin(user);
+                } else {
+                    showLoading(false);
+                    window.location.replace('login-signup.html?redirect=admin-dashboard.html');
+                }
+            });
+        }
+    }
+
+    async function handleAuthenticatedAdmin(user) {
+        if (!isAdminEmail(user.email)) {
+            showLoading(false);
+            window.location.replace('profile.html');
+            return;
+        }
+
+        state.user = user;
+        window.currentUserId = user.uid;
+        sessionStorage.setItem('userLoggedIn', 'true');
+        sessionStorage.setItem('userId', user.uid);
+
+        bindEvents();
+
+        try {
+            await loadCustomers();
+            await loadOrders();
+            composeCustomerList();
+            updateMetrics();
+            renderAll();
+            if (state.loadingCustomersError || state.loadingOrdersError) {
+                const parts = [];
+                if (state.loadingOrdersError) {
+                    parts.push(`orders: ${state.loadingOrdersError.message || state.loadingOrdersError}`);
+                }
+                if (state.loadingCustomersError) {
+                    parts.push(`customers: ${state.loadingCustomersError.message || state.loadingCustomersError}`);
+                }
+                showAlert('error', `We could not load all admin data. Details: ${parts.join(' | ')}`);
+            } else {
+                hideAlert();
+            }
+        } catch (error) {
+            console.error('AdminApp initialization error:', error);
+            const details = error && error.message ? ` (${error.message})` : '';
+            showAlert('error', `We could not load the admin dashboard. Please refresh and try again${details}.`);
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    async function loadCustomers() {
+        state.customers = [];
+        state.customersById = {};
+        state.loadingCustomersError = null;
+
+        if (!window.db) {
+            state.loadingCustomersError = new Error('Firestore is not available.');
+            return;
+        }
+
+        try {
+            const snapshot = await usersCollection().get();
+            snapshot.forEach(doc => {
+                const data = doc.data() || {};
+                const record = {
+                    id: doc.id,
+                    name: (data.name || '').trim() || 'Customer',
+                    email: (data.email || '').trim(),
+                    phone: (data.phone || '').trim(),
+                    createdAt: coerceToDate(data.createdAt || data.memberSince)
+                };
+
+                state.customers.push(record);
+                state.customersById[doc.id] = record;
+            });
+        } catch (error) {
+            state.loadingCustomersError = error;
+            console.error('Failed to load customers:', error);
+            showAlert('error', `Unable to load customers: ${error.message || error}`);
+        }
+    }
+
+    async function loadOrders() {
+        state.orders = [];
+        state.filteredOrders = [];
+        state.customerStats = {};
+        state.loadingOrdersError = null;
+
+        if (!window.db) {
+            state.loadingOrdersError = new Error('Firestore is not available.');
+            return;
+        }
+
+        try {
+            let snapshot;
+            try {
+                snapshot = await ordersCollection().orderBy('orderDate', 'desc').get();
+            } catch (orderError) {
+                if (orderError && orderError.code === 'failed-precondition') {
+                    console.warn('Missing Firestore index for admin order listing, falling back to unsorted fetch.');
+                    snapshot = await ordersCollection().get();
+                } else {
+                    throw orderError;
+                }
+            }
+
+            snapshot.forEach(doc => {
+                const data = doc.data() || {};
+                const orderDate = coerceToDate(data.orderDate);
+                const order = {
+                    docId: doc.id,
+                    orderId: data.orderId || doc.id,
+                    userId: data.userId || '',
+                    statusKey: data.statusKey || '',
+                    status: data.status || 'Pending',
+                    statusLabel: data.statusLabel || data.status || 'Pending',
+                    statusMessage: data.statusMessage || data.lastCustomerMessage || '',
+                    statusIcon: data.statusIcon || '',
+                    statusUpdatedAt: coerceToDate(data.statusUpdatedAt),
+                    statusHistory: Array.isArray(data.statusHistory) ? data.statusHistory : [],
+                    paymentStatus: data.paymentStatus || data.payment_status || 'Pending Payment',
+                    orderDate,
+                    totalAmount: Number(data.totalAmount) || 0,
+                    items: Array.isArray(data.items) ? data.items : [],
+                    shippingFee: Number(data.shippingFee || data.shippingCost || 0),
+                    trackingNumber: data.trackingNumber || '',
+                    estimatedArrivalText: data.estimatedArrivalText || data.estimatedDelivery || '',
+                    customerName: data.customerName || (data.customer && data.customer.name) || '',
+                    customerEmail: data.customerEmail || (data.customer && data.customer.email) || '',
+                    lastCustomerMessage: data.lastCustomerMessage || data.statusMessage || ''
+                };
+
+                state.orders.push(order);
+                accumulateCustomerStats(order);
+            });
+
+            state.orders.sort((a, b) => {
+                const aTime = (a.orderDate instanceof Date && !Number.isNaN(a.orderDate.getTime())) ? a.orderDate.getTime() : 0;
+                const bTime = (b.orderDate instanceof Date && !Number.isNaN(b.orderDate.getTime())) ? b.orderDate.getTime() : 0;
+                return bTime - aTime;
+            });
+
+            state.filteredOrders = [...state.orders];
+            console.info('Admin dashboard loaded orders:', state.orders.length);
+        } catch (error) {
+            state.loadingOrdersError = error;
+            console.error('Failed to load orders:', error);
+            showAlert('error', `Unable to load orders: ${error.message || error}`);
+        }
+    }
+
+    function accumulateCustomerStats(order) {
+        const key = order.userId || 'unknown';
+        const stats = state.customerStats[key] || { orders: 0, revenue: 0, lastOrder: null };
+
+        stats.orders += 1;
+        stats.revenue += Number(order.totalAmount) || 0;
+
+        const orderDate = coerceToDate(order.orderDate);
+        if (orderDate && (!stats.lastOrder || orderDate > stats.lastOrder)) {
+            stats.lastOrder = orderDate;
+        }
+
+        state.customerStats[key] = stats;
+    }
+
+    function updateMetrics() {
+        state.metrics.totalOrders = state.orders.length;
+        state.metrics.pendingOrders = state.orders.filter(order => (order.status || '').toLowerCase().includes('pending')).length;
+        state.metrics.totalRevenue = state.orders.reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0);
+        state.metrics.totalCustomers = state.customers.length;
+    }
+
+    function composeCustomerList() {
+        const combined = [];
+        const seen = new Set();
+
+        state.customers.forEach(customer => {
+            const stats = state.customerStats[customer.id] || { orders: 0, revenue: 0, lastOrder: null };
+            combined.push({
+                id: customer.id,
+                name: customer.name || customer.email || 'Customer',
+                email: customer.email || '—',
+                phone: customer.phone || '—',
+                orders: stats.orders,
+                revenue: stats.revenue,
+                lastOrder: stats.lastOrder
+            });
+            seen.add(customer.id);
+        });
+
+        Object.entries(state.customerStats).forEach(([userId, stats]) => {
+            if (seen.has(userId)) {
+                return;
+            }
+            combined.push({
+                id: userId,
+                name: userId === 'unknown' ? 'Guest Checkout' : 'Customer',
+                email: userId === 'unknown' ? '—' : userId,
+                phone: '—',
+                orders: stats.orders,
+                revenue: stats.revenue,
+                lastOrder: stats.lastOrder
+            });
+        });
+
+        state.customerList = combined.sort((a, b) => b.revenue - a.revenue);
+    }
+
+    function bindEvents() {
+        if (state.eventsBound) {
+            return;
+        }
+        state.eventsBound = true;
+
+        const statusFilter = selectors.statusFilter();
+        if (statusFilter) {
+            statusFilter.addEventListener('change', () => {
+                renderOrders();
+            });
+        }
+
+        const refreshBtn = selectors.refreshBtn();
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                refreshData();
+            });
+        }
+
+        const exportBtn = selectors.exportBtn();
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                exportOrders();
+            });
+        }
+
+        const exportPdfBtn = selectors.exportPdfBtn();
+        if (exportPdfBtn) {
+            exportPdfBtn.addEventListener('click', () => {
+                exportOrdersToPdf();
+            });
+        }
+
+        const logoutBtn = selectors.logoutBtn();
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                handleLogout();
+            });
+        }
+
+        const ordersBody = selectors.ordersBody();
+        if (ordersBody && !ordersBody.dataset.bound) {
+            ordersBody.addEventListener('change', async (event) => {
+                const select = event.target.closest('select[data-doc-id]');
+                if (!select) {
+                    return;
+                }
+
+                const docId = select.dataset.docId;
+                const field = select.dataset.field;
+                const value = select.value;
+
+                await updateOrderField(docId, field, value);
+            });
+            ordersBody.addEventListener('click', async (event) => {
+                const button = event.target.closest('button[data-status-action]');
+                if (!button) {
+                    return;
+                }
+                const docId = button.dataset.docId;
+                const actionKey = button.dataset.statusAction;
+                await applyStatusTemplate(docId, actionKey);
+            });
+            ordersBody.dataset.bound = 'true';
+        }
+    }
+
+    async function refreshData() {
+        showLoading(true);
+        try {
+            await loadOrders();
+            composeCustomerList();
+            updateMetrics();
+            renderAll();
+            showAlert('success', 'Dashboard data refreshed.', true);
+        } catch (error) {
+            console.error('Failed to refresh admin data:', error);
+            showAlert('error', 'Could not refresh data. Please try again later.');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    async function applyStatusTemplate(docId, actionKey) {
+        const template = getTemplateByKey(actionKey) || getTemplateByStatusLabel(actionKey);
+        if (!template) {
+            showAlert('info', 'No quick message template found for that action yet.', true);
+            return;
+        }
+
+        const order = state.orders.find(candidate => candidate.docId === docId);
+        if (!order) {
+            showAlert('error', 'Unable to locate that order. Please refresh and try again.');
+            return;
+        }
+
+        let overrides = {};
+        if (template.requiresInput) {
+            const userInput = window.prompt(template.requiresInput.prompt, template.requiresInput.placeholderFallback || 'soon');
+            if (userInput === null) {
+                return;
+            }
+            overrides = {
+                [template.requiresInput.field]: userInput.trim() || template.requiresInput.placeholderFallback || 'soon'
+            };
+        }
+
+        try {
+            showLoading(true);
+            const actor = { email: state.user?.email, uid: state.user?.uid };
+            const { payload } = buildStatusUpdatePayload(template, order, overrides, actor);
+            await ordersCollection().doc(docId).set(payload, { merge: true });
+            await loadOrders();
+            composeCustomerList();
+            updateMetrics();
+            renderAll();
+            const successLabel = `${template.icon || ''} ${template.label} update shared with the customer.`.trim();
+            showAlert('success', successLabel, true);
+        } catch (error) {
+            console.error('Failed to apply status template:', error);
+            showAlert('error', 'Could not send that update. Please try again.');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    async function updateOrderField(docId, field, value) {
+        if (!docId || !field) {
+            return;
+        }
+
+        if (field === 'status') {
+            const template = getTemplateByStatusLabel(value);
+            if (template) {
+                await applyStatusTemplate(docId, template.key);
+                return;
+            }
+        }
+
+        try {
+            await ordersCollection().doc(docId).set({
+                [field]: value,
+                updatedAt: window.serverTimestamp ? window.serverTimestamp() : new Date()
+            }, { merge: true });
+
+            await loadOrders();
+            composeCustomerList();
+            updateMetrics();
+            renderAll();
+            showAlert('success', 'Order updated successfully.', true);
+        } catch (error) {
+            console.error('Failed to update order:', error);
+            showAlert('error', 'Could not update this order. Please retry.');
+        }
+    }
+
+    function renderAll() {
+        renderMetrics();
+        renderOrders();
+        renderCustomers();
+    }
+
+    function renderMetrics() {
+        const totalOrdersEl = selectors.totalOrders();
+        const pendingOrdersEl = selectors.pendingOrders();
+        const totalRevenueEl = selectors.totalRevenue();
+        const totalCustomersEl = selectors.totalCustomers();
+
+        if (totalOrdersEl) totalOrdersEl.textContent = state.metrics.totalOrders;
+        if (pendingOrdersEl) pendingOrdersEl.textContent = state.metrics.pendingOrders;
+        if (totalRevenueEl) totalRevenueEl.textContent = formatCurrency(state.metrics.totalRevenue);
+        if (totalCustomersEl) totalCustomersEl.textContent = state.metrics.totalCustomers;
+    }
+
+    function renderOrders() {
+        const tbody = selectors.ordersBody();
+        if (!tbody) {
+            return;
+        }
+
+        tbody.innerHTML = '';
+
+        if (state.loadingOrdersError) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="px-4 py-6 text-center text-red-600">Failed to load orders: ${escapeHtml(state.loadingOrdersError.message || 'Unknown error')}</td>
+                </tr>`;
+            return;
+        }
+
+        const filter = selectors.statusFilter();
+        const filterValue = filter ? filter.value : 'all';
+        state.filteredOrders = filterOrders(filterValue);
+
+        if (!state.filteredOrders.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="px-4 py-6 text-center text-gray-500">No orders match this filter.</td>
+                </tr>`;
+            return;
+        }
+
+        state.filteredOrders.forEach(order => {
+            tbody.appendChild(buildOrderRow(order));
+        });
+    }
+
+    function filterOrders(filterValue) {
+        if (!filterValue || filterValue === 'all') {
+            return [...state.orders];
+        }
+
+        return state.orders.filter(order => (order.status || '').toLowerCase().includes(filterValue.toLowerCase()));
+    }
+
+    function buildOrderRow(order) {
+        const row = document.createElement('tr');
+        row.className = 'border-b last:border-0 hover:bg-gray-50 transition-colors';
+
+        const customer = state.customersById[order.userId] || {};
+        const customerName = customer.name || order.customerName || 'Customer';
+        const customerEmail = customer.email || order.customerEmail || '—';
+
+        const safeOrderId = escapeHtml(order.orderId);
+        const safeDocId = escapeHtml(order.docId);
+        const safeCustomerName = escapeHtml(customerName);
+        const safeCustomerEmail = escapeHtml(customerEmail);
+        const safeTracking = escapeHtml(order.trackingNumber || '');
+
+        const statusOptions = buildOptions(STATUS_OPTIONS, order.status);
+        const paymentOptions = buildOptions(PAYMENT_OPTIONS, order.paymentStatus);
+
+        const items = (order.items || []).map(item => {
+            const title = item.name || 'Item';
+            const quantity = item.quantity || 1;
+            const size = item.size && item.size !== 'N/A' ? ` (${item.size})` : '';
+            const label = escapeHtml(`${title}${size}`);
+            return `<li>${label} x${quantity}</li>`;
+        }).join('');
+
+        const latestMessage = escapeHtml(order.statusMessage || order.lastCustomerMessage || 'No message yet.');
+        const statusActions = buildStatusActions(order);
+        const historyList = buildHistoryList(order);
+        const eta = order.estimatedArrivalText ? `<div class="mt-1 text-[11px] text-blue-600">ETA: ${escapeHtml(order.estimatedArrivalText)}</div>` : '';
+
+        row.innerHTML = `
+            <td class="px-4 py-3 text-sm font-semibold text-gray-800">
+                <div>${safeOrderId}</div>
+                <div class="text-xs text-gray-400">${safeDocId}</div>
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-500">${formatDate(order.orderDate)}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">
+                <div>${safeCustomerName}</div>
+                <div class="text-xs text-gray-400">${safeCustomerEmail}</div>
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-700">${formatCurrency(order.totalAmount)}</td>
+            <td class="px-4 py-3 text-sm">
+                <select class="border rounded px-2 py-1 text-sm" data-doc-id="${safeDocId}" data-field="status">
+                    ${statusOptions}
+                </select>
+            </td>
+            <td class="px-4 py-3 text-sm">
+                <select class="border rounded px-2 py-1 text-sm" data-doc-id="${safeDocId}" data-field="paymentStatus">
+                    ${paymentOptions}
+                </select>
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-600">
+                <details class="group">
+                    <summary class="cursor-pointer text-blue-600 hover:underline text-sm">Items (${order.items.length})</summary>
+                    <ul class="mt-2 space-y-1 text-xs text-gray-500 group-open:animate-fade">${items || '<li>No items</li>'}</ul>
+                    ${safeTracking ? `<div class="mt-2 text-xs text-gray-500">Tracking: ${safeTracking}</div>` : ''}
+                </details>
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-600">
+                <div class="text-xs text-gray-700 bg-slate-100 border border-slate-200 rounded px-3 py-2">${latestMessage}</div>
+                ${eta}
+                <ul class="mt-3 space-y-2">${historyList}</ul>
+                <div class="mt-3 flex flex-wrap gap-2">${statusActions}</div>
+            </td>
+        `;
+
+        return row;
+    }
+
+    function buildOptions(options, currentValue) {
+        const normalized = (currentValue || '').toLowerCase();
+        const unique = new Set(options.map(option => option.toLowerCase()));
+        const rendered = [...options];
+
+        if (currentValue && !unique.has(normalized)) {
+            rendered.push(currentValue);
+        }
+
+        return rendered.map(option => {
+            const selected = option.toLowerCase() === normalized ? 'selected' : '';
+            const safeOption = escapeHtml(option);
+            return `<option value="${safeOption}" ${selected}>${safeOption}</option>`;
+        }).join('');
+    }
+
+    function renderCustomers() {
+        const tbody = selectors.customersBody();
+        if (!tbody) {
+            return;
+        }
+
+        tbody.innerHTML = '';
+
+        if (state.loadingCustomersError) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-4 py-6 text-center text-red-600">Failed to load customers: ${escapeHtml(state.loadingCustomersError.message || 'Unknown error')}</td>
+                </tr>`;
+            return;
+        }
+
+        if (!state.customerList.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-4 py-6 text-center text-gray-500">No customers found.</td>
+                </tr>`;
+            return;
+        }
+
+        state.customerList.slice(0, 10).forEach(customer => {
+            const row = document.createElement('tr');
+            row.className = 'border-b last:border-0';
+            row.innerHTML = `
+                <td class="px-4 py-3 text-sm font-semibold text-gray-800">${escapeHtml(customer.name)}</td>
+                <td class="px-4 py-3 text-sm text-gray-500">${escapeHtml(customer.email)}</td>
+                <td class="px-4 py-3 text-sm text-gray-500">${customer.orders}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">${formatCurrency(customer.revenue)}</td>
+                <td class="px-4 py-3 text-sm text-gray-500">${customer.lastOrder ? formatDate(customer.lastOrder) : '—'}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    function exportOrders() {
+        if (!state.filteredOrders.length) {
+            showAlert('info', 'There are no orders to export for this filter.', true);
+            return;
+        }
+
+        try {
+            const header = ['Order ID', 'Customer Name', 'Customer Email', 'Status', 'Status Message', 'Payment Status', 'Date', 'Total', 'Items'];
+            const rows = state.filteredOrders.map(order => {
+                const customer = state.customersById[order.userId] || {};
+                const customerName = customer.name || order.customerName || 'Customer';
+                const customerEmail = customer.email || order.customerEmail || '';
+                const items = (order.items || []).map(item => `${item.name || 'Item'} x${item.quantity || 1}`).join('; ');
+
+                return [
+                    quoteCsv(order.orderId),
+                    quoteCsv(customerName),
+                    quoteCsv(customerEmail),
+                    quoteCsv(order.status || ''),
+                    quoteCsv(order.statusMessage || order.lastCustomerMessage || ''),
+                    quoteCsv(order.paymentStatus || ''),
+                    quoteCsv(formatDate(order.orderDate)),
+                    quoteCsv(formatCurrency(order.totalAmount)),
+                    quoteCsv(items)
+                ].join(',');
+            });
+
+            const csvContent = [header.join(','), ...rows].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `disciplined-disciples-admin-orders-${Date.now()}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+            showAlert('success', 'CSV exported successfully.', true);
+        } catch (error) {
+            console.error('Failed to export CSV:', error);
+            showAlert('error', `Could not generate the CSV. ${error.message || error}`);
+        }
+    }
+
+    async function exportOrdersToPdf() {
+        if (!state.filteredOrders.length) {
+            showAlert('info', 'There are no orders to export for this filter.', true);
+            return;
+        }
+
+        try {
+            const JsPdfCtor = await resolveJsPdfConstructor();
+            if (!JsPdfCtor) {
+                showAlert('error', 'PDF export is unavailable right now. Please refresh and try again.');
+                return;
+            }
+
+            const doc = new JsPdfCtor({ unit: 'pt', format: 'a4' });
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 48;
+
+            const accent = hexToRgb('#111827');
+            const accentSecondary = hexToRgb('#2563EB');
+            const neutralText = hexToRgb('#1F2937');
+            const mutedText = hexToRgb('#4B5563');
+            const subtleBackground = hexToRgb('#F3F4F6');
+            const stripeBackground = hexToRgb('#F9FAFB');
+
+            const preferredSelectors = ['[data-admin-logo]', '[data-brand-logo]'];
+            const logoDataUrl = state.cachedLogoDataUrl || await getPrimaryLogoDataUrl(preferredSelectors);
+            if (logoDataUrl && !state.cachedLogoDataUrl) {
+                state.cachedLogoDataUrl = logoDataUrl;
+            }
+
+            doc.setFillColor(accent.r, accent.g, accent.b);
+            doc.rect(0, 0, pageWidth, 110, 'F');
+
+            if (logoDataUrl) {
+                doc.addImage(logoDataUrl, 'PNG', margin, 24, 72, 72);
+            }
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(22);
+            doc.text('Disciplined Disciples', margin + 92, 46);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Admin Orders Overview', margin + 92, 68);
+            doc.setFontSize(11);
+            doc.text(`Generated: ${new Date().toLocaleString('en-ZA')}`, pageWidth - margin, 46, { align: 'right' });
+
+            const filterSelect = selectors.statusFilter && selectors.statusFilter();
+            const selectedOption = filterSelect && filterSelect.options ? filterSelect.options[filterSelect.selectedIndex] : null;
+            const filterLabel = selectedOption ? (selectedOption.text || selectedOption.value || 'All orders') : 'All orders';
+            const pendingCount = state.filteredOrders.filter(order => (order.status || '').toLowerCase().includes('pending')).length;
+            const totalRevenue = state.filteredOrders.reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0);
+            const uniqueCustomers = new Set(state.filteredOrders.map(order => order.userId || order.customerEmail || order.customerName || order.docId)).size;
+
+            let cursorY = 140;
+            const summaryHeight = 120;
+
+            doc.setFillColor(subtleBackground.r, subtleBackground.g, subtleBackground.b);
+            doc.roundedRect(margin, cursorY, pageWidth - 2 * margin, summaryHeight, 12, 12, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.setTextColor(accentSecondary.r, accentSecondary.g, accentSecondary.b);
+            doc.text('At a glance', margin + 20, cursorY + 28);
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(11);
+            doc.setTextColor(mutedText.r, mutedText.g, mutedText.b);
+            const summaryBase = cursorY + 48;
+            doc.text(`Orders in view: ${state.filteredOrders.length}`, margin + 20, summaryBase);
+            doc.text(`Pending orders: ${pendingCount}`, margin + 20, summaryBase + 18);
+            doc.text(`Status filter: ${filterLabel}`, margin + 20, summaryBase + 36);
+            doc.text(`Total revenue (view): ${formatCurrency(totalRevenue)}`, margin + 260, summaryBase);
+            doc.text(`Unique customers: ${uniqueCustomers}`, margin + 260, summaryBase + 18);
+            doc.text('Generated from: Admin dashboard', margin + 260, summaryBase + 36);
+
+            cursorY += summaryHeight + 20;
+
+            const tableWidth = pageWidth - 2 * margin;
+            const rowHeight = 30;
+            const headerHeight = 34;
+            let tableY = cursorY;
+
+            const columns = (() => {
+                const base = [
+                    { title: 'Order ID', width: 150, getter: order => (order.orderId || order.docId || '').slice(0, 18) },
+                    { title: 'Date', width: 90, getter: order => formatDate(order.orderDate) },
+                    { title: 'Status', width: 140, getter: order => order.status || '—' },
+                    { title: 'Payment', width: 120, getter: order => order.paymentStatus || '—' }
+                ];
+                const usedWidth = base.reduce((sum, col) => sum + col.width, 0);
+                base.push({ title: 'Total', width: tableWidth - usedWidth, getter: order => formatCurrency(order.totalAmount) });
+                return base;
+            })();
+
+            const renderTableHeader = () => {
+                doc.setFillColor(accent.r, accent.g, accent.b);
+                doc.roundedRect(margin, tableY, tableWidth, headerHeight, 8, 8, 'F');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(11);
+                doc.setTextColor(255, 255, 255);
+
+                let colX = margin;
+                columns.forEach((col, index) => {
+                    const textX = index === columns.length - 1 ? colX + col.width - 14 : colX + 14;
+                    const align = index === columns.length - 1 ? 'right' : 'left';
+                    doc.text(col.title, textX, tableY + 22, { align });
+                    colX += col.width;
+                });
+
+                tableY += headerHeight;
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.setTextColor(neutralText.r, neutralText.g, neutralText.b);
+            };
+
+            const renderRow = (order, index) => {
+                if (tableY + rowHeight > pageHeight - margin) {
+                    doc.addPage();
+                    tableY = margin;
+                    renderTableHeader();
+                }
+
+                if (index % 2 === 0) {
+                    doc.setFillColor(stripeBackground.r, stripeBackground.g, stripeBackground.b);
+                    doc.rect(margin, tableY, tableWidth, rowHeight, 'F');
+                }
+
+                let colX = margin;
+                const textBaseline = tableY + 19;
+                columns.forEach((col, colIndex) => {
+                    const value = col.getter(order) || '—';
+                    if (colIndex === columns.length - 1) {
+                        doc.text(String(value), colX + col.width - 14, textBaseline, { align: 'right' });
+                    } else {
+                        doc.text(String(value), colX + 14, textBaseline, { maxWidth: col.width - 28 });
+                    }
+                    colX += col.width;
+                });
+
+                tableY += rowHeight;
+            };
+
+            renderTableHeader();
+            state.filteredOrders.forEach((order, index) => renderRow(order, index));
+
+            cursorY = tableY + 36;
+            doc.setFont('helvetica', 'italic');
+            doc.setFontSize(10);
+            doc.setTextColor(mutedText.r, mutedText.g, mutedText.b);
+            doc.text('For full order management, continue in the Disciplined Disciples admin dashboard.', margin, cursorY);
+
+            doc.save(`disciplined-disciples-admin-orders-${Date.now()}.pdf`);
+            showAlert('success', 'PDF exported successfully.', true);
+        } catch (error) {
+            console.error('Failed to export PDF:', error);
+            showAlert('error', `Could not generate the PDF. ${error.message || error}`);
+        }
+    }
+
+    async function resolveJsPdfConstructor() {
+        if (window.jspdf && window.jspdf.jsPDF) {
+            return window.jspdf.jsPDF;
+        }
+        if (window.jsPDF) {
+            return window.jsPDF;
+        }
+        return null;
+    }
+
+    function showLoading(isVisible) {
+        const overlay = selectors.loadingOverlay();
+        if (!overlay) {
+            return;
+        }
+        overlay.classList.toggle('hidden', !isVisible);
+    }
+
+    function hideAlert() {
+        const alertEl = selectors.alert();
+        if (!alertEl) {
+            return;
+        }
+        alertEl.classList.add('hidden');
+        alertEl.textContent = '';
+    }
+
+    function showAlert(type, message, autoHide = false) {
+        const alertEl = selectors.alert();
+        if (!alertEl) {
+            return;
+        }
+
+        const classMap = {
+            success: 'bg-emerald-50 border border-emerald-200 text-emerald-700',
+            error: 'bg-red-50 border border-red-200 text-red-700',
+            info: 'bg-blue-50 border border-blue-200 text-blue-700'
+        };
+
+        alertEl.className = `mb-6 px-4 py-3 rounded ${classMap[type] || 'bg-gray-50 border border-gray-200 text-gray-700'}`;
+        alertEl.textContent = message;
+        alertEl.classList.remove('hidden');
+        if (typeof alertEl.scrollIntoView === 'function') {
+            alertEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        if (autoHide) {
+            setTimeout(() => {
+                alertEl.classList.add('hidden');
+            }, 4000);
+        }
+    }
+
+    function ordersCollection() {
+        return window.db.collection('artifacts').doc('default-app-id').collection('orders');
+    }
+
+    function usersCollection() {
+        return window.db.collection('artifacts').doc('default-app-id').collection('users');
+    }
+
+    return {
+        init
     };
 })();
 

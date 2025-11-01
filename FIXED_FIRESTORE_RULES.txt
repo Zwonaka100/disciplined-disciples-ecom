@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+  
+    // Allow authenticated users to read/write products
+    match /products/{productId} {
+     allow read: if true;
+     allow write: if false;
+    } 
+
+    // Allow authenticated users to read and write to their own user profile
+    match /artifacts/default-app-id/users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Basic user collection (needed by some parts of your app)
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Cart functionality
+    match /artifacts/default-app-id/cart/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Allow authenticated users to create new orders
+    match /artifacts/default-app-id/orders/{orderId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
+    // Test collection for debugging
+    match /test/{document} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Default deny for all other collections/documents
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
