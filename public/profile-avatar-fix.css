@@ -1,0 +1,45 @@
+/* Profile Avatar Circular Styling - Add this to ensure avatars are always circular */
+
+/* Main profile avatar container - ensure it's always circular */
+#profile-ribbon-avatar {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    border-radius: 50% !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+}
+
+/* Ensure any image inside the avatar is circular and fits properly */
+#profile-ribbon-avatar img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 50% !important;
+}
+
+/* Ensure initials text is centered */
+#profile-ribbon-avatar:not(:has(img)) {
+    font-weight: bold !important;
+    font-size: 1rem !important;
+    color: #374151 !important;
+}
+
+/* For smaller screens or specific pages, maintain consistency */
+.login-signup-page #profile-ribbon-avatar {
+    width: 2rem !important;
+    height: 2rem !important;
+    font-size: 0.75rem !important;
+}
+
+.login-signup-page #profile-ribbon-avatar img {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Override any conflicting styles */
+#profile-ribbon-avatar * {
+    border-radius: 50% !important;
+}
