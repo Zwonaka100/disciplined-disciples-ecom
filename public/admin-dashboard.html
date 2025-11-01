@@ -93,8 +93,29 @@
                 <div>
                     <h2 class="text-lg font-semibold text-slate-900">Orders</h2>
                     <p class="text-sm text-slate-500">Track, update, and export the latest purchases</p>
+                    <p id="admin-orders-summary" class="mt-1 text-xs text-slate-400">Showing 0 orders (All statuses • All customers • All dates)</p>
+                    <div id="admin-stale-banner" class="mt-3 hidden rounded-lg border border-sky-300 bg-sky-50 px-4 py-3 text-xs text-sky-900">
+                        <div class="flex flex-col gap-2">
+                            <div class="flex items-start gap-2">
+                                <span class="text-lg leading-none" aria-hidden="true">💡</span>
+                                <div>
+                                    <p id="admin-stale-banner-title" class="font-semibold">Awaiting-payment orders auto-hidden</p>
+                                    <p id="admin-stale-banner-detail" class="mt-1 text-sky-700"></p>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <button id="admin-toggle-stale-orders" type="button" class="inline-flex items-center gap-2 rounded border border-sky-400 px-3 py-1.5 text-[11px] font-semibold text-sky-800 hover:bg-sky-100 transition">
+                                    Show hidden orders
+                                </button>
+                                <span id="admin-stale-banner-tip" class="text-[11px] text-sky-600"></span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
+                    <input type="search" id="admin-customer-filter" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48" placeholder="Search customer, email, order" aria-label="Filter by customer" />
+                    <input type="date" id="admin-date-from" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-36" aria-label="Filter from date" />
+                    <input type="date" id="admin-date-to" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-36" aria-label="Filter to date" />
                     <select id="admin-status-filter" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="all">All statuses</option>
                         <option value="awaiting payment">Awaiting payment</option>

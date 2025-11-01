@@ -347,6 +347,46 @@ function renderTemplateString(templateString, data = {}) {
     });
 }
 
+function formatDeliveryAddress(address) {
+    if (!address) {
+        return '';
+    }
+
+    if (typeof address === 'string') {
+        return address.trim();
+    }
+
+    const parts = [];
+
+    const pushPart = (value) => {
+        if (!value) {
+            return;
+        }
+        const text = String(value).trim();
+        if (text) {
+            parts.push(text);
+        }
+    };
+
+    pushPart(address.line1);
+    pushPart(address.line2);
+    pushPart(address.city);
+    pushPart(address.province || address.state || address.region);
+    pushPart(address.postalCode || address.postal_code || address.zip);
+    pushPart(address.country);
+
+    if (!parts.length && typeof address === 'object') {
+        Object.keys(address).forEach((key) => {
+            if (['name', 'phone', 'phoneNumber', 'contact', 'email'].includes(key)) {
+                return;
+            }
+            pushPart(address[key]);
+        });
+    }
+
+    return parts.join(', ');
+}
+
 function buildStatusUpdatePayload(template, context = {}, overrides = {}, actor = {}) {
     if (!template) {
         throw new Error('Status template is required to build an update payload.');
@@ -437,6 +477,44 @@ function buildStatusUpdatePayload(template, context = {}, overrides = {}, actor 
         message: resolvedMessage,
         historyEntry
     };
+}
+
+const AWAITING_PAYMENT_EXPIRY_DAYS = 7;
+const MILLIS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function includesAwaitingPaymentStatus(value) {
+    if (!value) {
+        return false;
+    }
+    const normalized = String(value).toLowerCase();
+    return normalized.includes('awaiting payment') || normalized.includes('pending payment') || normalized === 'pending_payment';
+}
+
+function isAwaitingPaymentOrder(orderLike) {
+    if (!orderLike) {
+        return false;
+    }
+
+    return [
+        orderLike.status,
+        orderLike.statusLabel,
+        orderLike.statusKey,
+        orderLike.paymentStatus
+    ].some(includesAwaitingPaymentStatus);
+}
+
+function isAwaitingPaymentExpired(orderLike) {
+    if (!isAwaitingPaymentOrder(orderLike)) {
+        return false;
+    }
+
+    const orderDate = coerceToDate(orderLike.orderDate);
+    if (!orderDate) {
+        return false;
+    }
+
+    const ageMs = Date.now() - orderDate.getTime();
+    return ageMs > AWAITING_PAYMENT_EXPIRY_DAYS * MILLIS_PER_DAY;
 }
 
 // Global Firebase configuration and authentication token provided by the environment
@@ -2635,8 +2713,13 @@ window.ProfileApp = (function() {
                     orderDate,
                     totalAmount: Number(data.totalAmount) || 0,
                     items: Array.isArray(data.items) ? data.items : [],
-                    estimatedArrivalText: data.estimatedArrivalText || data.estimatedDelivery || ''
+                    estimatedArrivalText: data.estimatedArrivalText || data.estimatedDelivery || '',
+                    deliveryAddress: data.deliveryAddress || data.shippingAddress || null
                 };
+
+                if (isAwaitingPaymentExpired(order)) {
+                    return;
+                }
 
                 state.orders.push(order);
             });
@@ -2688,6 +2771,13 @@ window.ProfileApp = (function() {
         const tableBody = selectors.ordersTableBody();
         if (tableBody && !tableBody.dataset.bound) {
             tableBody.addEventListener('click', async event => {
+                const deleteBtn = event.target.closest('button[data-action="delete-awaiting-order"]');
+                if (deleteBtn) {
+                    const docId = deleteBtn.dataset.docId;
+                    await deleteAwaitingPaymentOrder(docId);
+                    return;
+                }
+
                 const button = event.target.closest('button[data-action="download-invoice"]');
                 if (!button) {
                     return;
@@ -2730,6 +2820,52 @@ window.ProfileApp = (function() {
         } catch (error) {
             console.error('Address update failed:', error);
             showAlert('error', 'Could not update your address. Please try again.');
+        }
+    }
+
+    async function deleteAwaitingPaymentOrder(docId) {
+        if (!docId) {
+            return;
+        }
+
+        const orderIndex = state.orders.findIndex(candidate => candidate.docId === docId);
+        if (orderIndex === -1) {
+            showAlert('error', 'We could not find that order. Please refresh and try again.');
+            return;
+        }
+
+        const order = state.orders[orderIndex];
+        if (!isAwaitingPaymentOrder(order)) {
+            showAlert('info', 'Only awaiting-payment orders can be deleted.', true);
+            return;
+        }
+
+        const confirmed = window.confirm('Delete this awaiting-payment order? This cannot be undone.');
+        if (!confirmed) {
+            return;
+        }
+
+        if (!window.db) {
+            showAlert('error', 'We could not reach the store right now. Please try again.');
+            return;
+        }
+
+        try {
+            showLoading(true);
+            await window.db.collection('artifacts')
+                .doc('default-app-id')
+                .collection('orders')
+                .doc(docId)
+                .delete();
+
+            state.orders.splice(orderIndex, 1);
+            renderOrders();
+            showAlert('success', 'Awaiting-payment order deleted.', true);
+        } catch (error) {
+            console.error('Failed to delete awaiting-payment order:', error);
+            showAlert('error', 'We could not delete that order. Please try again.');
+        } finally {
+            showLoading(false);
         }
     }
 
@@ -2826,6 +2962,12 @@ window.ProfileApp = (function() {
                     Download Invoice
                </button>`
             : '';
+        const deleteButton = isAwaitingPaymentOrder(order)
+            ? `<button type="button" class="mt-2 inline-flex items-center gap-2 rounded border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-100 transition" data-action="delete-awaiting-order" data-doc-id="${escapeHtml(order.docId)}">
+                    <i class="fas fa-trash"></i>
+                    Delete order
+               </button>`
+            : '';
 
         row.innerHTML = `
             <td class="px-4 py-3 font-medium text-gray-700">${order.orderId}</td>
@@ -2843,6 +2985,7 @@ window.ProfileApp = (function() {
                     <ul class="mt-2 space-y-2">${timeline}</ul>
                 </details>
                 ${invoiceButton}
+                ${deleteButton}
             </td>
         `;
 
@@ -3469,9 +3612,19 @@ window.AdminApp = (function() {
             totalRevenue: 0,
             totalCustomers: 0
         },
+        staleAwaitingPaymentTotal: 0,
+        hiddenStaleOrdersForFilters: 0,
+        visibleStaleOrdersForFilters: 0,
+        hideStaleAwaitingPayments: true,
         loadingOrdersError: null,
         loadingCustomersError: null,
-        cachedLogoDataUrl: null
+        cachedLogoDataUrl: null,
+        filters: {
+            status: 'all',
+            customerQuery: '',
+            dateFrom: '',
+            dateTo: ''
+        }
     };
 
     const selectors = {
@@ -3482,13 +3635,29 @@ window.AdminApp = (function() {
         totalRevenue: () => document.getElementById('admin-total-revenue'),
         totalCustomers: () => document.getElementById('admin-total-customers'),
         statusFilter: () => document.getElementById('admin-status-filter'),
+        customerFilter: () => document.getElementById('admin-customer-filter'),
+        dateFrom: () => document.getElementById('admin-date-from'),
+        dateTo: () => document.getElementById('admin-date-to'),
         refreshBtn: () => document.getElementById('admin-refresh'),
         exportBtn: () => document.getElementById('admin-export'),
         exportPdfBtn: () => document.getElementById('admin-export-pdf'),
         ordersBody: () => document.getElementById('admin-orders-body'),
         customersBody: () => document.getElementById('admin-customers-body'),
-        logoutBtn: () => document.getElementById('admin-logout')
+        logoutBtn: () => document.getElementById('admin-logout'),
+        ordersSummary: () => document.getElementById('admin-orders-summary'),
+        staleBanner: () => document.getElementById('admin-stale-banner'),
+        staleBannerTitle: () => document.getElementById('admin-stale-banner-title'),
+        staleBannerDetail: () => document.getElementById('admin-stale-banner-detail'),
+        staleBannerTip: () => document.getElementById('admin-stale-banner-tip'),
+        staleBannerToggle: () => document.getElementById('admin-toggle-stale-orders')
     };
+
+    function pluralize(count, singular, plural) {
+        if (count === 1) {
+            return singular;
+        }
+        return plural || `${singular}s`;
+    }
 
     function getTemplateByKey(key) {
         if (!key) {
@@ -3537,7 +3706,13 @@ window.AdminApp = (function() {
 
     function buildStatusActions(order) {
         const docId = escapeHtml(order.docId);
-        return STATUS_ACTION_TEMPLATES.map(template => `<button type="button" data-doc-id="${docId}" data-status-action="${template.key}" class="px-2 py-1 text-xs rounded border border-slate-200 hover:border-blue-400 hover:text-blue-600 transition">${escapeHtml(template.buttonLabel || template.label)}</button>`).join('<span class="text-slate-200">|</span>');
+        const buttons = STATUS_ACTION_TEMPLATES.map(template => `<button type="button" data-doc-id="${docId}" data-status-action="${template.key}" class="px-2 py-1 text-xs rounded border border-slate-200 hover:border-blue-400 hover:text-blue-600 transition">${escapeHtml(template.buttonLabel || template.label)}</button>`);
+
+        if (isAwaitingPaymentOrder(order)) {
+            buttons.push(`<button type="button" data-doc-id="${docId}" data-action="delete-awaiting-order" class="px-2 py-1 text-xs rounded border border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 transition">Delete order</button>`);
+        }
+
+        return buttons.join('<span class="text-slate-200">|</span>');
     }
 
     function isAdminPage() {
@@ -3641,7 +3816,8 @@ window.AdminApp = (function() {
                     name: (data.name || '').trim() || 'Customer',
                     email: (data.email || '').trim(),
                     phone: (data.phone || '').trim(),
-                    createdAt: coerceToDate(data.createdAt || data.memberSince)
+                    createdAt: coerceToDate(data.createdAt || data.memberSince),
+                    deliveryAddress: data.deliveryAddress || null
                 };
 
                 state.customers.push(record);
@@ -3659,6 +3835,7 @@ window.AdminApp = (function() {
         state.filteredOrders = [];
         state.customerStats = {};
         state.loadingOrdersError = null;
+        state.staleAwaitingPaymentTotal = 0;
 
         if (!window.db) {
             state.loadingOrdersError = new Error('Firestore is not available.');
@@ -3701,11 +3878,17 @@ window.AdminApp = (function() {
                     estimatedArrivalText: data.estimatedArrivalText || data.estimatedDelivery || '',
                     customerName: data.customerName || (data.customer && data.customer.name) || '',
                     customerEmail: data.customerEmail || (data.customer && data.customer.email) || '',
+                    customerPhone: data.customerPhone || data.deliveryAddress?.phone || data.deliveryAddress?.phoneNumber || '',
+                    deliveryAddress: data.deliveryAddress || data.shippingAddress || null,
                     lastCustomerMessage: data.lastCustomerMessage || data.statusMessage || ''
                 };
 
+                order.isAwaitingPaymentExpired = isAwaitingPaymentExpired(order);
+                if (order.isAwaitingPaymentExpired) {
+                    state.staleAwaitingPaymentTotal += 1;
+                }
+
                 state.orders.push(order);
-                accumulateCustomerStats(order);
             });
 
             state.orders.sort((a, b) => {
@@ -3739,13 +3922,24 @@ window.AdminApp = (function() {
     }
 
     function updateMetrics() {
-        state.metrics.totalOrders = state.orders.length;
-        state.metrics.pendingOrders = state.orders.filter(order => (order.status || '').toLowerCase().includes('pending')).length;
-        state.metrics.totalRevenue = state.orders.reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0);
+        const visibleOrders = state.orders.filter(order => !state.hideStaleAwaitingPayments || !order.isAwaitingPaymentExpired);
+
+        state.metrics.totalOrders = visibleOrders.length;
+        state.metrics.pendingOrders = visibleOrders.filter(order => (order.status || '').toLowerCase().includes('pending')).length;
+        state.metrics.totalRevenue = visibleOrders.reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0);
         state.metrics.totalCustomers = state.customers.length;
     }
 
     function composeCustomerList() {
+        state.customerStats = {};
+
+        state.orders.forEach(order => {
+            if (state.hideStaleAwaitingPayments && order.isAwaitingPaymentExpired) {
+                return;
+            }
+            accumulateCustomerStats(order);
+        });
+
         const combined = [];
         const seen = new Set();
 
@@ -3794,6 +3988,33 @@ window.AdminApp = (function() {
             });
         }
 
+        const customerFilter = selectors.customerFilter();
+        if (customerFilter) {
+            let customerDebounceHandle;
+            customerFilter.addEventListener('input', () => {
+                if (customerDebounceHandle) {
+                    clearTimeout(customerDebounceHandle);
+                }
+                customerDebounceHandle = setTimeout(() => {
+                    renderOrders();
+                }, 200);
+            });
+        }
+
+        const dateFromInput = selectors.dateFrom();
+        if (dateFromInput) {
+            dateFromInput.addEventListener('change', () => {
+                renderOrders();
+            });
+        }
+
+        const dateToInput = selectors.dateTo();
+        if (dateToInput) {
+            dateToInput.addEventListener('change', () => {
+                renderOrders();
+            });
+        }
+
         const refreshBtn = selectors.refreshBtn();
         if (refreshBtn) {
             refreshBtn.addEventListener('click', () => {
@@ -3838,6 +4059,13 @@ window.AdminApp = (function() {
                 await updateOrderField(docId, field, value);
             });
             ordersBody.addEventListener('click', async (event) => {
+                const deleteBtn = event.target.closest('button[data-action="delete-awaiting-order"]');
+                if (deleteBtn) {
+                    const docId = deleteBtn.dataset.docId;
+                    await deleteAwaitingPaymentOrder(docId);
+                    return;
+                }
+
                 const button = event.target.closest('button[data-status-action]');
                 if (!button) {
                     return;
@@ -3847,6 +4075,18 @@ window.AdminApp = (function() {
                 await applyStatusTemplate(docId, actionKey);
             });
             ordersBody.dataset.bound = 'true';
+        }
+
+        const staleToggle = selectors.staleBannerToggle();
+        if (staleToggle) {
+            staleToggle.addEventListener('click', () => {
+                state.hideStaleAwaitingPayments = !state.hideStaleAwaitingPayments;
+                renderOrders();
+                composeCustomerList();
+                renderCustomers();
+                updateMetrics();
+                renderMetrics();
+            });
         }
     }
 
@@ -3939,6 +4179,43 @@ window.AdminApp = (function() {
         }
     }
 
+    async function deleteAwaitingPaymentOrder(docId) {
+        if (!docId) {
+            return;
+        }
+
+        const order = state.orders.find(candidate => candidate.docId === docId);
+        if (!order) {
+            showAlert('error', 'Unable to locate that order. Please refresh and try again.');
+            return;
+        }
+
+        if (!isAwaitingPaymentOrder(order)) {
+            showAlert('info', 'Only awaiting-payment orders can be deleted.', true);
+            return;
+        }
+
+        const confirmed = window.confirm('Delete this awaiting-payment order for both the admin and customer views? This cannot be undone.');
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            showLoading(true);
+            await ordersCollection().doc(docId).delete();
+            await loadOrders();
+            composeCustomerList();
+            updateMetrics();
+            renderAll();
+            showAlert('success', 'Awaiting-payment order deleted.', true);
+        } catch (error) {
+            console.error('Failed to delete awaiting-payment order:', error);
+            showAlert('error', 'Could not delete that order. Please try again.');
+        } finally {
+            showLoading(false);
+        }
+    }
+
     function renderAll() {
         renderMetrics();
         renderOrders();
@@ -3963,6 +4240,7 @@ window.AdminApp = (function() {
             return;
         }
 
+        const filters = collectActiveFilters();
         tbody.innerHTML = '';
 
         if (state.loadingOrdersError) {
@@ -3970,32 +4248,209 @@ window.AdminApp = (function() {
                 <tr>
                     <td colspan="8" class="px-4 py-6 text-center text-red-600">Failed to load orders: ${escapeHtml(state.loadingOrdersError.message || 'Unknown error')}</td>
                 </tr>`;
+            state.filteredOrders = [];
+            state.visibleStaleOrdersForFilters = 0;
+            state.hiddenStaleOrdersForFilters = 0;
+            updateOrdersSummary(filters);
+            renderStaleBanner();
             return;
         }
 
-        const filter = selectors.statusFilter();
-        const filterValue = filter ? filter.value : 'all';
-        state.filteredOrders = filterOrders(filterValue);
+        state.filteredOrders = filterOrders(filters);
+        state.visibleStaleOrdersForFilters = state.hideStaleAwaitingPayments
+            ? 0
+            : state.filteredOrders.filter(order => order.isAwaitingPaymentExpired).length;
 
         if (!state.filteredOrders.length) {
+            const noResultsMessage = filters.dateFrom && filters.dateTo && filters.dateFrom > filters.dateTo
+                ? 'The date range is invalid. Please adjust your filters.'
+                : 'No orders match the selected filters.';
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="8" class="px-4 py-6 text-center text-gray-500">No orders match this filter.</td>
+                    <td colspan="8" class="px-4 py-6 text-center text-gray-500">${escapeHtml(noResultsMessage)}</td>
                 </tr>`;
+            updateOrdersSummary(filters);
+            renderStaleBanner();
             return;
         }
 
         state.filteredOrders.forEach(order => {
             tbody.appendChild(buildOrderRow(order));
         });
+
+        updateOrdersSummary(filters);
+        renderStaleBanner();
     }
 
-    function filterOrders(filterValue) {
-        if (!filterValue || filterValue === 'all') {
-            return [...state.orders];
+    function collectActiveFilters() {
+        const statusEl = selectors.statusFilter();
+        const customerEl = selectors.customerFilter();
+        const dateFromEl = selectors.dateFrom();
+        const dateToEl = selectors.dateTo();
+
+        state.filters.status = statusEl ? (statusEl.value || 'all') : 'all';
+        state.filters.customerQuery = customerEl ? customerEl.value.trim() : '';
+        state.filters.dateFrom = dateFromEl && dateFromEl.value ? dateFromEl.value : '';
+        state.filters.dateTo = dateToEl && dateToEl.value ? dateToEl.value : '';
+
+        return { ...state.filters };
+    }
+
+    function filterOrders(filters) {
+        if (filters.dateFrom && filters.dateTo && filters.dateFrom > filters.dateTo) {
+            state.hiddenStaleOrdersForFilters = 0;
+            return [];
         }
 
-        return state.orders.filter(order => (order.status || '').toLowerCase().includes(filterValue.toLowerCase()));
+        state.hiddenStaleOrdersForFilters = 0;
+        const statusValue = (filters.status || 'all').toLowerCase();
+        const customerQuery = (filters.customerQuery || '').toLowerCase();
+        const startDate = parseDateInput(filters.dateFrom, false);
+        const endDate = parseDateInput(filters.dateTo, true);
+
+        return state.orders.filter(order => {
+            if (statusValue !== 'all') {
+                const orderStatus = (order.status || '').toLowerCase();
+                if (!orderStatus.includes(statusValue)) {
+                    return false;
+                }
+            }
+
+            if (customerQuery) {
+                const associatedCustomer = state.customersById[order.userId] || {};
+                const candidates = [
+                    order.orderId,
+                    order.docId,
+                    order.customerName,
+                    order.customerEmail,
+                    associatedCustomer.name,
+                    associatedCustomer.email,
+                    formatDeliveryAddress(order.deliveryAddress),
+                    formatDeliveryAddress(associatedCustomer.deliveryAddress)
+                ];
+
+                const matchesCustomer = candidates.some(candidate => {
+                    if (!candidate) {
+                        return false;
+                    }
+                    return String(candidate).toLowerCase().includes(customerQuery);
+                });
+
+                if (!matchesCustomer) {
+                    return false;
+                }
+            }
+
+            const orderDate = order.orderDate instanceof Date ? order.orderDate : coerceToDate(order.orderDate);
+
+            if (startDate && (!orderDate || orderDate < startDate)) {
+                return false;
+            }
+
+            if (endDate && (!orderDate || orderDate > endDate)) {
+                return false;
+            }
+
+            if (state.hideStaleAwaitingPayments && order.isAwaitingPaymentExpired) {
+                state.hiddenStaleOrdersForFilters += 1;
+                return false;
+            }
+
+            return true;
+        });
+    }
+
+    function parseDateInput(value, endOfDay = false) {
+        if (!value) {
+            return null;
+        }
+
+        const parts = value.split('-').map(Number);
+        if (parts.length !== 3 || parts.some(part => Number.isNaN(part))) {
+            return null;
+        }
+
+        const [year, month, day] = parts;
+        const date = new Date(year, month - 1, day, endOfDay ? 23 : 0, endOfDay ? 59 : 0, endOfDay ? 59 : 0, endOfDay ? 999 : 0);
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function updateOrdersSummary(filters) {
+        const summaryEl = selectors.ordersSummary ? selectors.ordersSummary() : null;
+        if (!summaryEl) {
+            return;
+        }
+
+        const statusSelect = selectors.statusFilter();
+        const statusLabel = statusSelect && statusSelect.options && statusSelect.selectedIndex >= 0
+            ? statusSelect.options[statusSelect.selectedIndex].text
+            : 'All statuses';
+
+        const customerLabel = filters.customerQuery
+            ? `Customer contains "${filters.customerQuery}"`
+            : 'All customers';
+
+        let dateLabel;
+        if (filters.dateFrom && filters.dateTo) {
+            dateLabel = filters.dateFrom > filters.dateTo
+                ? 'Date filter invalid'
+                : `Date ${filters.dateFrom} → ${filters.dateTo}`;
+        } else if (filters.dateFrom || filters.dateTo) {
+            dateLabel = `Date ${filters.dateFrom || 'any'} → ${filters.dateTo || 'any'}`;
+        } else {
+            dateLabel = 'All dates';
+        }
+
+        const count = state.filteredOrders.length;
+        summaryEl.textContent = `Showing ${count} ${count === 1 ? 'order' : 'orders'} (${statusLabel} • ${customerLabel} • ${dateLabel})`;
+    }
+
+    function renderStaleBanner() {
+        const banner = selectors.staleBanner();
+        const titleEl = selectors.staleBannerTitle();
+        const detailEl = selectors.staleBannerDetail();
+        const tipEl = selectors.staleBannerTip();
+        const toggleBtn = selectors.staleBannerToggle();
+
+        if (!banner || !titleEl || !detailEl || !tipEl || !toggleBtn) {
+            return;
+        }
+
+        const totalStale = state.staleAwaitingPaymentTotal;
+        if (!totalStale) {
+            banner.classList.add('hidden');
+            detailEl.textContent = '';
+            tipEl.textContent = '';
+            toggleBtn.setAttribute('aria-pressed', 'false');
+            return;
+        }
+
+        const hiddenCount = state.hideStaleAwaitingPayments ? state.hiddenStaleOrdersForFilters : 0;
+        const visibleCount = state.hideStaleAwaitingPayments ? 0 : state.visibleStaleOrdersForFilters;
+
+        banner.classList.remove('hidden');
+
+        if (state.hideStaleAwaitingPayments) {
+            titleEl.textContent = 'Awaiting-payment orders filtered';
+            if (hiddenCount) {
+                detailEl.textContent = `We filtered out ${hiddenCount} ${pluralize(hiddenCount, 'order')} older than 7 days to keep this view focused.`;
+            } else {
+                detailEl.textContent = `None of the awaiting-payment orders in this view are older than 7 days, but ${totalStale} ${pluralize(totalStale, 'order')} overall could use a quick check-in.`;
+            }
+            tipEl.textContent = 'You can review those older orders anytime without changing your saved filters.';
+            toggleBtn.textContent = 'Review older orders';
+            toggleBtn.setAttribute('aria-pressed', 'false');
+        } else {
+            titleEl.textContent = 'Reviewing older awaiting-payment orders';
+            if (visibleCount) {
+                detailEl.textContent = `You are viewing ${visibleCount} ${pluralize(visibleCount, 'order')} that are older than 7 days.`;
+            } else {
+                detailEl.textContent = `None of the awaiting-payment orders matching these filters are older than 7 days, though ${totalStale} ${pluralize(totalStale, 'order')} are older overall.`;
+            }
+            tipEl.textContent = 'Hide them again whenever you want to focus on more recent activity.';
+            toggleBtn.textContent = 'Hide older orders';
+            toggleBtn.setAttribute('aria-pressed', 'true');
+        }
     }
 
     function buildOrderRow(order) {
@@ -4005,12 +4460,19 @@ window.AdminApp = (function() {
         const customer = state.customersById[order.userId] || {};
         const customerName = customer.name || order.customerName || 'Customer';
         const customerEmail = customer.email || order.customerEmail || '—';
+    const deliveryAddress = order.deliveryAddress || customer.deliveryAddress || null;
+    const shippingAddress = deliveryAddress ? formatDeliveryAddress(deliveryAddress) : '';
+    const shippingPhone = order.customerPhone || customer.phone || deliveryAddress?.phone || deliveryAddress?.phoneNumber || '';
+    const shippingRecipient = deliveryAddress?.name || customerName;
 
         const safeOrderId = escapeHtml(order.orderId);
         const safeDocId = escapeHtml(order.docId);
         const safeCustomerName = escapeHtml(customerName);
         const safeCustomerEmail = escapeHtml(customerEmail);
         const safeTracking = escapeHtml(order.trackingNumber || '');
+    const safeShippingRecipient = escapeHtml(shippingRecipient || '');
+    const safeShippingPhone = escapeHtml(shippingPhone || '');
+    const safeShippingAddress = escapeHtml(shippingAddress || '');
 
         const statusOptions = buildOptions(STATUS_OPTIONS, order.status);
         const paymentOptions = buildOptions(PAYMENT_OPTIONS, order.paymentStatus);
@@ -4037,6 +4499,13 @@ window.AdminApp = (function() {
             <td class="px-4 py-3 text-sm text-gray-700">
                 <div>${safeCustomerName}</div>
                 <div class="text-xs text-gray-400">${safeCustomerEmail}</div>
+                ${shippingAddress ? `
+                    <div class="mt-3 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                        <div class="font-semibold text-slate-700 uppercase tracking-wide text-[10px]">Shipping to</div>
+                        <div class="mt-1">${safeShippingRecipient}</div>
+                        ${safeShippingPhone ? `<div class="mt-1">${safeShippingPhone}</div>` : ''}
+                        <div class="mt-1 leading-relaxed">${safeShippingAddress}</div>
+                    </div>` : ''}
             </td>
             <td class="px-4 py-3 text-sm text-gray-700">${formatCurrency(order.totalAmount)}</td>
             <td class="px-4 py-3 text-sm">
@@ -4128,12 +4597,13 @@ window.AdminApp = (function() {
         }
 
         try {
-            const header = ['Order ID', 'Customer Name', 'Customer Email', 'Status', 'Status Message', 'Payment Status', 'Date', 'Total', 'Items'];
+            const header = ['Order ID', 'Customer Name', 'Customer Email', 'Status', 'Status Message', 'Payment Status', 'Date', 'Total', 'Delivery Address', 'Items'];
             const rows = state.filteredOrders.map(order => {
                 const customer = state.customersById[order.userId] || {};
                 const customerName = customer.name || order.customerName || 'Customer';
                 const customerEmail = customer.email || order.customerEmail || '';
                 const items = (order.items || []).map(item => `${item.name || 'Item'} x${item.quantity || 1}`).join('; ');
+                const addressText = formatDeliveryAddress(order.deliveryAddress) || formatDeliveryAddress(customer.deliveryAddress);
 
                 return [
                     quoteCsv(order.orderId),
@@ -4144,6 +4614,7 @@ window.AdminApp = (function() {
                     quoteCsv(order.paymentStatus || ''),
                     quoteCsv(formatDate(order.orderDate)),
                     quoteCsv(formatCurrency(order.totalAmount)),
+                    quoteCsv(addressText),
                     quoteCsv(items)
                 ].join(',');
             });
@@ -4214,12 +4685,27 @@ window.AdminApp = (function() {
             const filterSelect = selectors.statusFilter && selectors.statusFilter();
             const selectedOption = filterSelect && filterSelect.options ? filterSelect.options[filterSelect.selectedIndex] : null;
             const filterLabel = selectedOption ? (selectedOption.text || selectedOption.value || 'All orders') : 'All orders';
+            const filters = { ...state.filters };
+            const customerFilterLabel = filters.customerQuery
+                ? `Customer filter: ${filters.customerQuery}`
+                : 'Customer filter: All customers';
+            const dateFilterLabel = (() => {
+                if (filters.dateFrom && filters.dateTo) {
+                    return filters.dateFrom > filters.dateTo
+                        ? 'Date filter: invalid range'
+                        : `Date filter: ${filters.dateFrom} → ${filters.dateTo}`;
+                }
+                if (filters.dateFrom || filters.dateTo) {
+                    return `Date filter: ${filters.dateFrom || 'any'} → ${filters.dateTo || 'any'}`;
+                }
+                return 'Date filter: All dates';
+            })();
             const pendingCount = state.filteredOrders.filter(order => (order.status || '').toLowerCase().includes('pending')).length;
             const totalRevenue = state.filteredOrders.reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0);
             const uniqueCustomers = new Set(state.filteredOrders.map(order => order.userId || order.customerEmail || order.customerName || order.docId)).size;
 
             let cursorY = 140;
-            const summaryHeight = 120;
+            const summaryHeight = 170;
 
             doc.setFillColor(subtleBackground.r, subtleBackground.g, subtleBackground.b);
             doc.roundedRect(margin, cursorY, pageWidth - 2 * margin, summaryHeight, 12, 12, 'F');
@@ -4235,6 +4721,8 @@ window.AdminApp = (function() {
             doc.text(`Orders in view: ${state.filteredOrders.length}`, margin + 20, summaryBase);
             doc.text(`Pending orders: ${pendingCount}`, margin + 20, summaryBase + 18);
             doc.text(`Status filter: ${filterLabel}`, margin + 20, summaryBase + 36);
+            doc.text(customerFilterLabel, margin + 20, summaryBase + 54);
+            doc.text(dateFilterLabel, margin + 20, summaryBase + 72);
             doc.text(`Total revenue (view): ${formatCurrency(totalRevenue)}`, margin + 260, summaryBase);
             doc.text(`Unique customers: ${uniqueCustomers}`, margin + 260, summaryBase + 18);
             doc.text('Generated from: Admin dashboard', margin + 260, summaryBase + 36);
