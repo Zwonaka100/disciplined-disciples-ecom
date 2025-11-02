@@ -4430,12 +4430,16 @@ window.AdminApp = (function() {
             const icon = entry.icon || '';
             const when = formatDate(entry.createdAt) || '';
             const message = escapeHtml(entry.message || entry.status || 'Update');
+            const adminEmail = entry.updatedBy || 'team';
+            const adminName = adminEmail === 'zmabege@gmail.com' ? 'Zwonaka' : 
+                             adminEmail === 'nomaqhizazolile@gmail.com' ? 'Zolile' : 
+                             adminEmail.includes('@') ? adminEmail.split('@')[0] : adminEmail;
             return `<li class="flex items-start gap-2">
                 <span class="text-lg leading-none">${icon}</span>
                 <div class="text-xs text-slate-500">
                     <div class="font-semibold text-slate-600">${escapeHtml(entry.status || entry.label || 'Update')}</div>
                     <div>${message}</div>
-                    <div class="text-[10px] uppercase tracking-wide text-slate-400">${escapeHtml(when)} • ${escapeHtml(entry.updatedBy || 'team')}</div>
+                    <div class="text-[10px] uppercase tracking-wide text-slate-400">${escapeHtml(when)} • By ${escapeHtml(adminName)}</div>
                 </div>
             </li>`;
         }).join('');
@@ -4991,7 +4995,8 @@ window.AdminApp = (function() {
         try {
             await ordersCollection().doc(docId).set({
                 [field]: value,
-                updatedAt: window.serverTimestamp ? window.serverTimestamp() : new Date()
+                updatedAt: window.serverTimestamp ? window.serverTimestamp() : new Date(),
+                updatedBy: state.user?.email || 'admin'
             }, { merge: true });
 
             await loadOrders();
@@ -5342,10 +5347,17 @@ window.AdminApp = (function() {
                </button>`
             : '';
 
+        const lastUpdatedBy = order.updatedBy || '';
+        const lastAdminName = lastUpdatedBy === 'zmabege@gmail.com' ? 'Zwonaka' : 
+                             lastUpdatedBy === 'nomaqhizazolile@gmail.com' ? 'Zolile' : 
+                             lastUpdatedBy ? 'Admin' : '';
+        const adminBadge = lastAdminName ? `<div class="text-[10px] text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full inline-block mt-1">Last updated by ${lastAdminName}</div>` : '';
+
         row.innerHTML = `
             <td class="px-4 py-3 text-sm font-semibold text-gray-800">
                 <div>${safeOrderId}</div>
                 <div class="text-xs text-gray-400">${safeDocId}</div>
+                ${adminBadge}
             </td>
             <td class="px-4 py-3 text-sm text-gray-500">${formatDate(order.orderDate)}</td>
             <td class="px-4 py-3 text-sm text-gray-700">
