@@ -4449,11 +4449,14 @@ window.AdminApp = (function() {
     }
 
     async function init() {
+        console.log('[AdminApp] init() called');
         if (!isAdminPage()) {
+            console.log('[AdminApp] Not on admin page, exiting');
             return;
         }
 
         if (state.initialized) {
+            console.log('[AdminApp] Already initialized, exiting');
             return;
         }
         state.initialized = true;
@@ -4461,28 +4464,38 @@ window.AdminApp = (function() {
         hideAlert();
         showLoading(true);
 
+        console.log('[AdminApp] Waiting for Firebase to be ready...');
         const firebaseReady = await waitForFirebaseReady();
         if (!firebaseReady) {
+            console.error('[AdminApp] Firebase not ready');
             showAlert('error', 'We could not connect to the store right now. Please refresh to try again.');
             showLoading(false);
             return;
         }
+        console.log('[AdminApp] Firebase is ready');
 
         const auth = window.auth || (window.firebase && window.firebase.auth && window.firebase.auth());
         if (!auth) {
+            console.error('[AdminApp] Auth object not available');
             showAlert('error', 'Unable to connect to Firebase. Please try again later.');
             showLoading(false);
             return;
         }
 
         const currentUser = auth.currentUser;
+        console.log('[AdminApp] Current user at init:', currentUser ? currentUser.email : 'null');
         if (currentUser) {
+            console.log('[AdminApp] User already authenticated, loading admin data');
             await handleAuthenticatedAdmin(currentUser);
         } else {
+            console.log('[AdminApp] No current user, setting up auth listener');
             auth.onAuthStateChanged(async (user) => {
+                console.log('[AdminApp] Auth state changed, user:', user ? user.email : 'null');
                 if (user) {
+                    console.log('[AdminApp] User authenticated via listener, loading admin data');
                     await handleAuthenticatedAdmin(user);
                 } else {
+                    console.log('[AdminApp] No user, redirecting to login');
                     showLoading(false);
                     window.location.replace('login-signup.html?redirect=admin-dashboard.html');
                 }
@@ -4491,12 +4504,15 @@ window.AdminApp = (function() {
     }
 
     async function handleAuthenticatedAdmin(user) {
+        console.log('[AdminApp] handleAuthenticatedAdmin called for user:', user.email);
         if (!isAdminEmail(user.email)) {
+            console.log('[AdminApp] User is not admin, redirecting to profile');
             showLoading(false);
             window.location.replace('profile.html');
             return;
         }
 
+        console.log('[AdminApp] User is admin, proceeding with data load');
         state.user = user;
         window.currentUserId = user.uid;
         sessionStorage.setItem('userLoggedIn', 'true');
@@ -4505,7 +4521,9 @@ window.AdminApp = (function() {
         bindEvents();
 
         try {
+            console.log('[AdminApp] Loading customers...');
             await loadCustomers();
+            console.log('[AdminApp] Loading orders...');
             await loadOrders();
             renderAll();
             if (state.loadingCustomersError || state.loadingOrdersError) {
