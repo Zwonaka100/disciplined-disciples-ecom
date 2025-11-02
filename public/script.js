@@ -222,6 +222,16 @@ function formatDate(value, options) {
     }
 }
 
+function formatDateInputValue(date) {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+        return '';
+    }
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 let cachedPrimaryLogoDataUrl = null;
 
 async function getPrimaryLogoDataUrl(preferredSelectors) {
@@ -346,6 +356,7 @@ function renderTemplateString(templateString, data = {}) {
         return String(value);
     });
 }
+
 
 function formatDeliveryAddress(address) {
     if (!address) {
@@ -490,6 +501,66 @@ function includesAwaitingPaymentStatus(value) {
     return normalized.includes('awaiting payment') || normalized.includes('pending payment') || normalized === 'pending_payment';
 }
 
+function includesPaidStatus(value) {
+    if (!value) {
+        return false;
+    }
+
+    const normalized = String(value).toLowerCase();
+    if (normalized.includes('unpaid')) {
+        return false;
+    }
+
+    return /\bpaid\b/.test(normalized) || normalized.includes('payment received') || normalized.includes('settled');
+}
+
+function includesCancelledStatus(value) {
+    if (!value) {
+        return false;
+    }
+    const normalized = String(value).toLowerCase();
+    return normalized.includes('cancel');
+}
+
+function includesRefundedStatus(value) {
+    if (!value) {
+        return false;
+    }
+    const normalized = String(value).toLowerCase();
+    return normalized.includes('refund') || normalized.includes('chargeback');
+}
+
+function isInvoiceAvailable(orderLike) {
+    if (!orderLike) {
+        return false;
+    }
+
+    const statusCandidates = [orderLike.status, orderLike.statusLabel];
+    const paymentStatus = orderLike.paymentStatus || '';
+
+    if (includesPaidStatus(paymentStatus)) {
+        return true;
+    }
+
+    if (statusCandidates.some(candidate => includesPaidStatus(candidate))) {
+        return true;
+    }
+
+    return statusCandidates.some(candidate => String(candidate || '').toLowerCase().includes('order placed'));
+}
+
+function isCancelledOrder(orderLike) {
+    if (!orderLike) {
+        return false;
+    }
+
+    if ([orderLike.status, orderLike.statusLabel, orderLike.statusKey, orderLike.paymentStatus].some(includesCancelledStatus)) {
+        return true;
+    }
+
+    return includesRefundedStatus(orderLike.paymentStatus);
+}
+
 function isAwaitingPaymentOrder(orderLike) {
     if (!orderLike) {
         return false;
@@ -555,7 +626,6 @@ window.createUserWithEmailAndPassword = window.firebase.auth().createUserWithEma
 window.signOut = window.firebase.auth().signOut.bind(window.firebase.auth());
 
 // Auth state listener will be set up in initFirebase() after all functions are defined
-
 // === NEW DIAGNOSTIC LOG ===
 console.log("firebaseConfig loaded:", firebaseConfig);
 console.log("firebaseConfig keys count:", Object.keys(firebaseConfig).length);
@@ -3289,9 +3359,11 @@ window.ProfileApp = (function() {
         let cursorY = 150;
         const rightColumnX = pageWidth / 2 + 10;
 
-        const customerEmail = state.user?.email || '';
-        const customerName = state.profile?.name || (customerEmail ? customerEmail.split('@')[0] : 'Customer');
-        const address = state.profile?.deliveryAddress || {};
+        const fallbackEmail = order.customerEmail || order.deliveryAddress?.email || '';
+        const customerEmail = state.user?.email || fallbackEmail;
+        const fallbackName = order.customerName || order.deliveryAddress?.name || (customerEmail ? customerEmail.split('@')[0] : 'Customer');
+        const customerName = state.profile?.name || fallbackName;
+        const address = state.profile?.deliveryAddress || order.deliveryAddress || order.shippingAddress || {};
         const addressLines = [address.line1, address.line2, address.city, address.province, address.postalCode]
             .filter(line => line && line.trim());
 
@@ -3461,6 +3533,7 @@ window.ProfileApp = (function() {
         doc.save(`disciplined-disciples-invoice-${order.orderId || order.docId}.pdf`);
         showAlert('success', 'Invoice PDF downloaded.', true);
     }
+    window.downloadInvoicePdf = downloadInvoicePdf;
 
     function buildItemLabel(item) {
         const parts = [];
@@ -3497,12 +3570,6 @@ window.ProfileApp = (function() {
         const totalAmount = Number(order.totalAmount) || 0;
         const fallback = totalAmount - shipping;
         return fallback > 0 ? fallback : totalAmount;
-    }
-
-    function isInvoiceAvailable(order) {
-        const status = (order.status || '').toLowerCase();
-        const paymentStatus = (order.paymentStatus || '').toLowerCase();
-        return status.includes('order placed') || paymentStatus.includes('paid');
     }
 
     async function resolveJsPdfConstructor() {
@@ -3609,7 +3676,14 @@ window.AdminApp = (function() {
         metrics: {
             totalOrders: 0,
             pendingOrders: 0,
+            paidOrders: 0,
             totalRevenue: 0,
+            awaitingOrders: 0,
+            awaitingRevenue: 0,
+            cancelledOrders: 0,
+            cancelledRevenue: 0,
+            cancelledPaidOrders: 0,
+            cancelledUnpaidOrders: 0,
             totalCustomers: 0
         },
         staleAwaitingPaymentTotal: 0,
@@ -3619,11 +3693,13 @@ window.AdminApp = (function() {
         loadingOrdersError: null,
         loadingCustomersError: null,
         cachedLogoDataUrl: null,
+        revenueSnapshot: null,
         filters: {
             status: 'all',
             customerQuery: '',
             dateFrom: '',
-            dateTo: ''
+            dateTo: '',
+            dateRange: 'ltd'
         }
     };
 
@@ -3632,15 +3708,20 @@ window.AdminApp = (function() {
         alert: () => document.getElementById('admin-alert'),
         totalOrders: () => document.getElementById('admin-total-orders'),
         pendingOrders: () => document.getElementById('admin-pending-orders'),
+    paidOrders: () => document.getElementById('admin-paid-orders'),
         totalRevenue: () => document.getElementById('admin-total-revenue'),
+    revenueBreakdown: () => document.getElementById('admin-revenue-breakdown'),
         totalCustomers: () => document.getElementById('admin-total-customers'),
         statusFilter: () => document.getElementById('admin-status-filter'),
         customerFilter: () => document.getElementById('admin-customer-filter'),
+    dateRange: () => document.getElementById('admin-date-range'),
         dateFrom: () => document.getElementById('admin-date-from'),
         dateTo: () => document.getElementById('admin-date-to'),
         refreshBtn: () => document.getElementById('admin-refresh'),
         exportBtn: () => document.getElementById('admin-export'),
         exportPdfBtn: () => document.getElementById('admin-export-pdf'),
+    revenueExport: () => document.getElementById('admin-revenue-export'),
+    revenueExportPdf: () => document.getElementById('admin-revenue-export-pdf'),
         ordersBody: () => document.getElementById('admin-orders-body'),
         customersBody: () => document.getElementById('admin-customers-body'),
         logoutBtn: () => document.getElementById('admin-logout'),
@@ -3651,6 +3732,587 @@ window.AdminApp = (function() {
         staleBannerTip: () => document.getElementById('admin-stale-banner-tip'),
         staleBannerToggle: () => document.getElementById('admin-toggle-stale-orders')
     };
+
+    function getFinancialStatus(orderLike) {
+        if (!orderLike) {
+            return 'unknown';
+        }
+
+        const paymentStatus = orderLike.paymentStatus || '';
+        const status = orderLike.status || '';
+        const statusLabel = orderLike.statusLabel || '';
+        const awaiting = isAwaitingPaymentOrder(orderLike);
+        const cancelled = isCancelledOrder(orderLike);
+        const paidViaPayment = includesPaidStatus(paymentStatus);
+        const paidViaStatus = includesPaidStatus(status) || includesPaidStatus(statusLabel);
+        const refunded = includesRefundedStatus(paymentStatus);
+
+        if (cancelled) {
+            if (paidViaPayment || paidViaStatus || refunded) {
+                return 'cancelled_paid';
+            }
+            return 'cancelled_unpaid';
+        }
+
+        if (awaiting) {
+            return 'awaiting';
+        }
+
+        if ((paidViaPayment || paidViaStatus) && !refunded) {
+            return 'paid';
+        }
+
+        if (refunded) {
+            return 'refunded';
+        }
+
+        return 'other';
+    }
+
+    function summarizeOrders(orders) {
+        const list = Array.isArray(orders) ? orders : [];
+        const buckets = {
+            paid: { label: 'Paid', orders: 0, revenue: 0 },
+            awaiting: { label: 'Awaiting payment', orders: 0, revenue: 0 },
+            cancelledPaid: { label: 'Cancelled (paid)', orders: 0, revenue: 0 },
+            cancelledUnpaid: { label: 'Cancelled (unpaid)', orders: 0, revenue: 0 },
+            refunded: { label: 'Refunded', orders: 0, revenue: 0 },
+            other: { label: 'Other', orders: 0, revenue: 0 }
+        };
+
+        const uniqueCustomerKeys = new Set();
+        let grossSales = 0;
+        let pendingOrders = 0;
+        let totalRevenue = 0;
+        let awaitingRevenue = 0;
+        let cancelledRevenue = 0;
+        let awaitingOrders = 0;
+        let paidOrders = 0;
+        let cancelledPaidOrders = 0;
+        let cancelledUnpaidOrders = 0;
+        let cancelledOrders = 0;
+        let firstOrderDate = null;
+        let lastOrderDate = null;
+
+        list.forEach(order => {
+            const amount = Number(order.totalAmount) || 0;
+            grossSales += amount;
+            const classification = getFinancialStatus(order);
+
+            const normalizedStatusText = `${order.status || ''} ${order.statusLabel || ''}`.toLowerCase();
+            const customerKey = order.userId || order.customerEmail || order.customerName || order.docId;
+            uniqueCustomerKeys.add(customerKey || `guest-${order.docId}`);
+
+            const orderDate = coerceToDate(order.orderDate);
+            if (orderDate) {
+                if (!firstOrderDate || orderDate < firstOrderDate) {
+                    firstOrderDate = orderDate;
+                }
+                if (!lastOrderDate || orderDate > lastOrderDate) {
+                    lastOrderDate = orderDate;
+                }
+            }
+
+            switch (classification) {
+                case 'paid':
+                    paidOrders += 1;
+                    totalRevenue += amount;
+                    buckets.paid.orders += 1;
+                    buckets.paid.revenue += amount;
+                    break;
+                case 'awaiting':
+                    awaitingOrders += 1;
+                    awaitingRevenue += amount;
+                    buckets.awaiting.orders += 1;
+                    buckets.awaiting.revenue += amount;
+                    pendingOrders += 1;
+                    break;
+                case 'cancelled_paid':
+                    cancelledOrders += 1;
+                    cancelledPaidOrders += 1;
+                    cancelledRevenue += amount;
+                    buckets.cancelledPaid.orders += 1;
+                    buckets.cancelledPaid.revenue += amount;
+                    break;
+                case 'cancelled_unpaid':
+                    cancelledOrders += 1;
+                    cancelledUnpaidOrders += 1;
+                    buckets.cancelledUnpaid.orders += 1;
+                    buckets.cancelledUnpaid.revenue += amount;
+                    break;
+                case 'refunded':
+                    buckets.refunded.orders += 1;
+                    buckets.refunded.revenue += amount;
+                    break;
+                default:
+                    buckets.other.orders += 1;
+                    buckets.other.revenue += amount;
+            }
+
+            if (!['awaiting', 'cancelled_paid', 'cancelled_unpaid'].includes(classification) && normalizedStatusText.includes('pending')) {
+                pendingOrders += 1;
+            }
+        });
+
+        const totalOrders = list.length;
+        const totalCustomers = uniqueCustomerKeys.size;
+        const averageOrderValue = totalOrders ? grossSales / totalOrders : 0;
+        const averagePaidOrderValue = paidOrders ? totalRevenue / paidOrders : 0;
+
+        return {
+            generatedAt: new Date(),
+            totalOrders,
+            grossSales,
+            paidOrders,
+            totalRevenue,
+            awaitingOrders,
+            awaitingRevenue,
+            cancelledOrders,
+            cancelledRevenue,
+            cancelledPaidOrders,
+            cancelledUnpaidOrders,
+            pendingOrders,
+            totalCustomers,
+            buckets,
+            averageOrderValue,
+            averagePaidOrderValue,
+            firstOrderDate,
+            lastOrderDate
+        };
+    }
+
+    function getStatusFilterLabel() {
+        const statusEl = selectors.statusFilter && selectors.statusFilter();
+        if (statusEl && statusEl.options && statusEl.selectedIndex >= 0) {
+            return statusEl.options[statusEl.selectedIndex].text;
+        }
+        return 'All statuses';
+    }
+
+    function describeDateFilters(filters) {
+        if (!filters) {
+            return 'All dates';
+        }
+
+        const range = filters.dateRange || 'ltd';
+        const from = filters.dateFrom || '';
+        const to = filters.dateTo || '';
+
+        if (from && to && from > to) {
+            return 'Custom range (invalid span)';
+        }
+
+        const labels = {
+            ltd: 'Lifetime (all dates)',
+            today: 'Today',
+            'this-week': 'This week',
+            'month-to-date': 'Month to date',
+            'year-to-date': 'Year to date',
+            manual: 'Custom range'
+        };
+
+        const label = labels[range] || 'Custom range';
+
+        if (range === 'ltd') {
+            return label;
+        }
+
+        if (!from && !to) {
+            return `${label} (no dates set)`;
+        }
+
+        return `${label}: ${from || 'any'} → ${to || 'any'}`;
+    }
+
+    function buildFilterSummary() {
+        const filters = { ...state.filters };
+        return {
+            filters,
+            statusLabel: getStatusFilterLabel(),
+            customerLabel: filters.customerQuery ? `Customer contains "${filters.customerQuery}"` : 'All customers',
+            dateLabel: describeDateFilters(filters)
+        };
+    }
+
+    function getRevenueSnapshot() {
+        if (state.revenueSnapshot && state.revenueSnapshot.orders) {
+            return state.revenueSnapshot;
+        }
+
+        const summary = summarizeOrders(state.filteredOrders);
+        const snapshot = {
+            ...summary,
+            filters: buildFilterSummary(),
+            orders: state.filteredOrders.map(order => ({ ...order })),
+            lastUpdated: summary.generatedAt
+        };
+        state.revenueSnapshot = snapshot;
+        return snapshot;
+    }
+
+    function exportRevenueCsv() {
+        const snapshot = getRevenueSnapshot();
+        if (!snapshot) {
+            showAlert('error', 'Revenue data is not available yet. Please refresh and try again.');
+            return;
+        }
+
+        const filters = snapshot.filters || buildFilterSummary();
+        const statusLabel = filters.statusLabel || 'All statuses';
+        const customerLabel = filters.customerLabel || 'All customers';
+        const dateLabel = filters.dateLabel || 'All dates';
+        const generatedAt = snapshot.lastUpdated instanceof Date && !Number.isNaN(snapshot.lastUpdated?.getTime?.())
+            ? snapshot.lastUpdated
+            : snapshot.generatedAt instanceof Date && !Number.isNaN(snapshot.generatedAt?.getTime?.())
+                ? snapshot.generatedAt
+                : new Date();
+        const generatedLabel = generatedAt.toLocaleString('en-ZA');
+
+        const rows = [];
+        const push = (...cells) => {
+            rows.push(cells.map(cell => quoteCsv(cell)).join(','));
+        };
+
+        push('Report', 'Disciplined Disciples Revenue Summary');
+        push('Generated', generatedLabel);
+        push('Status filter', statusLabel);
+        push('Customer filter', customerLabel);
+        push('Date filter', dateLabel);
+        rows.push('');
+        push('Metric', 'Value');
+        push('Total orders in view', snapshot.totalOrders);
+        push('Paid orders', snapshot.paidOrders);
+        push('Pending orders', snapshot.pendingOrders);
+        push('Awaiting orders', snapshot.awaitingOrders);
+        push('Cancelled orders', snapshot.cancelledOrders);
+        push('Cancelled orders (paid)', snapshot.cancelledPaidOrders);
+        push('Cancelled orders (unpaid)', snapshot.cancelledUnpaidOrders);
+        push('Unique customers', snapshot.totalCustomers);
+        push('Total revenue (paid)', formatCurrency(snapshot.totalRevenue));
+        push('Awaiting revenue', formatCurrency(snapshot.awaitingRevenue));
+        push('Cancelled revenue (paid)', formatCurrency(snapshot.cancelledRevenue));
+        push('Average order value', formatCurrency(snapshot.averageOrderValue));
+        push('Average paid order value', formatCurrency(snapshot.averagePaidOrderValue));
+        push('First order date', snapshot.firstOrderDate ? formatDate(snapshot.firstOrderDate) : '—');
+        push('Last order date', snapshot.lastOrderDate ? formatDate(snapshot.lastOrderDate) : '—');
+
+        rows.push('');
+        push('Status bucket', 'Orders', 'Revenue', 'Avg order value');
+        Object.values(snapshot.buckets || {}).forEach(bucket => {
+            const avgValue = bucket.orders ? bucket.revenue / bucket.orders : 0;
+            push(bucket.label, bucket.orders, formatCurrency(bucket.revenue), formatCurrency(avgValue));
+        });
+
+        const paidOrders = (snapshot.orders || [])
+            .filter(order => getFinancialStatus(order) === 'paid')
+            .sort((a, b) => (Number(b.totalAmount) || 0) - (Number(a.totalAmount) || 0))
+            .slice(0, 15);
+
+        if (paidOrders.length) {
+            rows.push('');
+            push('Top paid orders (max 15)', '', '', '');
+            push('Order', 'Date', 'Customer', 'Total');
+            paidOrders.forEach(order => {
+                const customer = state.customersById[order.userId] || {};
+                const customerName = customer.name || order.customerName || order.customerEmail || 'Customer';
+                push(order.orderId || order.docId || 'Order', formatDate(order.orderDate), customerName, formatCurrency(order.totalAmount));
+            });
+        }
+
+        try {
+            const csvContent = rows.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `disciplined-disciples-admin-revenue-${Date.now()}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+            showAlert('success', 'Revenue CSV exported successfully.', true);
+        } catch (error) {
+            console.error('Revenue CSV export failed:', error);
+            showAlert('error', `Could not generate the revenue CSV. ${error.message || error}`);
+        }
+    }
+
+    async function exportRevenueToPdf() {
+        const snapshot = getRevenueSnapshot();
+        if (!snapshot) {
+            showAlert('error', 'Revenue data is not available yet. Please refresh and try again.');
+            return;
+        }
+
+        try {
+            const JsPdfCtor = await resolveJsPdfConstructor();
+            if (!JsPdfCtor) {
+                showAlert('error', 'PDF export is unavailable right now. Please refresh and try again.');
+                return;
+            }
+
+            const doc = new JsPdfCtor({ unit: 'pt', format: 'a4' });
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 48;
+
+            const accent = hexToRgb('#111827');
+            const accentSecondary = hexToRgb('#2563EB');
+            const neutralText = hexToRgb('#1F2937');
+            const mutedText = hexToRgb('#4B5563');
+            const subtleBackground = hexToRgb('#F3F4F6');
+            const stripeBackground = hexToRgb('#F9FAFB');
+
+            const preferredSelectors = ['[data-admin-logo]', '[data-brand-logo]'];
+            const logoDataUrl = state.cachedLogoDataUrl || await getPrimaryLogoDataUrl(preferredSelectors);
+            if (logoDataUrl && !state.cachedLogoDataUrl) {
+                state.cachedLogoDataUrl = logoDataUrl;
+            }
+
+            const filters = snapshot.filters || buildFilterSummary();
+            const statusLabel = filters.statusLabel || 'All statuses';
+            const customerLabel = filters.customerLabel || 'All customers';
+            const dateLabel = filters.dateLabel || 'All dates';
+            const generatedAt = snapshot.lastUpdated instanceof Date && !Number.isNaN(snapshot.lastUpdated?.getTime?.())
+                ? snapshot.lastUpdated
+                : snapshot.generatedAt instanceof Date && !Number.isNaN(snapshot.generatedAt?.getTime?.())
+                    ? snapshot.generatedAt
+                    : new Date();
+
+            doc.setFillColor(accent.r, accent.g, accent.b);
+            doc.rect(0, 0, pageWidth, 116, 'F');
+
+            if (logoDataUrl) {
+                doc.addImage(logoDataUrl, 'PNG', margin, 26, 72, 72);
+            }
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(22);
+            doc.text('Disciplined Disciples', margin + 92, 48);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Revenue Summary', margin + 92, 70);
+            doc.setFontSize(11);
+            doc.text(`Generated: ${generatedAt.toLocaleString('en-ZA')}`, pageWidth - margin, 46, { align: 'right' });
+            doc.text(`Status: ${statusLabel}`, pageWidth - margin, 62, { align: 'right' });
+            doc.text(`Customers: ${customerLabel}`, pageWidth - margin, 78, { align: 'right' });
+            doc.text(`Dates: ${dateLabel}`, pageWidth - margin, 94, { align: 'right' });
+
+            let cursorY = 140;
+
+            doc.setFillColor(subtleBackground.r, subtleBackground.g, subtleBackground.b);
+            doc.roundedRect(margin, cursorY, pageWidth - 2 * margin, 130, 12, 12, 'F');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.setTextColor(accentSecondary.r, accentSecondary.g, accentSecondary.b);
+            doc.text('Key metrics', margin + 20, cursorY + 28);
+
+            const metricsLeft = [
+                `Total revenue (paid): ${formatCurrency(snapshot.totalRevenue)}`,
+                `Paid orders: ${snapshot.paidOrders}`,
+                `Average paid order value: ${formatCurrency(snapshot.averagePaidOrderValue)}`,
+                `Unique customers: ${snapshot.totalCustomers}`
+            ];
+            const metricsRight = [
+                `Awaiting revenue: ${formatCurrency(snapshot.awaitingRevenue)}`,
+                `Awaiting orders: ${snapshot.awaitingOrders}`,
+                `Cancelled revenue (paid): ${formatCurrency(snapshot.cancelledRevenue)}`,
+                `Pending orders: ${snapshot.pendingOrders}`
+            ];
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(11);
+            doc.setTextColor(neutralText.r, neutralText.g, neutralText.b);
+            const metricsBaseline = cursorY + 48;
+            metricsLeft.forEach((line, index) => {
+                doc.text(line, margin + 20, metricsBaseline + index * 18);
+            });
+            metricsRight.forEach((line, index) => {
+                doc.text(line, margin + 260, metricsBaseline + index * 18);
+            });
+            doc.setTextColor(mutedText.r, mutedText.g, mutedText.b);
+            doc.text(`First order in view: ${snapshot.firstOrderDate ? formatDate(snapshot.firstOrderDate) : '—'}`, margin + 20, metricsBaseline + 90);
+            doc.text(`Last order in view: ${snapshot.lastOrderDate ? formatDate(snapshot.lastOrderDate) : '—'}`, margin + 260, metricsBaseline + 90);
+
+            cursorY += 150;
+
+            const tableWidth = pageWidth - 2 * margin;
+            const rowHeight = 30;
+            const headerHeight = 34;
+            let tableY = cursorY;
+
+            const bucketEntries = Object.values(snapshot.buckets || {});
+            const bucketColumns = (() => {
+                const statusWidth = Math.round(tableWidth * 0.42);
+                const ordersWidth = Math.round(tableWidth * 0.18);
+                const revenueWidth = Math.round(tableWidth * 0.2);
+                const avgWidth = tableWidth - statusWidth - ordersWidth - revenueWidth;
+                return [
+                    { title: 'Status bucket', width: statusWidth, getter: bucket => bucket.label },
+                    { title: 'Orders', width: ordersWidth, getter: bucket => bucket.orders },
+                    { title: 'Revenue', width: revenueWidth, getter: bucket => formatCurrency(bucket.revenue) },
+                    {
+                        title: 'Avg order',
+                        width: avgWidth,
+                        getter: bucket => formatCurrency(bucket.orders ? bucket.revenue / bucket.orders : 0)
+                    }
+                ];
+            })();
+
+            const renderBucketHeader = () => {
+                doc.setFillColor(accent.r, accent.g, accent.b);
+                doc.roundedRect(margin, tableY, tableWidth, headerHeight, 8, 8, 'F');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(11);
+                doc.setTextColor(255, 255, 255);
+
+                let colX = margin;
+                bucketColumns.forEach((col, index) => {
+                    const textX = index === bucketColumns.length - 1 ? colX + col.width - 14 : colX + 14;
+                    const align = index === bucketColumns.length - 1 ? 'right' : index === 1 ? 'center' : 'left';
+                    doc.text(col.title, textX, tableY + 22, { align });
+                    colX += col.width;
+                });
+
+                tableY += headerHeight;
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.setTextColor(neutralText.r, neutralText.g, neutralText.b);
+            };
+
+            const renderBucketRow = (bucket, index) => {
+                if (tableY + rowHeight > pageHeight - margin) {
+                    doc.addPage();
+                    tableY = margin;
+                    renderBucketHeader();
+                }
+
+                if (index % 2 === 0) {
+                    doc.setFillColor(stripeBackground.r, stripeBackground.g, stripeBackground.b);
+                    doc.rect(margin, tableY, tableWidth, rowHeight, 'F');
+                }
+
+                let colX = margin;
+                const baseline = tableY + 19;
+                bucketColumns.forEach((col, colIndex) => {
+                    const value = col.getter(bucket) || '—';
+                    if (colIndex === bucketColumns.length - 1) {
+                        doc.text(String(value), colX + col.width - 14, baseline, { align: 'right' });
+                    } else if (colIndex === 1) {
+                        doc.text(String(value), colX + col.width / 2, baseline, { align: 'center' });
+                    } else {
+                        doc.text(String(value), colX + 14, baseline, { maxWidth: col.width - 28 });
+                    }
+                    colX += col.width;
+                });
+
+                tableY += rowHeight;
+            };
+
+            renderBucketHeader();
+            bucketEntries.forEach((bucket, index) => renderBucketRow(bucket, index));
+
+            cursorY = tableY + 40;
+
+            const paidOrders = (snapshot.orders || [])
+                .filter(order => getFinancialStatus(order) === 'paid')
+                .sort((a, b) => (Number(b.totalAmount) || 0) - (Number(a.totalAmount) || 0))
+                .slice(0, 12);
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.setTextColor(accentSecondary.r, accentSecondary.g, accentSecondary.b);
+            doc.text('Top paid orders (filtered view)', margin, cursorY);
+            cursorY += 16;
+
+            if (!paidOrders.length) {
+                doc.setFont('helvetica', 'italic');
+                doc.setFontSize(10);
+                doc.setTextColor(mutedText.r, mutedText.g, mutedText.b);
+                doc.text('No paid orders are available for the current filters.', margin, cursorY);
+            } else {
+                const ordersTableWidth = pageWidth - 2 * margin;
+                const ordersHeaderHeight = 32;
+                const ordersRowHeight = 24;
+                let ordersTableY = cursorY;
+
+                const orderColumns = (() => {
+                    const idWidth = Math.round(ordersTableWidth * 0.24);
+                    const dateWidth = Math.round(ordersTableWidth * 0.18);
+                    const customerWidth = Math.round(ordersTableWidth * 0.36);
+                    const totalWidth = ordersTableWidth - idWidth - dateWidth - customerWidth;
+                    return [
+                        { title: 'Order', width: idWidth, getter: order => (order.orderId || order.docId || '').slice(0, 20) },
+                        { title: 'Date', width: dateWidth, getter: order => formatDate(order.orderDate) },
+                        {
+                            title: 'Customer',
+                            width: customerWidth,
+                            getter: order => {
+                                const customer = state.customersById[order.userId] || {};
+                                return customer.name || order.customerName || order.customerEmail || 'Customer';
+                            }
+                        },
+                        { title: 'Total', width: totalWidth, getter: order => formatCurrency(order.totalAmount) }
+                    ];
+                })();
+
+                const renderOrdersHeader = () => {
+                    doc.setFillColor(accent.r, accent.g, accent.b);
+                    doc.roundedRect(margin, ordersTableY, ordersTableWidth, ordersHeaderHeight, 6, 6, 'F');
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(10);
+                    doc.setTextColor(255, 255, 255);
+
+                    let colX = margin;
+                    orderColumns.forEach((col, index) => {
+                        const align = index === orderColumns.length - 1 ? 'right' : 'left';
+                        const textX = align === 'right' ? colX + col.width - 12 : colX + 12;
+                        doc.text(col.title, textX, ordersTableY + 20, { align });
+                        colX += col.width;
+                    });
+
+                    ordersTableY += ordersHeaderHeight;
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(9);
+                    doc.setTextColor(neutralText.r, neutralText.g, neutralText.b);
+                };
+
+                const renderOrdersRow = (order, index) => {
+                    if (ordersTableY + ordersRowHeight > pageHeight - margin) {
+                        doc.addPage();
+                        ordersTableY = margin;
+                        renderOrdersHeader();
+                    }
+
+                    if (index % 2 === 0) {
+                        doc.setFillColor(stripeBackground.r, stripeBackground.g, stripeBackground.b);
+                        doc.rect(margin, ordersTableY, ordersTableWidth, ordersRowHeight, 'F');
+                    }
+
+                    let colX = margin;
+                    const baseline = ordersTableY + 16;
+                    orderColumns.forEach((col, colIndex) => {
+                        const value = col.getter(order) || '—';
+                        const align = colIndex === orderColumns.length - 1 ? 'right' : 'left';
+                        const textX = align === 'right' ? colX + col.width - 12 : colX + 12;
+                        doc.text(String(value), textX, baseline, { align, maxWidth: col.width - 24 });
+                        colX += col.width;
+                    });
+
+                    ordersTableY += ordersRowHeight;
+                };
+
+                renderOrdersHeader();
+                paidOrders.forEach((order, index) => renderOrdersRow(order, index));
+                cursorY = ordersTableY + 28;
+            }
+
+            doc.save(`disciplined-disciples-admin-revenue-${Date.now()}.pdf`);
+            showAlert('success', 'Revenue PDF exported successfully.', true);
+        } catch (error) {
+            console.error('Revenue PDF export failed:', error);
+            showAlert('error', `Could not generate the revenue PDF. ${error.message || error}`);
+        }
+    }
 
     function pluralize(count, singular, plural) {
         if (count === 1) {
@@ -3773,8 +4435,6 @@ window.AdminApp = (function() {
         try {
             await loadCustomers();
             await loadOrders();
-            composeCustomerList();
-            updateMetrics();
             renderAll();
             if (state.loadingCustomersError || state.loadingOrdersError) {
                 const parts = [];
@@ -3921,20 +4581,43 @@ window.AdminApp = (function() {
         state.customerStats[key] = stats;
     }
 
-    function updateMetrics() {
-        const visibleOrders = state.orders.filter(order => !state.hideStaleAwaitingPayments || !order.isAwaitingPaymentExpired);
+    function updateMetrics(ordersReference) {
+        const providedOrders = Array.isArray(ordersReference) ? ordersReference : null;
+        const visibleOrders = providedOrders || state.orders.filter(order => !state.hideStaleAwaitingPayments || !order.isAwaitingPaymentExpired);
 
-        state.metrics.totalOrders = visibleOrders.length;
-        state.metrics.pendingOrders = visibleOrders.filter(order => (order.status || '').toLowerCase().includes('pending')).length;
-        state.metrics.totalRevenue = visibleOrders.reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0);
-        state.metrics.totalCustomers = state.customers.length;
+        const summary = summarizeOrders(visibleOrders);
+        const metrics = state.metrics;
+
+        metrics.totalOrders = summary.totalOrders;
+        metrics.pendingOrders = summary.pendingOrders;
+        metrics.paidOrders = summary.paidOrders;
+        metrics.totalRevenue = summary.totalRevenue;
+        metrics.awaitingOrders = summary.awaitingOrders;
+        metrics.awaitingRevenue = summary.awaitingRevenue;
+        metrics.cancelledOrders = summary.cancelledOrders;
+        metrics.cancelledRevenue = summary.cancelledRevenue;
+        metrics.cancelledPaidOrders = summary.cancelledPaidOrders;
+        metrics.cancelledUnpaidOrders = summary.cancelledUnpaidOrders;
+        metrics.totalCustomers = summary.totalCustomers;
+
+        state.revenueSnapshot = {
+            ...summary,
+            filters: buildFilterSummary(),
+            orders: visibleOrders.map(order => ({ ...order })),
+            lastUpdated: summary.generatedAt
+        };
     }
 
-    function composeCustomerList() {
+    function composeCustomerList(orders, options = {}) {
+        const includeZeroOrderCustomers = options.includeZeroOrderCustomers === true;
+        const usingCustomOrders = Array.isArray(orders);
+        const baseOrders = usingCustomOrders ? orders : state.orders;
+        const skipStale = !usingCustomOrders && state.hideStaleAwaitingPayments;
+
         state.customerStats = {};
 
-        state.orders.forEach(order => {
-            if (state.hideStaleAwaitingPayments && order.isAwaitingPaymentExpired) {
+        baseOrders.forEach(order => {
+            if (skipStale && order.isAwaitingPaymentExpired) {
                 return;
             }
             accumulateCustomerStats(order);
@@ -3945,6 +4628,9 @@ window.AdminApp = (function() {
 
         state.customers.forEach(customer => {
             const stats = state.customerStats[customer.id] || { orders: 0, revenue: 0, lastOrder: null };
+            if (!includeZeroOrderCustomers && (!stats.orders || stats.orders <= 0)) {
+                return;
+            }
             combined.push({
                 id: customer.id,
                 name: customer.name || customer.email || 'Customer',
@@ -4001,9 +4687,22 @@ window.AdminApp = (function() {
             });
         }
 
+        const dateRangeSelect = selectors.dateRange();
+        if (dateRangeSelect) {
+            applyDateRangePreset(dateRangeSelect.value || 'ltd');
+            dateRangeSelect.addEventListener('change', () => {
+                applyDateRangePreset(dateRangeSelect.value || 'ltd');
+                renderOrders();
+            });
+        }
+
         const dateFromInput = selectors.dateFrom();
         if (dateFromInput) {
             dateFromInput.addEventListener('change', () => {
+                if (dateRangeSelect && dateRangeSelect.value !== 'manual') {
+                    dateRangeSelect.value = 'manual';
+                    applyDateRangePreset('manual');
+                }
                 renderOrders();
             });
         }
@@ -4011,6 +4710,10 @@ window.AdminApp = (function() {
         const dateToInput = selectors.dateTo();
         if (dateToInput) {
             dateToInput.addEventListener('change', () => {
+                if (dateRangeSelect && dateRangeSelect.value !== 'manual') {
+                    dateRangeSelect.value = 'manual';
+                    applyDateRangePreset('manual');
+                }
                 renderOrders();
             });
         }
@@ -4033,6 +4736,20 @@ window.AdminApp = (function() {
         if (exportPdfBtn) {
             exportPdfBtn.addEventListener('click', () => {
                 exportOrdersToPdf();
+            });
+        }
+
+        const revenueExportBtn = selectors.revenueExport();
+        if (revenueExportBtn) {
+            revenueExportBtn.addEventListener('click', () => {
+                exportRevenueCsv();
+            });
+        }
+
+        const revenueExportPdfBtn = selectors.revenueExportPdf();
+        if (revenueExportPdfBtn) {
+            revenueExportPdfBtn.addEventListener('click', () => {
+                exportRevenueToPdf();
             });
         }
 
@@ -4066,6 +4783,24 @@ window.AdminApp = (function() {
                     return;
                 }
 
+                const invoiceBtn = event.target.closest('button[data-action="download-invoice"]');
+                if (invoiceBtn) {
+                    const docId = invoiceBtn.dataset.docId;
+                    const order = state.orders.find(candidate => candidate.docId === docId);
+                    if (!order) {
+                        showAlert('error', 'Unable to locate that order. Please refresh and try again.');
+                        return;
+                    }
+
+                    if (typeof window.downloadInvoicePdf === 'function') {
+                        await window.downloadInvoicePdf(order);
+                        showAlert('success', 'Invoice PDF downloaded.', true);
+                    } else {
+                        showAlert('error', 'Invoice generator is unavailable right now.');
+                    }
+                    return;
+                }
+
                 const button = event.target.closest('button[data-status-action]');
                 if (!button) {
                     return;
@@ -4082,10 +4817,6 @@ window.AdminApp = (function() {
             staleToggle.addEventListener('click', () => {
                 state.hideStaleAwaitingPayments = !state.hideStaleAwaitingPayments;
                 renderOrders();
-                composeCustomerList();
-                renderCustomers();
-                updateMetrics();
-                renderMetrics();
             });
         }
     }
@@ -4094,8 +4825,6 @@ window.AdminApp = (function() {
         showLoading(true);
         try {
             await loadOrders();
-            composeCustomerList();
-            updateMetrics();
             renderAll();
             showAlert('success', 'Dashboard data refreshed.', true);
         } catch (error) {
@@ -4136,8 +4865,6 @@ window.AdminApp = (function() {
             const { payload } = buildStatusUpdatePayload(template, order, overrides, actor);
             await ordersCollection().doc(docId).set(payload, { merge: true });
             await loadOrders();
-            composeCustomerList();
-            updateMetrics();
             renderAll();
             const successLabel = `${template.icon || ''} ${template.label} update shared with the customer.`.trim();
             showAlert('success', successLabel, true);
@@ -4169,8 +4896,6 @@ window.AdminApp = (function() {
             }, { merge: true });
 
             await loadOrders();
-            composeCustomerList();
-            updateMetrics();
             renderAll();
             showAlert('success', 'Order updated successfully.', true);
         } catch (error) {
@@ -4204,8 +4929,6 @@ window.AdminApp = (function() {
             showLoading(true);
             await ordersCollection().doc(docId).delete();
             await loadOrders();
-            composeCustomerList();
-            updateMetrics();
             renderAll();
             showAlert('success', 'Awaiting-payment order deleted.', true);
         } catch (error) {
@@ -4217,20 +4940,30 @@ window.AdminApp = (function() {
     }
 
     function renderAll() {
-        renderMetrics();
         renderOrders();
-        renderCustomers();
     }
 
     function renderMetrics() {
         const totalOrdersEl = selectors.totalOrders();
         const pendingOrdersEl = selectors.pendingOrders();
+        const paidOrdersEl = selectors.paidOrders();
         const totalRevenueEl = selectors.totalRevenue();
+        const revenueBreakdownEl = selectors.revenueBreakdown();
         const totalCustomersEl = selectors.totalCustomers();
 
         if (totalOrdersEl) totalOrdersEl.textContent = state.metrics.totalOrders;
         if (pendingOrdersEl) pendingOrdersEl.textContent = state.metrics.pendingOrders;
+        if (paidOrdersEl) paidOrdersEl.textContent = state.metrics.paidOrders;
         if (totalRevenueEl) totalRevenueEl.textContent = formatCurrency(state.metrics.totalRevenue);
+        if (revenueBreakdownEl) {
+            const paid = formatCurrency(state.metrics.totalRevenue);
+            const awaiting = formatCurrency(state.metrics.awaitingRevenue);
+            const cancelled = formatCurrency(state.metrics.cancelledRevenue);
+            const awaitingCount = state.metrics.awaitingOrders;
+            const cancelledPaidCount = state.metrics.cancelledPaidOrders;
+            const cancelledUnpaidCount = state.metrics.cancelledUnpaidOrders;
+            revenueBreakdownEl.textContent = `Paid: ${paid} (${state.metrics.paidOrders} ${pluralize(state.metrics.paidOrders, 'order')}) • Awaiting: ${awaiting} (${awaitingCount} ${pluralize(awaitingCount, 'order')}) • Cancelled (paid): ${cancelled} (${cancelledPaidCount} ${pluralize(cancelledPaidCount, 'order')}) • Cancelled (unpaid): ${cancelledUnpaidCount} ${pluralize(cancelledUnpaidCount, 'order')}`;
+        }
         if (totalCustomersEl) totalCustomersEl.textContent = state.metrics.totalCustomers;
     }
 
@@ -4251,6 +4984,10 @@ window.AdminApp = (function() {
             state.filteredOrders = [];
             state.visibleStaleOrdersForFilters = 0;
             state.hiddenStaleOrdersForFilters = 0;
+            updateMetrics([]);
+            renderMetrics();
+            composeCustomerList([], { includeZeroOrderCustomers: false });
+            renderCustomers();
             updateOrdersSummary(filters);
             renderStaleBanner();
             return;
@@ -4269,6 +5006,10 @@ window.AdminApp = (function() {
                 <tr>
                     <td colspan="8" class="px-4 py-6 text-center text-gray-500">${escapeHtml(noResultsMessage)}</td>
                 </tr>`;
+            updateMetrics([]);
+            renderMetrics();
+            composeCustomerList([], { includeZeroOrderCustomers: false });
+            renderCustomers();
             updateOrdersSummary(filters);
             renderStaleBanner();
             return;
@@ -4278,6 +5019,10 @@ window.AdminApp = (function() {
             tbody.appendChild(buildOrderRow(order));
         });
 
+        updateMetrics(state.filteredOrders);
+        renderMetrics();
+        composeCustomerList(state.filteredOrders, { includeZeroOrderCustomers: false });
+        renderCustomers();
         updateOrdersSummary(filters);
         renderStaleBanner();
     }
@@ -4285,6 +5030,7 @@ window.AdminApp = (function() {
     function collectActiveFilters() {
         const statusEl = selectors.statusFilter();
         const customerEl = selectors.customerFilter();
+        const dateRangeEl = selectors.dateRange();
         const dateFromEl = selectors.dateFrom();
         const dateToEl = selectors.dateTo();
 
@@ -4292,6 +5038,7 @@ window.AdminApp = (function() {
         state.filters.customerQuery = customerEl ? customerEl.value.trim() : '';
         state.filters.dateFrom = dateFromEl && dateFromEl.value ? dateFromEl.value : '';
         state.filters.dateTo = dateToEl && dateToEl.value ? dateToEl.value : '';
+        state.filters.dateRange = dateRangeEl ? (dateRangeEl.value || 'ltd') : 'ltd';
 
         return { ...state.filters };
     }
@@ -4489,6 +5236,12 @@ window.AdminApp = (function() {
         const statusActions = buildStatusActions(order);
         const historyList = buildHistoryList(order);
         const eta = order.estimatedArrivalText ? `<div class="mt-1 text-[11px] text-blue-600">ETA: ${escapeHtml(order.estimatedArrivalText)}</div>` : '';
+        const invoiceButton = isInvoiceAvailable(order)
+            ? `<button type="button" data-doc-id="${safeDocId}" data-action="download-invoice" class="inline-flex items-center gap-2 rounded border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-100 transition">
+                    <i class="fas fa-file-invoice"></i>
+                    Invoice PDF
+               </button>`
+            : '';
 
         row.innerHTML = `
             <td class="px-4 py-3 text-sm font-semibold text-gray-800">
@@ -4529,6 +5282,7 @@ window.AdminApp = (function() {
                 <div class="text-xs text-gray-700 bg-slate-100 border border-slate-200 rounded px-3 py-2">${latestMessage}</div>
                 ${eta}
                 <ul class="mt-3 space-y-2">${historyList}</ul>
+                ${invoiceButton ? `<div class="mt-3">${invoiceButton}</div>` : ''}
                 <div class="mt-3 flex flex-wrap gap-2">${statusActions}</div>
             </td>
         `;
@@ -4550,6 +5304,80 @@ window.AdminApp = (function() {
             const safeOption = escapeHtml(option);
             return `<option value="${safeOption}" ${selected}>${safeOption}</option>`;
         }).join('');
+    }
+
+    function setDateInputsDisabled(isDisabled) {
+        const fromInput = selectors.dateFrom();
+        const toInput = selectors.dateTo();
+        [fromInput, toInput].forEach(input => {
+            if (!input) {
+                return;
+            }
+            input.disabled = isDisabled;
+            input.classList.toggle('opacity-60', isDisabled);
+        });
+    }
+
+    function applyDateRangePreset(rangeValue) {
+        state.filters.dateRange = rangeValue;
+
+        const fromInput = selectors.dateFrom();
+        const toInput = selectors.dateTo();
+        if (!fromInput || !toInput) {
+            return;
+        }
+
+        const today = new Date();
+        const toDateValue = formatDateInputValue(today);
+
+        switch (rangeValue) {
+            case 'manual': {
+                setDateInputsDisabled(false);
+                return;
+            }
+            case 'ltd': {
+                setDateInputsDisabled(true);
+                fromInput.value = '';
+                toInput.value = '';
+                return;
+            }
+            case 'today': {
+                setDateInputsDisabled(true);
+                const todayValue = formatDateInputValue(today);
+                fromInput.value = todayValue;
+                toInput.value = todayValue;
+                return;
+            }
+            case 'this-week': {
+                setDateInputsDisabled(true);
+                const startOfWeek = new Date(today);
+                const day = startOfWeek.getDay();
+                const diff = day === 0 ? -6 : 1 - day; // Monday as start of week
+                startOfWeek.setDate(startOfWeek.getDate() + diff);
+                fromInput.value = formatDateInputValue(startOfWeek);
+                toInput.value = toDateValue;
+                return;
+            }
+            case 'month-to-date': {
+                setDateInputsDisabled(true);
+                const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+                fromInput.value = formatDateInputValue(monthStart);
+                toInput.value = toDateValue;
+                return;
+            }
+            case 'year-to-date': {
+                setDateInputsDisabled(true);
+                const yearStart = new Date(today.getFullYear(), 0, 1);
+                fromInput.value = formatDateInputValue(yearStart);
+                toInput.value = toDateValue;
+                return;
+            }
+            default: {
+                setDateInputsDisabled(true);
+                fromInput.value = '';
+                toInput.value = '';
+            }
+        }
     }
 
     function renderCustomers() {

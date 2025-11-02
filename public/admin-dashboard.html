@@ -69,7 +69,7 @@
     <main class="container mx-auto px-4 py-8 space-y-8">
         <div id="admin-alert" class="hidden"></div>
 
-        <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+        <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-6">
             <article class="bg-white rounded-xl shadow p-6">
                 <p class="text-sm text-slate-500">Total Orders</p>
                 <p id="admin-total-orders" class="text-3xl font-semibold mt-2">0</p>
@@ -79,11 +79,18 @@
                 <p id="admin-pending-orders" class="text-3xl font-semibold mt-2">0</p>
             </article>
             <article class="bg-white rounded-xl shadow p-6">
-                <p class="text-sm text-slate-500">Total Revenue</p>
-                <p id="admin-total-revenue" class="text-3xl font-semibold mt-2">R0.00</p>
+                <p class="text-sm text-slate-500">Paid Orders</p>
+                <p id="admin-paid-orders" class="text-3xl font-semibold mt-2">0</p>
             </article>
             <article class="bg-white rounded-xl shadow p-6">
-                <p class="text-sm text-slate-500">Registered Customers</p>
+                <p class="text-sm text-slate-500">Paid Revenue</p>
+                <p id="admin-total-revenue" class="text-3xl font-semibold mt-2">R0.00</p>
+                <p id="admin-revenue-breakdown" class="mt-2 text-xs text-slate-500 leading-relaxed">
+                    Paid: R0.00 • Awaiting: R0.00 • Cancelled (paid): R0.00
+                </p>
+            </article>
+            <article class="bg-white rounded-xl shadow p-6">
+                <p class="text-sm text-slate-500">Customers in view</p>
                 <p id="admin-total-customers" class="text-3xl font-semibold mt-2">0</p>
             </article>
         </section>
@@ -114,6 +121,14 @@
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <input type="search" id="admin-customer-filter" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48" placeholder="Search customer, email, order" aria-label="Filter by customer" />
+                    <select id="admin-date-range" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="ltd">Lifetime (All)</option>
+                        <option value="today">Today</option>
+                        <option value="this-week">This week</option>
+                        <option value="month-to-date">Month to date</option>
+                        <option value="year-to-date">Year to date</option>
+                        <option value="manual">Custom range</option>
+                    </select>
                     <input type="date" id="admin-date-from" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-36" aria-label="Filter from date" />
                     <input type="date" id="admin-date-to" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-36" aria-label="Filter to date" />
                     <select id="admin-status-filter" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -133,6 +148,12 @@
                     </button>
                     <button id="admin-export-pdf" class="px-4 py-2 text-sm font-medium bg-emerald-600 text-white rounded hover:bg-emerald-700 transition">
                         <i class="fas fa-file-pdf mr-2"></i>Export PDF
+                    </button>
+                    <button id="admin-revenue-export" class="px-4 py-2 text-sm font-medium bg-slate-800 text-white rounded hover:bg-slate-900 transition">
+                        <i class="fas fa-chart-line mr-2"></i>Revenue CSV
+                    </button>
+                    <button id="admin-revenue-export-pdf" class="px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded hover:bg-indigo-700 transition">
+                        <i class="fas fa-file-invoice-dollar mr-2"></i>Revenue PDF
                     </button>
                 </div>
             </header>
