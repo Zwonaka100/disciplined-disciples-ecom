@@ -17,6 +17,55 @@ function isAdminEmail(candidate) {
     return ADMIN_EMAILS.some(adminEmail => adminEmail.toLowerCase() === normalized);
 }
 
+function determinePostLoginDestination(user, requestedFallback) {
+    if (!user) {
+        return requestedFallback || 'profile.html';
+    }
+
+    if (isAdminEmail(user.email)) {
+        return 'admin-dashboard.html';
+    }
+
+    return requestedFallback || 'profile.html';
+}
+
+function redirectAfterAuthentication(user, options = {}) {
+    if (!user) {
+        return;
+    }
+
+    const requestedRedirect = options.requestedRedirect;
+    const fallbackUrl = options.fallbackUrl || 'profile.html';
+    const target = determinePostLoginDestination(user, requestedRedirect || fallbackUrl);
+
+    if (!target) {
+        return;
+    }
+
+    const isAbsolute = /^https?:/i.test(target);
+    const currentRelative = `${window.location.pathname.replace(/^\//, '')}${window.location.search}`;
+    const normalizedTarget = target.replace(/^\//, '');
+
+    if (isAdminEmail(user.email) && !currentRelative.startsWith('admin-dashboard.html')) {
+        window.location.replace(target);
+        return;
+    }
+
+    if (isAbsolute) {
+        if (window.location.href !== target) {
+            window.location.replace(target);
+        }
+        return;
+    }
+
+    if (currentRelative !== normalizedTarget) {
+        window.location.replace(target);
+    }
+}
+
+window.redirectAfterAuthentication = redirectAfterAuthentication;
+window.determinePostLoginDestination = determinePostLoginDestination;
+
 let resolveFirebaseInitialized = null;
 let firebaseInitializationPromise = new Promise(resolve => {
     resolveFirebaseInitialized = resolve;
@@ -2109,7 +2158,16 @@ await window.db.collection('artifacts').doc('default-app-id')
             const userCredential = await window.signInWithEmailAndPassword(window.auth, email, password);
             console.log("User logged in:", userCredential.user);
             showMessage("Login successful!");
-            window.location.href = 'profile.html'; // <-- Redirect to profile page after login
+
+            const user = userCredential.user;
+            sessionStorage.setItem('userLoggedIn', 'true');
+            sessionStorage.setItem('userId', user.uid);
+            localStorage.setItem('userLoggedIn', 'true');
+            localStorage.setItem('userId', user.uid);
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const requestedRedirect = urlParams.get('redirect');
+            redirectAfterAuthentication(user, { requestedRedirect, fallbackUrl: 'profile.html' });
         } catch (error) {
             console.error("Error during login:", error.message);
             let errorMessage = "Login failed. Please check your credentials.";
@@ -2135,7 +2193,16 @@ await window.db.collection('artifacts').doc('default-app-id')
             try {
                 const userCredential = await window.auth.signInWithEmailAndPassword(email, password);
                 alert('Login successful!');
-                window.location.href = "profile.html"; // Redirect to profile/dashboard
+
+                const user = userCredential.user;
+                sessionStorage.setItem('userLoggedIn', 'true');
+                sessionStorage.setItem('userId', user.uid);
+                localStorage.setItem('userLoggedIn', 'true');
+                localStorage.setItem('userId', user.uid);
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const requestedRedirect = urlParams.get('redirect');
+                redirectAfterAuthentication(user, { requestedRedirect, fallbackUrl: 'profile.html' });
             } catch (error) {
                 alert(error.message);
             }
@@ -4394,7 +4461,12 @@ window.AdminApp = (function() {
         hideAlert();
         showLoading(true);
 
-        await waitForFirebaseReady();
+        const firebaseReady = await waitForFirebaseReady();
+        if (!firebaseReady) {
+            showAlert('error', 'We could not connect to the store right now. Please refresh to try again.');
+            showLoading(false);
+            return;
+        }
 
         const auth = window.auth || (window.firebase && window.firebase.auth && window.firebase.auth());
         if (!auth) {

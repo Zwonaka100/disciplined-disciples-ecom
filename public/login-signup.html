@@ -396,25 +396,24 @@
                     
                     // Determine redirect target
                     const urlParams = new URLSearchParams(window.location.search);
-                    let redirectUrl = urlParams.get('redirect');
+                    const requestedRedirect = urlParams.get('redirect');
+                    const target = (typeof determinePostLoginDestination === 'function')
+                        ? determinePostLoginDestination(userCredential.user, requestedRedirect || 'profile.html')
+                        : ((requestedRedirect) || (typeof isAdminEmail === 'function' && isAdminEmail(userCredential.user.email) ? 'admin-dashboard.html' : 'profile.html'));
 
-                    if (!redirectUrl) {
-                        if (typeof isAdminEmail === 'function' && isAdminEmail(userCredential.user.email)) {
-                            redirectUrl = 'admin-dashboard.html';
-                        } else {
-                            redirectUrl = 'profile.html';
-                        }
-                    }
-
-                    // Add fromLogin flag for customer profile page only
-                    if (redirectUrl.includes('profile.html')) {
+                    let redirectUrl = target;
+                    if (!isAdminEmail(userCredential.user.email) && redirectUrl.includes('profile.html') && !redirectUrl.includes('fromLogin=')) {
                         redirectUrl += redirectUrl.includes('?') ? '&fromLogin=true' : '?fromLogin=true';
                     }
                     
                     // Wait a moment for auth state to propagate, then redirect
                     setTimeout(() => {
                         console.log('Redirecting to:', redirectUrl);
-                        window.location.href = redirectUrl;
+                        if (typeof redirectAfterAuthentication === 'function') {
+                            redirectAfterAuthentication(userCredential.user, { requestedRedirect: redirectUrl, fallbackUrl: 'profile.html' });
+                        } else {
+                            window.location.href = redirectUrl;
+                        }
                     }, 1200);
                     
                 } catch (error) {
@@ -466,13 +465,16 @@
                     localStorage.setItem('userId', user.uid);
 
                     const urlParams = new URLSearchParams(window.location.search);
-                    let redirectUrl = urlParams.get('redirect');
-                    if (!redirectUrl) {
-                        redirectUrl = (typeof isAdminEmail === 'function' && isAdminEmail(user.email))
-                            ? 'admin-dashboard.html'
-                            : 'profile.html';
+                    const requestedRedirect = urlParams.get('redirect');
+                    const target = (typeof determinePostLoginDestination === 'function')
+                        ? determinePostLoginDestination(user, requestedRedirect || 'profile.html')
+                        : ((requestedRedirect) || (typeof isAdminEmail === 'function' && isAdminEmail(user.email) ? 'admin-dashboard.html' : 'profile.html'));
+
+                    if (typeof redirectAfterAuthentication === 'function') {
+                        redirectAfterAuthentication(user, { requestedRedirect: target, fallbackUrl: 'profile.html' });
+                    } else {
+                        window.location.href = target;
                     }
-                    window.location.href = redirectUrl;
                     return; // Exit early to prevent further execution
                 }
             });
