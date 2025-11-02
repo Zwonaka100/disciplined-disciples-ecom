@@ -2672,7 +2672,8 @@ window.ProfileApp = (function() {
         user: null,
         profile: null,
         orders: [],
-        filteredOrders: []
+        filteredOrders: [],
+        ordersUnsubscribe: null
     };
 
     const selectors = {
@@ -2870,6 +2871,64 @@ window.ProfileApp = (function() {
         }
 
         state.filteredOrders = [...state.orders];
+        
+        // Set up real-time listener for order updates
+        setupOrdersListener();
+    }
+    
+    function setupOrdersListener() {
+        // Unsubscribe from previous listener if exists
+        if (state.ordersUnsubscribe) {
+            state.ordersUnsubscribe();
+        }
+        
+        if (!window.db || !state.user) {
+            return;
+        }
+        
+        const ordersRef = window.db.collection('artifacts')
+            .doc('default-app-id')
+            .collection('orders')
+            .where('userId', '==', state.user.uid)
+            .orderBy('orderDate', 'desc');
+        
+        // Listen for real-time updates
+        state.ordersUnsubscribe = ordersRef.onSnapshot((snapshot) => {
+            console.log('[ProfileApp] Real-time order update received');
+            state.orders = [];
+            
+            snapshot.forEach(doc => {
+                const data = doc.data() || {};
+                const orderDate = coerceToDate(data.orderDate);
+                const order = {
+                    docId: doc.id,
+                    orderId: data.orderId || doc.id,
+                    statusKey: data.statusKey || '',
+                    status: data.status || 'Pending',
+                    statusLabel: data.statusLabel || data.status || 'Pending',
+                    statusMessage: data.statusMessage || data.lastCustomerMessage || '',
+                    statusIcon: data.statusIcon || '',
+                    statusHistory: Array.isArray(data.statusHistory) ? data.statusHistory : [],
+                    paymentStatus: data.paymentStatus || 'Pending',
+                    orderDate,
+                    totalAmount: Number(data.totalAmount) || 0,
+                    items: Array.isArray(data.items) ? data.items : [],
+                    estimatedArrivalText: data.estimatedArrivalText || data.estimatedDelivery || '',
+                    deliveryAddress: data.deliveryAddress || data.shippingAddress || null
+                };
+
+                if (!isAwaitingPaymentExpired(order)) {
+                    state.orders.push(order);
+                }
+            });
+            
+            state.filteredOrders = [...state.orders];
+            renderOrders();
+            updateStats();
+            console.log(`[ProfileApp] Loaded ${state.orders.length} orders`);
+        }, (error) => {
+            console.error('[ProfileApp] Error in orders listener:', error);
+        });
     }
 
     function bindEvents() {
@@ -3727,10 +3786,20 @@ window.ProfileApp = (function() {
             section.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }
+    
+    function refreshOrders() {
+        console.log('[ProfileApp] Manual refresh triggered');
+        return loadOrders().then(() => {
+            renderOrders();
+            updateStats();
+            console.log('[ProfileApp] Refresh complete');
+        });
+    }
 
     return {
         init,
-        showTab
+        showTab,
+        refreshOrders
     };
 })();
 
