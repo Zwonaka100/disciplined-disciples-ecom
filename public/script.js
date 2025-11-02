@@ -180,10 +180,10 @@ const ORDER_STATUS_TEMPLATES = Object.freeze({
         key: 'cancelled',
         status: 'Cancelled',
         label: 'Cancelled',
-        icon: '⚠️',
-        buttonLabel: '⚠️ Cancel order',
-        message: 'Your order has been cancelled. Please contact support if this was unexpected.',
-        statusMessage: 'Order cancelled at your request.'
+        icon: '❌',
+        buttonLabel: '❌ Cancel order',
+        message: 'Your order has been cancelled. If you have any questions, please contact our support team.',
+        statusMessage: 'This order has been cancelled.'
     }
 });
 
@@ -3193,7 +3193,14 @@ window.ProfileApp = (function() {
             totalOrdersEl.textContent = state.orders.length;
         }
         if (totalSpendEl) {
-            const total = state.orders.reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0);
+            // Only count orders that have been paid for
+            const total = state.orders.reduce((sum, order) => {
+                const isPaid = order.paymentStatus && 
+                              (order.paymentStatus.toLowerCase() === 'paid' || 
+                               order.paymentStatus.toLowerCase() === 'complete' ||
+                               order.paymentStatus.toLowerCase() === 'completed');
+                return isPaid ? sum + (Number(order.totalAmount) || 0) : sum;
+            }, 0);
             totalSpendEl.textContent = formatCurrency(total);
         }
         if (pendingEl) {
@@ -3726,7 +3733,7 @@ window.ProfileApp = (function() {
 window.AdminApp = (function() {
     const STATUS_OPTIONS = ['Awaiting Payment', 'Order Placed', 'Out for Delivery', 'Arriving Soon', 'Delivered', 'Cancelled'];
     const PAYMENT_OPTIONS = ['Pending Payment', 'Paid', 'Refunded', 'Failed', 'Cancelled'];
-    const STATUS_ACTION_KEYS = ['orderPlaced', 'outForDelivery', 'eta', 'delivered'];
+    const STATUS_ACTION_KEYS = ['orderPlaced', 'outForDelivery', 'eta', 'delivered', 'cancelled'];
     const STATUS_ACTION_TEMPLATES = STATUS_ACTION_KEYS
         .map(key => window.ORDER_STATUS_TEMPLATES?.[key])
         .filter(Boolean);
