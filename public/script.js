@@ -2758,7 +2758,8 @@ window.ProfileApp = (function() {
     }
 
     function isProfilePage() {
-        return window.location.pathname.includes('profile.html');
+        const path = window.location.pathname;
+        return path.includes('profile.html') || path.includes('/profile');
     }
 
     async function handleAuthenticatedUser(user) {
@@ -4445,7 +4446,8 @@ window.AdminApp = (function() {
     }
 
     function isAdminPage() {
-        return window.location.pathname.includes('admin-dashboard.html');
+        const path = window.location.pathname;
+        return path.includes('admin-dashboard.html') || path.includes('/admin-dashboard');
     }
 
     async function init() {
