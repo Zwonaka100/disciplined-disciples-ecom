@@ -236,45 +236,78 @@ async function sendOrderPlacedEmails(orderId, order, docRef) {
         ]
     };
 
-    const businessEmailOptions = {
-        from: SENDER_EMAIL,
-        to: OWNER_EMAIL,
-        subject: `New Order Received - ${trimmedOrderId}`,
-        html: `
+    // Admin notification emails - send to both admins
+    const ADMIN_EMAILS = ['zmabege@gmail.com', 'nomaqhizazolile@gmail.com'];
+    
+    const adminEmailHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: #28a745; color: white; padding: 20px; text-align: center;">
-              <h1 style="margin: 0;">New order confirmed 🎉</h1>
+            <div style="background: #28a745; color: white; padding: 30px; text-align: center;">
+              <h1 style="margin: 0; font-size: 26px;">🎉 New Order Received!</h1>
+              <p style="margin: 10px 0 0 0; font-size: 16px;">Action required - Please process this order</p>
             </div>
-            <div style="padding: 20px;">
-              <p><strong>Order ID:</strong> ${trimmedOrderId}</p>
-              <p><strong>Customer:</strong> ${customerName} (${customerEmail || 'no email'})</p>
-              <p><strong>Total:</strong> R${totalAmount.toFixed(2)}</p>
-              <p><strong>Date:</strong> ${orderDateLabel}</p>
-              <p><strong>Message sent to customer:</strong><br>${statusMessage}</p>
-              <h3>Items</h3>
-              <ul>
-                ${itemsList.map(item => `<li>${item.name || 'Item'} x${item.quantity || 1} - R${((Number(item.price) || 0) * (Number(item.quantity) || 1)).toFixed(2)}</li>`).join('')}
-              </ul>
-              <h3>Delivery address</h3>
-              <p>${addressBlock}</p>
-              <p><a href="${invoiceUrl}">Download Invoice</a></p>
+            <div style="padding: 25px; background: #f8f9fa;">
+              <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #28a745;">
+                <h2 style="margin: 0 0 15px 0; color: #333;">Order Details</h2>
+                <p style="margin: 8px 0;"><strong>Order ID:</strong> ${trimmedOrderId}</p>
+                <p style="margin: 8px 0;"><strong>Customer:</strong> ${customerName}</p>
+                <p style="margin: 8px 0;"><strong>Email:</strong> ${customerEmail || 'No email provided'}</p>
+                <p style="margin: 8px 0;"><strong>Total:</strong> <span style="color: #28a745; font-size: 18px; font-weight: bold;">R${totalAmount.toFixed(2)}</span></p>
+                <p style="margin: 8px 0;"><strong>Date:</strong> ${orderDateLabel}</p>
+              </div>
+              
+              <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h3 style="margin: 0 0 12px 0; color: #333;">Items Ordered</h3>
+                <ul style="margin: 0; padding-left: 20px;">
+                  ${itemsList.map(item => `<li style="margin: 6px 0;">${item.name || 'Item'} x${item.quantity || 1} - <strong>R${((Number(item.price) || 0) * (Number(item.quantity) || 1)).toFixed(2)}</strong></li>`).join('')}
+                </ul>
+              </div>
+              
+              <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h3 style="margin: 0 0 12px 0; color: #333;">Delivery Address</h3>
+                <p style="margin: 0; line-height: 1.6; color: #555;">${addressBlock}</p>
+              </div>
+              
+              <div style="text-align: center; margin: 25px 0;">
+                <a href="https://disciplined-disciples-1.web.app/admin-dashboard" style="background: #28a745; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold; font-size: 16px;">Process Order in Admin Dashboard</a>
+              </div>
+              
+              <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 4px; margin-top: 20px;">
+                <p style="margin: 0; color: #856404;"><strong>⚡ Action Required:</strong> Please log in to the admin dashboard to process and fulfill this order.</p>
+              </div>
+              
+              <p style="margin-top: 20px; color: #666; font-size: 13px;"><strong>Message sent to customer:</strong><br>${statusMessage}</p>
+              <p style="margin-top: 15px; color: #666; font-size: 13px;"><a href="${invoiceUrl}" style="color: #007bff;">Download Invoice PDF</a></p>
+            </div>
+            <div style="background: #333; color: white; padding: 20px; text-align: center;">
+              <p style="margin: 0; font-size: 14px;">Disciplined Disciples Admin Notification</p>
+              <p style="margin: 5px 0 0 0; font-size: 12px; color: #ccc;">${SENDER_EMAIL} | +27 69 206 0618</p>
             </div>
           </div>
-        `,
-        attachments: [
-            {
-                filename: `Invoice-${trimmedOrderId}.pdf`,
-                content: invoiceBuffer,
-                contentType: 'application/pdf'
-            }
-        ]
-    };
+        `;
 
     const emailPromises = [];
+    
+    // Send confirmation email to customer
     if (customerEmail) {
         emailPromises.push(transporter.sendMail(customerEmailOptions));
     }
-    emailPromises.push(transporter.sendMail(businessEmailOptions));
+    
+    // Send notification emails to BOTH admins
+    ADMIN_EMAILS.forEach(adminEmail => {
+        emailPromises.push(transporter.sendMail({
+            from: SENDER_EMAIL,
+            to: adminEmail,
+            subject: `🔔 New Order #${trimmedOrderId} - Action Required`,
+            html: adminEmailHtml,
+            attachments: [
+                {
+                    filename: `Invoice-${trimmedOrderId}.pdf`,
+                    content: invoiceBuffer,
+                    contentType: 'application/pdf'
+                }
+            ]
+        }));
+    });
 
     await Promise.all(emailPromises);
   console.log(`Order confirmation emails dispatched for ${orderId}`);
