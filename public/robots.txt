@@ -1,11 +1,54 @@
+# Robots.txt for Disciplined Disciples - South African Streetwear
+# Updated: 2025-11-02
+
+# Allow all search engines full access
 User-agent: *
 Allow: /
+Crawl-delay: 1
 
-# Sitemap
-Sitemap: https://disciplineddisciples.co.za/sitemap.xml
+# Sitemap location
+Sitemap: https://disciplined-disciples-1.web.app/sitemap.xml
 
-# Block access to private areas
+# Google-specific directives
+User-agent: Googlebot
+Allow: /
 Disallow: /profile.html
+Disallow: /admin-dashboard.html
 Disallow: /order-history.html
+Crawl-delay: 0
+
+# Google Image Bot
+User-agent: Googlebot-Image
+Allow: /Assets/
+Allow: /images/
+
+# Bing Bot
+User-agent: Bingbot
+Allow: /
+Disallow: /profile.html
+Disallow: /admin-dashboard.html
+Crawl-delay: 1
+
+# Block access to private/authenticated areas
+Disallow: /profile.html
+Disallow: /admin-dashboard.html
+Disallow: /order-history.html
+
+# Block technical directories
 Disallow: /.firebase/
 Disallow: /node_modules/
+Disallow: /__/
+Disallow: /functions/
+
+# Allow public assets
+Allow: /Assets/
+Allow: /images/
+Allow: /*.css$
+Allow: /*.js$
+
+# Encourage crawling of key pages
+Allow: /shop.html
+Allow: /Product-detail.html
+Allow: /blog.html
+Allow: /contact.html
+Allow: /faq.html
