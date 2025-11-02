@@ -290,22 +290,35 @@
             const { subtotal, vat, shipping, total } = totals;
             const orderId = 'DD' + Date.now() + Math.random().toString(36).substr(2, 9);
             const customerEmail = window.currentUserProfile?.email || window.auth?.currentUser?.email || '';
+            
+            // Build initial order context
             const orderContext = {
+                orderId,
                 customerName: deliveryAddress.name,
+                customerEmail,
                 deliveryAddress,
-                customerCity: deliveryAddress.city
+                customerCity: deliveryAddress.city,
+                totalAmount: total
             };
+            
+            // Get pending payment template
             const pendingTemplate = window.ORDER_STATUS_TEMPLATES?.pendingPayment || {
                 key: 'pending_payment',
                 status: 'Awaiting Payment',
                 label: 'Awaiting payment',
                 icon: '⌛',
-                message: '⌛ We have created your order and are waiting for your secure payment confirmation.'
+                message: 'We have created your order and are waiting for your secure payment confirmation.'
             };
-            const pendingMessage = buildStatusMessage(pendingTemplate, orderContext, {});
-            const pendingHistoryEntry = composeStatusHistoryEntry(pendingTemplate, pendingMessage, { stage: 'checkout' }, 'system');
-            const initialNote = Object.assign({ type: 'status' }, pendingHistoryEntry);
+            
+            // Use buildStatusUpdatePayload to create status data
+            const { payload } = window.buildStatusUpdatePayload(
+                pendingTemplate, 
+                orderContext, 
+                {}, 
+                { email: 'system', uid: 'system' }
+            );
 
+            // Build the complete order data
             const orderData = {
                 orderId,
                 userId: window.currentUserId,
@@ -319,19 +332,10 @@
                 shipping,
                 totalAmount: total,
                 orderDate: window.serverTimestamp ? window.serverTimestamp() : new Date(),
-                statusKey: pendingTemplate.key,
-                status: pendingTemplate.status,
-                statusLabel: pendingTemplate.label,
-                statusMessage: pendingMessage,
-                statusIcon: pendingTemplate.icon,
-                statusUpdatedAt: window.serverTimestamp ? window.serverTimestamp() : new Date(),
-                statusUpdatedBy: 'system',
                 paymentStatus: 'Pending',
                 trackingNumber: null,
                 estimatedDelivery: null,
-                lastCustomerMessage: pendingMessage,
-                statusHistory: [pendingHistoryEntry],
-                notes: [initialNote]
+                ...payload
             };
             // Save order to Firestore
             try {

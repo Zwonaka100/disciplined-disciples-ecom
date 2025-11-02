@@ -539,6 +539,9 @@ function buildStatusUpdatePayload(template, context = {}, overrides = {}, actor 
     };
 }
 
+// Expose buildStatusUpdatePayload globally for checkout page
+window.buildStatusUpdatePayload = buildStatusUpdatePayload;
+
 const AWAITING_PAYMENT_EXPIRY_DAYS = 7;
 const MILLIS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -1456,10 +1459,11 @@ window.loadUserDeliveryAddress = async () => {
     }
 
     try {
-        const userDocRef = window.doc(window.db, "artifacts", "default-app-id", "users", window.currentUserId);
-        const userDocSnap = await window.getDoc(userDocRef);
+        const userDocRef = window.db.collection('artifacts').doc('default-app-id')
+            .collection('users').doc(window.currentUserId);
+        const userDocSnap = await userDocRef.get();
 
-        if (userDocSnap.exists()) {
+        if (userDocSnap.exists) {
             window.currentUserProfile = userDocSnap.data();
             console.log("User profile loaded:", window.currentUserProfile);
             const address = window.currentUserProfile.deliveryAddress;
