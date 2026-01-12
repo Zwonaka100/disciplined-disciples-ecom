@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -8,18 +8,26 @@
     <link rel="stylesheet" href="profile-avatar-fix.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="icon" type="image/jpeg" href="Assets/logo.jpg">
+    <link rel="icon" type="image/png" href="Assets/45.png">
     <!-- Firebase scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2J1GWH59V4"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-2J1GWH59V4');
+    </script>
 </head>
 <body class="bg-gray-50">
     <!-- Header Section -->
     <header class="header bg-white shadow">
         <div class="container flex justify-between items-center py-4">
             <a href="index.html" class="logo flex items-center">
-                <img src="Assets/logo.jpg" alt="Disciplined Disciples Logo" style="height:40px; width:auto; margin-right:10px;">
+                <img src="Assets/45.png" alt="Disciplined Disciples Logo" style="height:48px; width:auto; margin-right:10px;">
                 <span class="font-bold text-xl">Disciplined Disciples</span>
             </a>
             <nav class="nav-menu">
@@ -170,9 +178,32 @@
         </div>
         <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
             <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
-            <p>Built by Zande Technologies (Pty) Ltd</p>
+            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> (Pty) Ltd</p>
         </div>
     </footer>
     <script src="script.js"></script>
+
+    <!-- WhatsApp Floating Button -->
+    <a href="https://wa.me/27692060618?text=Hi%20Disciplined%20Disciples!%20I%20have%20a%20question%20about%20your%20products." 
+       class="whatsapp-float" 
+       target="_blank" 
+       rel="noopener noreferrer"
+       aria-label="Chat on WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <!-- Cookie Consent Banner (POPIA Compliance) -->
+    <div id="cookie-consent-banner" class="cookie-consent-banner">
+        <div class="cookie-consent-content">
+            <div class="cookie-consent-text">
+                <h3>🍪 We Value Your Privacy</h3>
+                <p>We use cookies to improve your experience and analyze site traffic. By clicking "Accept", you consent to our use of cookies. <a href="privacy-policy.html">Learn more</a></p>
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept">Accept All Cookies</button>
+                <button id="cookie-decline-btn" class="cookie-btn cookie-btn-decline">Decline Analytics</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

@@ -24,7 +24,7 @@
     <meta property="og:url" content="https://disciplined-disciples-1.web.app/shop.html">
     <meta property="og:title" content="Shop Streetwear | Caps, Hoodies & T-Shirts SA | Disciplined Disciples">
     <meta property="og:description" content="Shop premium South African streetwear. Buy caps, hoodies, oversized tees online. Free delivery in major cities. R150-R800.">
-    <meta property="og:image" content="https://disciplined-disciples-1.web.app/Assets/logo.jpg">
+    <meta property="og:image" content="https://disciplined-disciples-1.web.app/Assets/45.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:site_name" content="Disciplined Disciples">
@@ -35,7 +35,7 @@
     <meta name="twitter:url" content="https://disciplined-disciples-1.web.app/shop.html">
     <meta name="twitter:title" content="Shop Streetwear | Caps, Hoodies & T-Shirts SA">
     <meta name="twitter:description" content="Premium South African streetwear. Buy caps, hoodies, oversized tees online. Free delivery. R150-R800.">
-    <meta name="twitter:image" content="https://disciplined-disciples-1.web.app/Assets/logo.jpg">
+    <meta name="twitter:image" content="https://disciplined-disciples-1.web.app/Assets/45.png">
     <meta name="twitter:site" content="@disciplined_disciples_2023">
     
     <!-- Canonical URL -->
@@ -44,6 +44,15 @@
     <!-- Alternate for SEO -->
     <link rel="alternate" hreflang="en-za" href="https://disciplined-disciples-1.web.app/shop.html">
     <link rel="alternate" hreflang="x-default" href="https://disciplined-disciples-1.web.app/shop.html">
+    
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2J1GWH59V4"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-2J1GWH59V4');
+    </script>
     
     <!-- Schema.org Structured Data - Product Catalog -->
     <script type="application/ld+json">
@@ -126,7 +135,7 @@
     <link rel="stylesheet" href="profile-avatar-fix.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="icon" type="image/jpeg" href="Assets/logo.jpg">
+    <link rel="icon" type="image/png" href="Assets/45.png">
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -137,13 +146,14 @@
     <header class="header bg-white shadow">
         <div class="container flex justify-between items-center py-4">
             <a href="index.html" class="logo flex items-center">
-                <img src="Assets/logo.jpg" alt="Disciplined Disciples Logo" style="height:40px; width:auto; margin-right:10px;">
+                <img src="Assets/45.png" alt="Disciplined Disciples Logo" style="height:48px; width:auto; margin-right:10px;">
                 <span class="font-bold text-xl">Disciplined Disciples</span>
             </a>
             <nav class="nav-menu">
                 <ul class="flex space-x-6">
                     <li><a href="index.html" class="nav-link">Home</a></li>
                     <li><a href="shop.html" class="nav-link active">Shop</a></li>
+                    <li><a href="about.html" class="nav-link">About</a></li>
                     <li><a href="blog.html" class="nav-link">Blog</a></li>
                     <li><a href="contact.html" class="nav-link">Contact</a></li>
                     <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link"><i class="fab fa-instagram"></i></a></li>
@@ -168,6 +178,7 @@
             <ul class="py-4">
                 <li><a href="index.html" class="nav-link-mobile">Home</a></li>
                 <li><a href="shop.html" class="nav-link-mobile active">Shop</a></li>
+                <li><a href="about.html" class="nav-link-mobile">About</a></li>
                 <li><a href="blog.html" class="nav-link-mobile">Blog</a></li>
                 <li><a href="contact.html" class="nav-link-mobile">Contact</a></li>
                 <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
@@ -207,6 +218,26 @@
         <div class="container text-center py-16" style="position:relative; z-index:2;">
             <h1 class="shop-title" style="color:#fff;">Discover Our Collection</h1>
             <p class="shop-subtitle" style="color:#e0e0e0;">Apparel crafted for purpose, faith, and everyday wear.</p>
+        </div>
+    </section>
+
+    <!-- Filter Section -->
+    <section class="filter-section">
+        <div class="container">
+            <div class="filter-bar">
+                <div class="filter-label">Filter by:</div>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-category="all">All Products</button>
+                    <button class="filter-btn" data-category="hoodie">Hoodies</button>
+                    <button class="filter-btn" data-category="tee">Classic Tees</button>
+                    <button class="filter-btn" data-category="oversized">Oversized Tees</button>
+                    <button class="filter-btn" data-category="cap">Caps</button>
+                </div>
+                <div class="active-filter" id="active-filter">
+                    <span id="filter-status">Showing All Products</span>
+                    <button id="clear-filter" class="clear-filter-btn" style="display:none;">✕ Clear Filter</button>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -258,34 +289,200 @@
         </div>
         <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
             <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
-            <p>Built by Zande Technologies (Pty) Ltd</p>
+            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> (Pty) Ltd</p>
         </div>
     </footer>
 
     <script src="script.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const productListContainer = document.getElementById('products-list');
-            // Use the correct function to get products
-            const allProducts = window.getAllProducts?.();
+        let allProducts = [];
+        let currentFilter = 'all';
 
-            if (productListContainer && Array.isArray(allProducts) && allProducts.length > 0) {
+        // Render products with filter support
+        function renderShopProducts(filterCategory = 'all') {
+            const productListContainer = document.getElementById('products-list');
+            if (!productListContainer) return;
+
+            let filteredProducts = allProducts;
+            
+            // Apply category filter with normalized matching
+            if (filterCategory !== 'all') {
+                filteredProducts = allProducts.filter(product => {
+                    const productCategory = (product.category || '').toLowerCase();
+                    const filter = filterCategory.toLowerCase();
+                    
+                    // Handle category matching with variations
+                    if (filter === 'oversized') {
+                        return productCategory === 'oversized' || productCategory === 'oversized-tee';
+                    }
+                    if (filter === 'tee') {
+                        return productCategory === 'tee' || productCategory === 'normal-tee';
+                    }
+                    if (filter === 'hoodie') {
+                        return productCategory === 'hoodie' || productCategory === 'hoodies';
+                    }
+                    if (filter === 'cap') {
+                        return productCategory === 'cap' || productCategory === 'caps';
+                    }
+                    
+                    return productCategory === filter;
+                });
+            }
+
+            // Update filter status
+            const filterStatus = document.getElementById('filter-status');
+            const clearFilterBtn = document.getElementById('clear-filter');
+            if (filterCategory === 'all') {
+                filterStatus.textContent = `Showing All Products (${allProducts.length})`;
+                clearFilterBtn.style.display = 'none';
+            } else {
+                const categoryNames = {
+                    'hoodie': 'Hoodies',
+                    'tee': 'Classic Tees',
+                    'oversized': 'Oversized Tees',
+                    'cap': 'Caps'
+                };
+                filterStatus.textContent = `Showing ${categoryNames[filterCategory] || filterCategory} (${filteredProducts.length})`;
+                clearFilterBtn.style.display = 'inline-block';
+            }
+
+            if (filteredProducts.length > 0) {
                 productListContainer.innerHTML = '';
-                allProducts.forEach(product => {
+                filteredProducts.forEach((product, index) => {
                     const productCard = document.createElement('div');
                     productCard.className = 'product-card';
+                    
+                    // Add badges
+                    let badgeHTML = '';
+                    if (index === 0) {
+                        badgeHTML = '<span class="product-badge badge-new">NEW</span>';
+                    } else if (index === 1) {
+                        badgeHTML = '<span class="product-badge badge-trending">🔥 TRENDING</span>';
+                    }
+                    
                     productCard.innerHTML = `
-                        <img src="${product.displayImage}" alt="${product.name}" class="product-image">
+                        <div class="product-image-wrapper">
+                            ${badgeHTML}
+                            <img src="${product.displayImage}" alt="${product.name}" class="product-image">
+                            <button class="quick-view-btn" data-product-id="${product.id}">Quick View</button>
+                        </div>
                         <h3 class="product-name">${product.name}</h3>
                         <p class="product-price">R ${product.price.toFixed(2)}</p>
                         <a href="Product-detail.html?id=${product.id}" class="btn btn-secondary">View Product</a>
                     `;
+                    
+                    // Add event listener to Quick View button
+                    const quickViewBtn = productCard.querySelector('.quick-view-btn');
+                    if (quickViewBtn) {
+                        quickViewBtn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            window.location.href = `Product-detail.html?id=${product.id}`;
+                        });
+                    }
+                    
                     productListContainer.appendChild(productCard);
                 });
             } else {
-                productListContainer.innerHTML = '<p>No products found. Please check back later.</p>';
+                productListContainer.innerHTML = '<p class="no-products-message">No products found in this category.</p>';
             }
+        }
+
+        // Initialize shop page
+        async function initShopPage() {
+            // Ensure Firebase init + product load has run
+            if (window.firebaseInitialized) {
+                await window.firebaseInitialized.catch(() => {});
+            }
+            if (typeof window.initializeProducts === 'function') {
+                await window.initializeProducts();
+            }
+
+            allProducts = Array.isArray(window.products) ? window.products : (window.getAllProducts?.() || []);
+
+            // Check for category in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const categoryParam = urlParams.get('category');
+            
+            if (categoryParam) {
+                currentFilter = categoryParam.toLowerCase();
+                // Update active button
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.category === currentFilter) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+
+            renderShopProducts(currentFilter);
+
+            // Setup filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const category = btn.dataset.category;
+                    currentFilter = category;
+                    
+                    // Update active state
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    // Update URL without reload
+                    const url = new URL(window.location);
+                    if (category === 'all') {
+                        url.searchParams.delete('category');
+                    } else {
+                        url.searchParams.set('category', category);
+                    }
+                    window.history.pushState({}, '', url);
+                    
+                    renderShopProducts(category);
+                });
+            });
+
+            // Clear filter button
+            const clearFilterBtn = document.getElementById('clear-filter');
+            if (clearFilterBtn) {
+                clearFilterBtn.addEventListener('click', () => {
+                    currentFilter = 'all';
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelector('[data-category="all"]').classList.add('active');
+                    
+                    const url = new URL(window.location);
+                    url.searchParams.delete('category');
+                    window.history.pushState({}, '', url);
+                    
+                    renderShopProducts('all');
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initShopPage();
         });
     </script>
+
+    <!-- WhatsApp Floating Button -->
+    <a href="https://wa.me/27692060618?text=Hi%20Disciplined%20Disciples!%20I%20have%20a%20question%20about%20your%20products." 
+       class="whatsapp-float" 
+       target="_blank" 
+       rel="noopener noreferrer"
+       aria-label="Chat on WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <!-- Cookie Consent Banner (POPIA Compliance) -->
+    <div id="cookie-consent-banner" class="cookie-consent-banner">
+        <div class="cookie-consent-content">
+            <div class="cookie-consent-text">
+                <h3>🍪 We Value Your Privacy</h3>
+                <p>We use cookies to improve your experience and analyze site traffic. By clicking "Accept", you consent to our use of cookies. <a href="privacy-policy.html">Learn more</a></p>
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept">Accept All Cookies</button>
+                <button id="cookie-decline-btn" class="cookie-btn cookie-btn-decline">Decline Analytics</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

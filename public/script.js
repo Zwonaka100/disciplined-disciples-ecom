@@ -712,103 +712,13 @@ async function handleLogout() {
     }
 }
 
-// --- Product Data (Hardcoded for now - will come from Firestore/Backend later) ---
+// --- Product Data (Hardcoded ONLY for Caps - others from Firebase) ---
 const products = [
     {
-        id: 'hoodie',
-        name: 'Faith Hoodie',
-        price: 649.00,
-        category: 'hoodie', // <--- Add this
-        displayImage: 'Assets/Products/Hoodies/unisex-premium-hoodie-black-front-6898d6eb53d0e.jpg',
-        description: 'Representing warmth and comfort in the journey of disciplined living. Made from premium, soft-touch fabric for ultimate comfort and durability.',
-        options: {
-            colors: {
-                'Black': {
-                    defaultImage: 'Assets/Products/Hoodies/unisex-premium-hoodie-black-front-6898d6eb53d0e.jpg',
-                    images: [
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-black-front-6898d6eb5c3fb.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-black-front-2-6898d6eb47f0b.jpg?size=small',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-black-back-6898d6eb52300.jpg?size=small',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-black-back-6898d6eb48eaf.jpg?size=small',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-black-left-front-6898d6eb612e0.jpg?size=small',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-black-right-front-6898d6eb66caa.jpg?size=small',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-black-zoomed-in-6898d6eb73758.jpg?size=small',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-black-product-details-6898d6eb317e2.jpg?size=small',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-black-left-front-6898d6eb6a7e5.jpg?size=small',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-black-front-6898d6eb36e77.jpg?size=small'
-                    ]
-                },
-                'Maroon': {
-                    defaultImage: 'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-front-6898dd7272343.jpg',
-                    images: [
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-front-6898dd727c49b.jpg?size=small',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-front-6898dd727095f.jpg?size=small',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-back-6898dd72819fe.jpg?size=small',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-back-6898dd729610d.jpg?size=small',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-left-6898dd728873b.jpg?size=small',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-right-front-6898dd72382d8.jpg?size=small',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-zoomed-in-6898dd722bebf.jpg?size=small',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-product-details-6898dd72279d8.jpg?size=small',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-front-6898dd722f6b6.jpg?size=small',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-maroon-front-2-6898dd7298a94.jpg'
-                    ]
-                },
-                'Green': {
-                    defaultImage: 'Assets/Products/Hoodies/unisex-premium-hoodie-forest-green-front-6898e27dba00b.jpg',
-                    images: [
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-forest-green-front-6898e27e4a0dd.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-forest-green-front-6898e27c800a6.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-forest-green-back-6898e27d7ea61.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-forest-green-front-6898dd77e06c2.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-forest-green-back-6898dd7758566.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-forest-green-front-6898dd76a466d.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-forest-green-back-6898e27dafc8a.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-forest-green-front-6898dd78b290f.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-forest-green-front-6898dd76853fb.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-forest-green-front-6898e27e16ff9.jpg'
-
-                    ]
-                },
-                'Purple': {
-                    defaultImage: 'Assets/Products/Hoodies/unisex-premium-hoodie-purple-front-6898dd75e5070.jpg',
-                    images: [
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-purple-front-6898dd742d62b.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-purple-front-6898dd747b062.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-purple-front-6898dd759da14.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-purple-left-6898dd7637434.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-purple-left-front-6898dd7593dfa.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-purple-product-details-6898dd75327de.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-purple-right-front-6898dd75be2d5.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-purple-front-6898dd7567dbc.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-purple-zoomed-in-6898e27b36e88.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-purple-front-6898dd74787de.jpg'
-                    ]
-                },
-                'Royal Blue': {
-                    defaultImage: 'Assets/Products/Hoodies/unisex-premium-hoodie-team-royal-front-6898e27913bcb.jpg',
-                    images: [
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-team-royal-front-6898e279ec606.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-team-royal-front-6898e2791f527.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-team-royal-front-6898e2792ec16.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-team-royal-front-6898e27921e96.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-team-royal-left-front-6898e279c3e48.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-team-royal-product-details-6898dd73c4e8e.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-team-royal-right-6898dd72bd2cf.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-team-royal-front-6898e2791b7dd.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-team-royal-right-front-6898e279418a9.jpg',
-                        'Assets/Products/Hoodies/unisex-premium-hoodie-team-royal-back-6898e27a16159.jpg'
-                    
-                    ]
-                }
-            },
-            sizes: ['S', 'M', 'L', 'XL', 'XXL']
-        }
-    },
-    {
         id: 'cap',
-        name: 'Discipline Cap',
+        name: 'Courage Cap',
         price: 249.00,
-        category: 'cap', // <--- Add this
+        category: 'cap',
         displayImage: 'Assets/Products/Caps/IMG-20250810-WA0005.jpg',
         description: 'A symbol of casual, everyday discipline. Perfect for any occasion.',
         options: {
@@ -817,335 +727,45 @@ const products = [
                     defaultImage: 'Assets/Products/Caps/IMG-20250810-WA0004.jpg',
                     images: [
                         'Assets/Products/Caps/IMG-20250810-WA0013.jpg',
-                        'Assets/Products/Caps/IMG-20250810-WA0014.jpg',
-                        
+                        'Assets/Products/Caps/IMG-20250810-WA0014.jpg'
                     ]
                 },
                 'White': {
                     defaultImage: 'Assets/Products/Caps/IMG-20250810-WA0002.jpg',
                     images: [
                         'Assets/Products/Caps/IMG-20250810-WA0011 (1).jpg',
-                        'Assets/Products/Caps/IMG-20250810-WA0010.jpg',
-                        
+                        'Assets/Products/Caps/IMG-20250810-WA0010.jpg'
                     ]
                 },
                 'Blue': {
                     defaultImage: 'Assets/Products/Caps/IMG-20250810-WA0001.jpg',
                     images: [
                         'Assets/Products/Caps/IMG-20250810-WA0001.jpg',
-                        'Assets/Products/Caps/IMG-20250810-WA0001.jpg',
-                        
-                    ]
-                },
-                'Green': {
-                    defaultImage: 'Assets/Other/WhatsApp Image 2025-09-28 at 12.08.00_71ef19fa.jpg',
-                    images: [
-                        'Assets/Other/WhatsApp Image 2025-09-28 at 12.06.24_c8914fa8.jpg',
-                        'Assets/Other/WhatsApp Image 2025-09-28 at 12.08.00_71ef19fa.jpg',
-                        
-                    ]
-                },
-                'Pink': {
-                    defaultImage: 'Assets/Products/Caps/IMG-20250810-WA0003.jpg',
-                    images: [
-                        'Assets/Other/WhatsApp Image 2025-09-28 at 12.08.01_503b73c2.jpg',
-                        'Assets/Other/WhatsApp Image 2025-09-28 at 12.06.24_32158261.jpg',
-                        'Assets/Other/WhatsApp Image 2025-09-28 at 12.06.23_a5a6943c.jpg'
+                        'Assets/Products/Caps/IMG-20250810-WA0001.jpg'
                     ]
                 },
                 'Red': {
                     defaultImage: 'Assets/Products/Caps/IMG-20250810-WA0005.jpg',
                     images: [
                         'Assets/Products/Caps/IMG-20250810-WA0007.jpg',
-                        'Assets/Products/Caps/IMG-20250810-WA0008.jpg',
-                    
+                        'Assets/Products/Caps/IMG-20250810-WA0008.jpg'
                     ]
                 }
             },
             sizes: ['One Size']
         }
-    },
-    {
-        id: 'normal-tee',
-        name: 'Foundation Tee',
-    price: 1.00,
-        category: 'tee', // <-- add this if missing
-        displayImage: 'Assets/Products/Classic tees/unisex-classic-tee-black-front-6898f24c91f11.jpg',
-        description: 'Simple, yet powerful statements of one\'s values. A classic fit for everyday wear.',
-        options: {
-            colors: {
-                'Black': {
-                    defaultImage: 'Assets/Products/Classic tees/unisex-classic-tee-black-front-6898f24c93a6c.jpg',
-                    images: [
-                        'Assets/Products/Classic tees/unisex-classic-tee-black-front-6898f24c93fa2.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-black-front-6898f24c95a31.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-black-front-and-back-6898f24c990f6.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-black-front-and-back-6898f24c98b08.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-black-front-6898f24c926ba.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-black-front-6898f24c91105.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-black-left-6898f24c96f33.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-black-front-2-6898f24c935d7.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-black-right-6898f24c97490.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-black-front-2-6898f24c94c3c.jpg'
-                    ]
-                },
-                'White': {
-                    defaultImage: 'Assets/Products/Classic tees/unisex-classic-tee-white-front-6898f0127d4ec.jpg',
-                    images: [
-                        'Assets/Products/Classic tees/unisex-classic-tee-white-front-6898f012a3d3a.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-white-front-6898f012ba801.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-white-front-and-back-6898f0130a557.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-white-front-6898f01284d2a.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-white-front-6898f012b2eff.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-white-back-6898f012d1188.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-white-back-2-6898f013029a3.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-white-front-2-6898f012ab692.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-white-front-6898f0128c656.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-white-right-6898f012e01dd.jpg'
-                    ]
-                },
-                'Pink': {
-                    defaultImage: 'Assets/Products/Classic tees/unisex-classic-tee-azalea-front-6898f010bd401.jpg',
-                    images: [
-                        'Assets/Products/Classic tees/unisex-classic-tee-azalea-front-6898f010dcf78.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-azalea-front-6898f010ec1bd.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-azalea-front-and-back-6898f01122383.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-azalea-front-6898f010e772e.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-azalea-front-6898f010cf5c3.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-azalea-front-6898f010e772e.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-azalea-back-6898f01106182.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-azalea-back-2-6898f0111d880.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-azalea-front-2-6898f010e2c42.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-azalea-front-6898f010ca78e.jpg'                    
-                    ]
-                },
-                'Red': {
-                    defaultImage: 'Assets/Products/Classic tees/unisex-classic-tee-red-front-6898f00fbfa93.jpg',
-                    images: [
-                        'Assets/Products/Classic tees/unisex-classic-tee-red-front-6898f00fc0cac.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-red-front-6898f00fc19a3.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-red-front-and-back-6898f00fc47fa.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-red-front-6898f00fc153a.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-red-front-6898f00fbf15b.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-red-front-2-6898f00fc10fb.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-red-front-2-6898f00fc086e.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-red-back-6898f00fc1eb6.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-red-left-6898f00fc2dc4.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-red-right-6898f00fc32c2.jpg'
-                    ]
-                },
-                'Blue': {
-                    defaultImage: 'Assets/Products/Classic tees/unisex-classic-tee-carolina-blue-front-6898f01126e9b.jpg',
-                    images: [
-                        'Assets/Products/Classic tees/unisex-classic-tee-carolina-blue-front-6898f01141d54.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-carolina-blue-front-6898f011519e4.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-carolina-blue-front-and-back-6898f0118213f.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-carolina-blue-front-6898f0114c50a.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-carolina-blue-back-6898f0115c384.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-carolina-blue-front-2-6898f0113c9c7.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-carolina-blue-front-2-6898f01147099.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-carolina-blue-front-6898f01126e9b.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-carolina-blue-left-6898f01166d1f.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-carolina-blue-right-6898f0116c109.jpg'
-                    ]
-                },
-                'Light Blue': {
-                    defaultImage: 'Assets/Products/Classic tees/unisex-classic-tee-tropical-blue-front-6898f01035b16.jpg',
-                    images: [
-                        'Assets/Products/Classic tees/unisex-classic-tee-tropical-blue-front-6898f0105e9bf.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-tropical-blue-front-6898f0106e0ff.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-tropical-blue-front-6898f01051a32.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-tropical-blue-front-and-back-6898f010712b8.jpg',    
-                        'Assets/Products/Classic tees/unisex-classic-tee-tropical-blue-front-2-6898f0104b3e0.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-tropical-blue-back-6898f0106af27.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-tropical-blue-front-6898f0104e7ef.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-tropical-blue-front-6898f01035b16.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-tropical-blue-front-6898f01067d9e.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-tropical-blue-left-6898f0105adbd.jpg',
-                        
-                        
-
-                    ]
-                },
-                'Light Green': {
-                    defaultImage: 'Assets/Products/Classic tees/unisex-classic-tee-irish-green-front-6898f01074455.jpg',
-                    images: [
-                        'Assets/Products/Classic tees/unisex-classic-tee-irish-green-front-6898f01087d12.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-irish-green-front-6898f01093f97.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-irish-green-front-6898f010802ba.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-irish-green-front-and-back-6898f010b8fc2.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-irish-green-front-6898f0107c407.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-irish-green-front-2-6898f0108ba04.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-irish-green-back-6898f0109c5bd.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-irish-green-back-6898f010a0497.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-irish-green-front-6898f0108f6fa.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-irish-green-left-6898f010a4c1e.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-irish-green-right-6898f010a8b8e.jpg'
-                    ]
-                },
-                'Light Pink': {
-                    defaultImage: 'Assets/Products/Classic tees/unisex-classic-tee-light-pink-front-6898f01201ce6.jpg',
-                    images: [
-                        'Assets/Products/Classic tees/unisex-classic-tee-light-pink-front-6898f012238d2.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-light-pink-front-6898f01237978.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-light-pink-front-and-back-6898f0127696e.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-light-pink-front-6898f01230f0c.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-light-pink-front-2-6898f0122a3f6.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-light-pink-back-6898f0124ccc6.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-light-pink-front-6898f0120f33f.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-light-pink-front-6898f012087d5.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-light-pink-back-6898f01245a6c.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-light-pink-back-2-6898f0126fcc5.jpg'
-                        
-                    ]
-                },
-                'Green': {
-                    defaultImage: 'Assets/Products/Classic tees/unisex-classic-tee-turf-green-front-6898f00fdb53a.jpg',
-                    images: [
-                        'Assets/Products/Classic tees/unisex-classic-tee-turf-green-front-6898f00ff0050.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-turf-green-front-6898f010031b2.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-turf-green-front-and-back-6898f01004de2.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-turf-green-front-6898f00fdb53a.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-turf-green-front-2-6898f00fe59f7.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-turf-green-front-6898f00fdd179.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-turf-green-front-6898f00fe9144.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-turf-green-back-6898f00fead0a.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-turf-green-back-6898f010015e2.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-turf-green-left-6898f00fee46c.jpg'
-                    ]
-                },
-                'Yellow': {
-                    defaultImage: 'Assets/Products/Classic tees/unisex-classic-tee-yellow-haze-front-6898f0118846a.jpg',
-                    images: [
-                        'Assets/Products/Classic tees/unisex-classic-tee-yellow-haze-front-6898f011d25c6.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-yellow-haze-front-6898f011ea388.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-yellow-haze-front-6898f0118e73e.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-yellow-haze-front-and-back-6898f011f0140.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-yellow-haze-left-6898f011cc3cc.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-yellow-haze-front-6898f011de58b.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-yellow-haze-front-6898f011b33bd.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-yellow-haze-front-6898f011b9667.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-yellow-haze-front-2-6898f011d8668.jpg',
-                        'Assets/Products/Classic tees/unisex-classic-tee-yellow-haze-back-6898f011bfac2.jpg'
-
-                    ]
-                }
-            },
-            sizes: ['S', 'M', 'L', 'XL']
-        }
-    },
-    {
-        id: 'oversized-tee',
-        name: 'Kingdom Oversized Tee',
-        price: 449.00,
-        category: 'oversized-tee', // <-- add this if missing
-        displayImage: 'Assets/Other/WhatsApp Image 2025-09-28 at 12.08.01_503b73c2.jpg',
-        description: 'For those who embrace comfort without compromising on style or conviction.',
-        options: {
-            colors: {
-                'Black': {
-                    defaultImage: 'Assets/Products/Oversized tess/unisex-oversized-t-shirt-black-front-6898e814f093a.jpg',
-                    images: [
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-black-front-6898e814f03ab.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-black-front-6898e814f05fa.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-black-back-6898e814f14af.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-black-back-6898e814f17da.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-black-left-6898e814f11cf.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-black-left-front-6898e814f207d.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-black-zoomed-in-6898e814f1a0d.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-black-product-details-2-6898e814f1b2f.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-black-right-6898e814f1e56.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-black-right-front-6898e814f1f5a.jpg'
-                    ]
-                },
-                'White': {
-                    defaultImage: 'Assets/Products/Oversized tess/unisex-oversized-t-shirt-white-front-6898eb2686ba9.jpg',
-                    images: [
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-white-front-6898eb2683ffa.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-white-front-6898eb268598e.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-white-back-6898eb268c699.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-white-back-6898eb268ba0b.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-white-left-6898eb2689fca.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-white-right-6898eb268a698.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-white-zoomed-in-6898eb268cced.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-white-product-details-2-6898eb268d32b.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-white-left-front-6898eb2690056.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-white-left-front-2-6898eb2690b96.jpg'
-                    ]
-                },
-                'Navy': {
-                    defaultImage: 'Assets/Products/Oversized tess/unisex-oversized-t-shirt-navy-front-6898e814f347a.jpg',
-                    images: [
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-navy-front-2-6898e814f2b50.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-navy-front-6898e814f2e0c.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-navy-front-6898e814f347a.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-navy-front-6898e814f3968.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-navy-zoomed-in-6898e815033ee.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-navy-right-6898e81502110.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-navy-back-6898e8150244f.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-navy-back-6898e81502e4c.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-navy-left-6898e81501bb2.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-navy-left-front-6898e81501042.jpg'
-                        
-                    ]
-                },
-                'Khakhi': {
-                    defaultImage: 'Assets/Products/Oversized tess/unisex-oversized-t-shirt-sand-khaki-front-6898ea1ddbd2c.jpg',
-                    images: [
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-sand-khaki-front-6898ea1ddba5e.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-sand-khaki-back-6898ea1dddf60.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-sand-khaki-right-6898ea1ddd441.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-sand-khaki-left-front-6898ea1ddf524.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-sand-khaki-product-details-2-6898ea1dde78f.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-sand-khaki-left-front-2-6898ea1ddf804.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-sand-khaki-right-front-6898ea1ddf26b.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-sand-khaki-right-front-6898ea1ddecf9.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-sand-khaki-left-front-6898ea1ddcb23.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-sand-khaki-left-6898ea1ddd128.jpg'
-                    ]
-                },
-                'Faded': {
-                    defaultImage: 'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-front-6898d53df2bf6.jpg',
-                    images: [
-                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-front-6898d53df2e7c.jpg',
-                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-front-6898d53df30a2.jpg',
-                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-front-6898d53df239d.jpg',
-                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-front-6898d53df34eb.jpg',
-                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-front-6898d53df3719.jpg',
-                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-front-6898d53e01fae.jpg',
-                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-front-6898d53e04cf2.jpg',
-                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-left-6898d53df4045.jpg',
-                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-left-6898d53e007cb.jpg',
-                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-right-6898d53e000b4.jpg',
-                        'Assets/Products/Oversized tess/oversized-faded-t-shirt-faded-bone-product-details-6898d53e03643.jpg'
-
-                    
-                    ]
-                },
-                'City Green': {
-                    defaultImage: 'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-front-6898eb2672f75.jpg',
-                    images: [
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-front-6898eb267308e.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-front-6898eb2672294.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-left-6898eb267351f.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-left-front-2-6898eb267496a.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-left-front-6898eb267482a.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-product-details-2-6898eb26742c0.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-right-6898eb2673a98.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-right-6898eb2674600.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-right-front-6898eb26744f4.jpg',
-                        'Assets/Products/Oversized tess/unisex-oversized-t-shirt-city-green-zoomed-in-6898eb26741b8.jpg'
-                    ]
-                }
-            },
-            sizes: ['M', 'L', 'XL', 'XXL']
-        }
     }
 ];
 
 // Make products accessible globally
-window.getProductById = (id) => products.find(p => p.id === id);
-window.getAllProducts = () => products;
+window.getProductById = (id) => {
+    const source = window.products || products;
+    return source.find(p => p.id === id);
+};
+window.getAllProducts = () => window.products || products;
+
+// Expose initial products for manual re-upload of originals with options
+window.getInitialProducts = () => products;
 
 // --- Constants ---
 const VAT_RATE = 0; // Temporarily zero-rated for testing
@@ -2055,6 +1675,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log("Firebase is ready. Proceeding with UI and event listeners.");
         settleFirebaseInitialization(true);
         updateAuthUI(!!window.auth.currentUser);
+        
+        // Load products after Firebase is initialized
+        if (typeof window.initializeProducts === 'function') {
+            await window.initializeProducts();
+        }
     } else {
         console.log("Firebase initialization failed. Using offline mode.");
         settleFirebaseInitialization(false);
@@ -2309,6 +1934,118 @@ await window.db.collection('artifacts').doc('default-app-id')
     showMessage("All products uploaded to Firestore!", "success");
 }
 
+    // Load additional products from a manifest JSON in /public
+    async function loadProductsManifest() {
+        try {
+            const res = await fetch('products-manifest.json', { cache: 'no-store' });
+            if (!res.ok) return [];
+            const data = await res.json();
+            if (!Array.isArray(data)) return [];
+            return data.map(p => ({
+                id: p.id,
+                name: p.name,
+                price: Number(p.price || 0),
+                category: p.category || 'misc',
+                displayImage: p.displayImage || '',
+                description: p.description || '',
+                options: p.options || { colors: {}, sizes: [] }
+            }));
+        } catch (e) {
+            console.warn('Manifest load failed:', e);
+            return [];
+        }
+    }
+
+    // Upload products from manifest to Firestore (upsert by product.id)
+    window.uploadProductsFromManifest = async function({ overwrite = true } = {}) {
+        const manifestProducts = await loadProductsManifest();
+        if (!manifestProducts.length) {
+            showMessage('No manifest products found.', 'error');
+            return;
+        }
+        if (!window.db) {
+            showMessage('Firestore not initialized.', 'error');
+            return;
+        }
+        
+        console.log(`Starting upload of ${manifestProducts.length} products...`);
+        let successCount = 0;
+        let skipCount = 0;
+        let errorCount = 0;
+        
+        const productsRef = window.db.collection('products');
+        for (const product of manifestProducts) {
+            try {
+                const colors = product.options && product.options.colors ? Object.keys(product.options.colors) : [];
+                const imageUrls = [];
+                colors.forEach(color => {
+                    const c = product.options.colors[color];
+                    if (c?.images?.length) imageUrls.push(...c.images);
+                });
+                const docId = product.id && String(product.id).trim() ? String(product.id).trim() : null;
+                if (docId) {
+                    const docRef = productsRef.doc(docId);
+                    const existing = await docRef.get();
+                    const payload = {
+                        name: product.name,
+                        price: product.price,
+                        description: product.description,
+                        displayImage: product.displayImage,
+                        imageUrls: imageUrls,
+                        colors: colors,
+                        sizes: product.options?.sizes || [],
+                        category: product.category || 'misc',
+                        options: product.options || {}
+                    };
+                    if (existing.exists) {
+                        if (overwrite) {
+                            await docRef.set(payload, { merge: true });
+                            console.log(`✓ Updated: ${product.name} (${docId})`);
+                            successCount++;
+                        } else {
+                            console.log(`⊘ Skipped: ${product.name} (${docId})`);
+                            skipCount++;
+                        }
+                    } else {
+                        await docRef.set(payload);
+                        console.log(`✓ Created: ${product.name} (${docId})`);
+                        successCount++;
+                    }
+                } else {
+                    await window.db.collection('products').add({
+                        name: product.name,
+                        price: product.price,
+                        description: product.description,
+                        displayImage: product.displayImage,
+                        imageUrls: imageUrls,
+                        colors: colors,
+                        sizes: product.options?.sizes || [],
+                        category: product.category || 'misc',
+                        options: product.options || {}
+                    });
+                    console.log(`✓ Created (auto-id): ${product.name}`);
+                    successCount++;
+                }
+            } catch (error) {
+                console.error(`✗ Failed to upload ${product.name}:`, error);
+                errorCount++;
+            }
+        }
+        
+        console.log(`Upload complete: ${successCount} succeeded, ${skipCount} skipped, ${errorCount} failed`);
+        
+        if (errorCount > 0) {
+            showMessage(`Upload completed with ${errorCount} errors. Check console.`, 'error');
+        } else {
+            showMessage(`${successCount} products uploaded successfully!`, 'success');
+        }
+        
+        // Refresh products list
+        const count = await fetchProductsFromFirestore();
+        console.log(`Firestore now has ${count} products total`);
+        await window.initializeProducts();
+    }
+
     // --- Uncomment to enable product upload on initial load (one-time setup) ---
     // if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
     //     console.log("Localhost detected. Uploading products to Firestore...");
@@ -2320,23 +2057,73 @@ await window.db.collection('artifacts').doc('default-app-id')
     async function fetchProductsFromFirestore() {
         if (!window.db) {
             console.error("Firestore not initialized.");
-            return;
+            return 0;
         }
-        const productsRef = window.collection(window.db, 'products');
-        const snapshot = await window.getDocs(productsRef);
-        window.products = [];
+        // Use compat API to match how db was initialized
+        const snapshot = await window.db.collection('products').get();
+        const firestoreProducts = [];
         snapshot.forEach(doc => {
             const product = doc.data();
             product.id = doc.id;
-            window.products.push(product);
+            firestoreProducts.push(product);
         });
-        renderProducts(); // Call your function to display products
+        
+        // Always start with hard-coded products
+        window.products = [...products];
+        
+        // Merge in Firestore products (overwrite hard-coded ones if they exist in Firestore)
+        const hardcodedIds = new Set(products.map(p => p.id));
+        const firestoreIds = new Set(firestoreProducts.map(p => p.id));
+        
+        // Update hard-coded products if newer versions in Firestore
+        firestoreProducts.forEach(fp => {
+            if (hardcodedIds.has(fp.id)) {
+                // Overwrite hard-coded with Firestore version if it exists
+                const idx = window.products.findIndex(p => p.id === fp.id);
+                if (idx >= 0) {
+                    window.products[idx] = fp;
+                }
+            } else {
+                // Add new products from Firestore (not in hard-coded list)
+                window.products.push(fp);
+            }
+        });
+        
+        return window.products.length;
     }
 
-    // Call this after Firebase is initialized and DOM is ready
-    document.addEventListener('DOMContentLoaded', async () => {
-        await fetchProductsFromFirestore();
-    });
+    // Expose for console debugging/manual refresh
+    window.fetchProductsFromFirestore = fetchProductsFromFirestore;
+
+    // Expose manifest loader
+    window.loadProductsManifest = loadProductsManifest;
+
+    // Product initialization - call after Firebase is ready
+    window.initializeProducts = async function() {
+        let count = 0;
+        try {
+            count = await fetchProductsFromFirestore();
+            console.log('[Products] Fetched from Firestore:', count);
+        } catch (e) {
+            console.warn('Firestore fetch failed:', e);
+        }
+        const manifestProducts = await loadProductsManifest();
+        console.log('[Products] Manifest count:', manifestProducts.length);
+        if (!count && manifestProducts.length) {
+            window.products = manifestProducts;
+            console.log('[Products] Using manifest only fallback');
+        } else if (manifestProducts.length) {
+            const existingIds = new Set(window.products.map(p => String(p.id || '').trim()).filter(Boolean));
+            manifestProducts.forEach(mp => {
+                const mid = String(mp.id || '').trim();
+                if (mid && !existingIds.has(mid)) {
+                    window.products.push(mp);
+                }
+            });
+            console.log('[Products] After merge, total products:', window.products.length);
+        }
+        renderProducts();
+    };
 });
 
 function renderProducts() {
@@ -3844,6 +3631,7 @@ window.AdminApp = (function() {
         revenueSnapshot: null,
         filters: {
             status: 'all',
+            payment: 'all',
             customerQuery: '',
             dateFrom: '',
             dateTo: '',
@@ -3861,6 +3649,7 @@ window.AdminApp = (function() {
     revenueBreakdown: () => document.getElementById('admin-revenue-breakdown'),
         totalCustomers: () => document.getElementById('admin-total-customers'),
         statusFilter: () => document.getElementById('admin-status-filter'),
+        paymentFilter: () => document.getElementById('admin-payment-filter'),
         customerFilter: () => document.getElementById('admin-customer-filter'),
     dateRange: () => document.getElementById('admin-date-range'),
         dateFrom: () => document.getElementById('admin-date-from'),
@@ -4077,9 +3866,19 @@ window.AdminApp = (function() {
         return {
             filters,
             statusLabel: getStatusFilterLabel(),
+            paymentLabel: getPaymentFilterLabel(),
             customerLabel: filters.customerQuery ? `Customer contains "${filters.customerQuery}"` : 'All customers',
             dateLabel: describeDateFilters(filters)
         };
+    }
+    
+    function getPaymentFilterLabel() {
+        const paymentValue = (state.filters.payment || 'all').toLowerCase();
+        if (paymentValue === 'all') {
+            return 'All payments';
+        }
+        // Capitalize first letter
+        return paymentValue.charAt(0).toUpperCase() + paymentValue.slice(1) + ' only';
     }
 
     function getRevenueSnapshot() {
@@ -4107,6 +3906,7 @@ window.AdminApp = (function() {
 
         const filters = snapshot.filters || buildFilterSummary();
         const statusLabel = filters.statusLabel || 'All statuses';
+        const paymentLabel = filters.paymentLabel || 'All payments';
         const customerLabel = filters.customerLabel || 'All customers';
         const dateLabel = filters.dateLabel || 'All dates';
         const generatedAt = snapshot.lastUpdated instanceof Date && !Number.isNaN(snapshot.lastUpdated?.getTime?.())
@@ -4124,6 +3924,7 @@ window.AdminApp = (function() {
         push('Report', 'Disciplined Disciples Revenue Summary');
         push('Generated', generatedLabel);
         push('Status filter', statusLabel);
+        push('Payment filter', paymentLabel);
         push('Customer filter', customerLabel);
         push('Date filter', dateLabel);
         rows.push('');
@@ -4850,6 +4651,13 @@ window.AdminApp = (function() {
             });
         }
 
+        const paymentFilter = selectors.paymentFilter();
+        if (paymentFilter) {
+            paymentFilter.addEventListener('change', () => {
+                renderOrders();
+            });
+        }
+
         const customerFilter = selectors.customerFilter();
         if (customerFilter) {
             let customerDebounceHandle;
@@ -5206,12 +5014,14 @@ window.AdminApp = (function() {
 
     function collectActiveFilters() {
         const statusEl = selectors.statusFilter();
+        const paymentEl = selectors.paymentFilter();
         const customerEl = selectors.customerFilter();
         const dateRangeEl = selectors.dateRange();
         const dateFromEl = selectors.dateFrom();
         const dateToEl = selectors.dateTo();
 
         state.filters.status = statusEl ? (statusEl.value || 'all') : 'all';
+        state.filters.payment = paymentEl ? (paymentEl.value || 'all') : 'all';
         state.filters.customerQuery = customerEl ? customerEl.value.trim() : '';
         state.filters.dateFrom = dateFromEl && dateFromEl.value ? dateFromEl.value : '';
         state.filters.dateTo = dateToEl && dateToEl.value ? dateToEl.value : '';
@@ -5228,6 +5038,7 @@ window.AdminApp = (function() {
 
         state.hiddenStaleOrdersForFilters = 0;
         const statusValue = (filters.status || 'all').toLowerCase();
+        const paymentValue = (filters.payment || 'all').toLowerCase();
         const customerQuery = (filters.customerQuery || '').toLowerCase();
         const startDate = parseDateInput(filters.dateFrom, false);
         const endDate = parseDateInput(filters.dateTo, true);
@@ -5236,6 +5047,15 @@ window.AdminApp = (function() {
             if (statusValue !== 'all') {
                 const orderStatus = (order.status || '').toLowerCase();
                 if (!orderStatus.includes(statusValue)) {
+                    return false;
+                }
+            }
+
+            if (paymentValue !== 'all') {
+                const paymentStatus = (order.paymentStatus || '').toLowerCase();
+                // Normalize "pending payment" to just "pending" for filtering
+                const normalizedPayment = paymentStatus.replace(/pending payment/gi, 'pending').replace(/\s+/g, ' ').trim();
+                if (!normalizedPayment.includes(paymentValue)) {
                     return false;
                 }
             }
@@ -5697,6 +5517,11 @@ window.AdminApp = (function() {
             const filterSelect = selectors.statusFilter && selectors.statusFilter();
             const selectedOption = filterSelect && filterSelect.options ? filterSelect.options[filterSelect.selectedIndex] : null;
             const filterLabel = selectedOption ? (selectedOption.text || selectedOption.value || 'All orders') : 'All orders';
+            
+            const paymentSelect = selectors.paymentFilter && selectors.paymentFilter();
+            const selectedPaymentOption = paymentSelect && paymentSelect.options ? paymentSelect.options[paymentSelect.selectedIndex] : null;
+            const paymentFilterLabel = selectedPaymentOption ? (selectedPaymentOption.text || selectedPaymentOption.value || 'All payments') : 'All payments';
+            
             const filters = { ...state.filters };
             const customerFilterLabel = filters.customerQuery
                 ? `Customer filter: ${filters.customerQuery}`
@@ -5733,8 +5558,9 @@ window.AdminApp = (function() {
             doc.text(`Orders in view: ${state.filteredOrders.length}`, margin + 20, summaryBase);
             doc.text(`Pending orders: ${pendingCount}`, margin + 20, summaryBase + 18);
             doc.text(`Status filter: ${filterLabel}`, margin + 20, summaryBase + 36);
-            doc.text(customerFilterLabel, margin + 20, summaryBase + 54);
-            doc.text(dateFilterLabel, margin + 20, summaryBase + 72);
+            doc.text(`Payment filter: ${paymentFilterLabel}`, margin + 20, summaryBase + 54);
+            doc.text(customerFilterLabel, margin + 20, summaryBase + 72);
+            doc.text(dateFilterLabel, margin + 20, summaryBase + 90);
             doc.text(`Total revenue (view): ${formatCurrency(totalRevenue)}`, margin + 260, summaryBase);
             doc.text(`Unique customers: ${uniqueCustomers}`, margin + 260, summaryBase + 18);
             doc.text('Generated from: Admin dashboard', margin + 260, summaryBase + 36);
@@ -5896,10 +5722,141 @@ window.showTab = function(target) {
     }
 };
 
+// ============================================
+// COOKIE CONSENT MANAGEMENT (POPIA Compliance)
+// ============================================
+window.CookieConsent = (function() {
+    const STORAGE_KEY = 'cookie_consent';
+    const GA_STORAGE_KEY = 'ga_opt_out';
+    
+    function hasConsented() {
+        return localStorage.getItem(STORAGE_KEY) === 'accepted';
+    }
+    
+    function hasDeclined() {
+        return localStorage.getItem(STORAGE_KEY) === 'declined';
+    }
+    
+    function hasResponded() {
+        return hasConsented() || hasDeclined();
+    }
+    
+    function acceptCookies() {
+        localStorage.setItem(STORAGE_KEY, 'accepted');
+        localStorage.removeItem(GA_STORAGE_KEY);
+        hideBanner();
+        enableAnalytics();
+        console.log('✅ Cookie consent: Accepted');
+    }
+    
+    function declineCookies() {
+        localStorage.setItem(STORAGE_KEY, 'declined');
+        localStorage.setItem(GA_STORAGE_KEY, 'true');
+        hideBanner();
+        disableAnalytics();
+        console.log('❌ Cookie consent: Declined');
+    }
+    
+    function enableAnalytics() {
+        if (typeof gtag === 'function') {
+            gtag('consent', 'update', {
+                'analytics_storage': 'granted'
+            });
+            console.log('📊 Google Analytics: Enabled');
+        }
+    }
+    
+    function disableAnalytics() {
+        if (typeof gtag === 'function') {
+            gtag('consent', 'update', {
+                'analytics_storage': 'denied'
+            });
+        }
+        
+        // Disable Google Analytics tracking
+        window['ga-disable-G-2J1GWH59V4'] = true;
+        console.log('🚫 Google Analytics: Disabled');
+    }
+    
+    function showBanner() {
+        const banner = document.getElementById('cookie-consent-banner');
+        if (banner) {
+            banner.classList.add('show');
+        }
+    }
+    
+    function hideBanner() {
+        const banner = document.getElementById('cookie-consent-banner');
+        if (banner) {
+            banner.classList.remove('show');
+            setTimeout(() => {
+                banner.style.display = 'none';
+            }, 400);
+        }
+    }
+    
+    function init() {
+        // Check if user has already responded
+        if (hasResponded()) {
+            if (hasConsented()) {
+                enableAnalytics();
+            } else {
+                disableAnalytics();
+            }
+            return;
+        }
+        
+        // Show banner after short delay
+        setTimeout(() => {
+            showBanner();
+        }, 1000);
+        
+        // Set up button handlers
+        const acceptBtn = document.getElementById('cookie-accept-btn');
+        const declineBtn = document.getElementById('cookie-decline-btn');
+        
+        if (acceptBtn) {
+            acceptBtn.addEventListener('click', acceptCookies);
+        }
+        
+        if (declineBtn) {
+            declineBtn.addEventListener('click', declineCookies);
+        }
+        
+        console.log('🍪 Cookie consent banner initialized');
+    }
+    
+    // Initialize Google Analytics consent mode
+    if (typeof gtag === 'function') {
+        gtag('consent', 'default', {
+            'analytics_storage': 'denied'
+        });
+    }
+    
+    return {
+        init,
+        hasConsented,
+        hasDeclined,
+        hasResponded,
+        acceptCookies,
+        declineCookies
+    };
+})();
+
 // Handle payment completion redirects once the DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     if (window.AdminApp) {
         window.AdminApp.init();
+    }
+    
+    // Initialize cookie consent
+    if (window.CookieConsent) {
+        window.CookieConsent.init();
+    }
+    
+    // Initialize newsletter popup
+    if (window.NewsletterPopup) {
+        window.NewsletterPopup.init();
     }
 
     setTimeout(() => {
@@ -5909,3 +5866,115 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 2000);
 });
 
+// ============================================
+// Newsletter Popup Module
+// ============================================
+window.NewsletterPopup = (function() {
+    const STORAGE_KEY = 'newsletter_shown';
+    const DELAY_MS = 8000; // Show after 8 seconds
+    
+    function hasShownPopup() {
+        const shown = localStorage.getItem(STORAGE_KEY);
+        if (!shown) return false;
+        
+        const shownDate = new Date(shown);
+        const now = new Date();
+        const daysDiff = (now - shownDate) / (1000 * 60 * 60 * 24);
+        
+        // Show again after 7 days
+        return daysDiff < 7;
+    }
+    
+    function markAsShown() {
+        localStorage.setItem(STORAGE_KEY, new Date().toISOString());
+    }
+    
+    function showPopup() {
+        const popup = document.getElementById('newsletter-popup');
+        if (popup) {
+            popup.classList.add('show');
+        }
+    }
+    
+    function hidePopup() {
+        const popup = document.getElementById('newsletter-popup');
+        if (popup) {
+            popup.classList.remove('show');
+        }
+        markAsShown();
+    }
+    
+    function handleSubmit(e) {
+        e.preventDefault();
+        const emailInput = document.getElementById('newsletter-email');
+        const email = emailInput?.value;
+        
+        if (!email) return;
+        
+        // Store subscriber email in localStorage (in production, send to backend)
+        const subscribers = JSON.parse(localStorage.getItem('newsletter_subscribers') || '[]');
+        if (!subscribers.includes(email)) {
+            subscribers.push(email);
+            localStorage.setItem('newsletter_subscribers', JSON.stringify(subscribers));
+        }
+        
+        // Show success message
+        alert('🎉 Success! Check your email for your 10% discount code!');
+        hidePopup();
+        
+        // In production, you would send this to your backend:
+        // await fetch('/api/newsletter/subscribe', {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'application/json' },
+        //     body: JSON.stringify({ email })
+        // });
+    }
+    
+    function init() {
+        // Only show on homepage
+        if (!window.location.pathname.includes('index.html') && window.location.pathname !== '/') {
+            return;
+        }
+        
+        // Don't show if already shown recently
+        if (hasShownPopup()) {
+            return;
+        }
+        
+        const popup = document.getElementById('newsletter-popup');
+        const closeBtn = document.getElementById('newsletter-close-btn');
+        const form = document.getElementById('newsletter-form');
+        
+        if (!popup) return;
+        
+        // Show popup after delay
+        setTimeout(() => {
+            showPopup();
+        }, DELAY_MS);
+        
+        // Close button handler
+        if (closeBtn) {
+            closeBtn.addEventListener('click', hidePopup);
+        }
+        
+        // Click outside to close
+        popup.addEventListener('click', (e) => {
+            if (e.target === popup) {
+                hidePopup();
+            }
+        });
+        
+        // Form submit handler
+        if (form) {
+            form.addEventListener('submit', handleSubmit);
+        }
+        
+        console.log('📧 Newsletter popup initialized');
+    }
+    
+    return {
+        init,
+        show: showPopup,
+        hide: hidePopup
+    };
+})();

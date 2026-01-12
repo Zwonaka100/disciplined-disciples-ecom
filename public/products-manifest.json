@@ -1,0 +1,268 @@
+[
+  {
+    "id": "classic-dyed-tee",
+    "name": "Classic Dyed Tee",
+    "price": 349.0,
+    "category": "tee",
+    "displayImage": "Assets/Products/Classic Dyed Tee/unisex-oversized-garment-dyed-t-shirt-vintage-white-front-6963c46d03772.jpg",
+    "description": "Soft garment-dyed tee with a lived-in look.",
+    "options": {
+      "colors": {
+        "Vintage White": {
+          "defaultImage": "Assets/Products/Classic Dyed Tee/unisex-oversized-garment-dyed-t-shirt-vintage-white-front-6963c46d03772.jpg",
+          "images": [
+            "Assets/Products/Classic Dyed Tee/unisex-oversized-garment-dyed-t-shirt-vintage-white-front-6963c46d03772.jpg",
+            "Assets/Products/Classic Dyed Tee/unisex-oversized-garment-dyed-t-shirt-vintage-white-left-6963c46d04a63.jpg",
+            "Assets/Products/Classic Dyed Tee/unisex-oversized-garment-dyed-t-shirt-vintage-white-right-6963c46d050bc.jpg",
+            "Assets/Products/Classic Dyed Tee/unisex-oversized-garment-dyed-t-shirt-vintage-white-back-6963c46d04445.jpg"
+          ]
+        },
+        "Khaki": {
+          "defaultImage": "Assets/Products/Classic Dyed Tee/unisex-oversized-garment-dyed-t-shirt-khaki-front-6963c46d035c6.jpg",
+          "images": [
+            "Assets/Products/Classic Dyed Tee/unisex-oversized-garment-dyed-t-shirt-khaki-front-6963c46d035c6.jpg",
+            "Assets/Products/Classic Dyed Tee/unisex-oversized-garment-dyed-t-shirt-khaki-left-6963c46d049af.jpg",
+            "Assets/Products/Classic Dyed Tee/unisex-oversized-garment-dyed-t-shirt-khaki-right-6963c46d04fee.jpg",
+            "Assets/Products/Classic Dyed Tee/unisex-oversized-garment-dyed-t-shirt-khaki-back-6963c46d04386.jpg"
+          ]
+        }
+      },
+      "sizes": ["S", "M", "L", "XL", "2XL"]
+    }
+  },
+  {
+    "id": "develop-more-discipline-tee",
+    "name": "Develop More Discipline Tee",
+    "price": 299.0,
+    "category": "tee",
+    "displayImage": "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-black-front-6963c18b9532a.jpg",
+    "description": "A classic tee reminding you to stay consistent.",
+    "options": {
+      "colors": {
+        "Faded Black": {
+          "defaultImage": "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-black-front-6963c18b9532a.jpg",
+          "images": [
+            "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-black-front-6963c18b9532a.jpg",
+            "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-black-left-6963c18b96161.jpg",
+            "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-black-right-6963c18b9673b.jpg",
+            "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-black-back-6963c18b96d09.jpg"
+          ]
+        },
+        "Faded Bone": {
+          "defaultImage": "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-bone-front-6963bf84e9388.jpg",
+          "images": [
+            "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-bone-front-6963bf84e9388.jpg",
+            "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-bone-left-6963bf84ea1b4.jpg",
+            "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-bone-right-6963bf84ea7cc.jpg",
+            "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-bone-back-6963bf84eae1d.jpg"
+          ]
+        },
+        "Faded Eucalyptus": {
+          "defaultImage": "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-eucalyptus-front-6963bf84e960f.jpg",
+          "images": [
+            "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-eucalyptus-front-6963bf84e960f.jpg",
+            "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-eucalyptus-left-6963bf84ea269.jpg",
+            "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-eucalyptus-right-6963bf84ea87c.jpg",
+            "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-eucalyptus-back-6963bf84eaec7.jpg"
+          ]
+        },
+        "Faded Khaki": {
+          "defaultImage": "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-khaki-front-6963bf84e96c7.jpg",
+          "images": [
+            "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-khaki-front-6963bf84e96c7.jpg",
+            "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-khaki-left-6963bf84ea313.jpg",
+            "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-khaki-right-6963bf84ea90d.jpg",
+            "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-khaki-back-6963bf84eaf4f.jpg"
+          ]
+        }
+      },
+      "sizes": ["S", "M", "L", "XL", "2XL"]
+    }
+  },
+  {
+    "id": "essential-crew-neck-sweatshirt",
+    "name": "Essential Crew Neck Sweatshirt",
+    "price": 549.0,
+    "category": "sweatshirt",
+    "displayImage": "Assets/Products/Essential Crew Neck Sweatshirt/unisex-relax-crew-neck-sweatshirt-black-front-6963d52ece9d2.jpg",
+    "description": "A cozy midweight crew for everyday layering.",
+    "options": {
+      "colors": {
+        "Black": {
+          "defaultImage": "Assets/Products/Essential Crew Neck Sweatshirt/unisex-relax-crew-neck-sweatshirt-black-front-6963d52ece9d2.jpg",
+          "images": [
+            "Assets/Products/Essential Crew Neck Sweatshirt/unisex-relax-crew-neck-sweatshirt-black-front-6963d52ece9d2.jpg",
+            "Assets/Products/Essential Crew Neck Sweatshirt/unisex-relax-crew-neck-sweatshirt-black-left-6963d52ecf78c.jpg",
+            "Assets/Products/Essential Crew Neck Sweatshirt/unisex-relax-crew-neck-sweatshirt-black-right-6963d52ecfe6f.jpg",
+            "Assets/Products/Essential Crew Neck Sweatshirt/unisex-relax-crew-neck-sweatshirt-black-back-6963d52ecf124.jpg"
+          ]
+        },
+        "Athletic Heather": {
+          "defaultImage": "Assets/Products/Essential Crew Neck Sweatshirt/unisex-relax-crew-neck-sweatshirt-athletic-heather-front-6963d52ece856.jpg",
+          "images": [
+            "Assets/Products/Essential Crew Neck Sweatshirt/unisex-relax-crew-neck-sweatshirt-athletic-heather-front-6963d52ece856.jpg",
+            "Assets/Products/Essential Crew Neck Sweatshirt/unisex-relax-crew-neck-sweatshirt-athletic-heather-left-6963d52ecf70b.jpg",
+            "Assets/Products/Essential Crew Neck Sweatshirt/unisex-relax-crew-neck-sweatshirt-athletic-heather-right-6963d52ecfdf3.jpg",
+            "Assets/Products/Essential Crew Neck Sweatshirt/unisex-relax-crew-neck-sweatshirt-athletic-heather-back-6963d52ecf09b.jpg"
+          ]
+        }
+      },
+      "sizes": ["S", "M", "L", "XL", "2XL"]
+    }
+  },
+  {
+    "id": "essential-fleece-shorts",
+    "name": "Essential Fleece Shorts",
+    "price": 349.0,
+    "category": "shorts",
+    "displayImage": "Assets/Products/Essential Fleece Shorts/mens-fleece-shorts-black-front-6963d115ba991.jpg",
+    "description": "Comfortable everyday fleece shorts.",
+    "options": {
+      "colors": {
+        "Black": {
+          "defaultImage": "Assets/Products/Essential Fleece Shorts/mens-fleece-shorts-black-front-6963d115ba991.jpg",
+          "images": [
+            "Assets/Products/Essential Fleece Shorts/mens-fleece-shorts-black-front-6963d115ba991.jpg",
+            "Assets/Products/Essential Fleece Shorts/mens-fleece-shorts-black-left-front-6963d115bb782.jpg",
+            "Assets/Products/Essential Fleece Shorts/mens-fleece-shorts-black-right-front-6963d115bbe51.jpg",
+            "Assets/Products/Essential Fleece Shorts/mens-fleece-shorts-black-back-6963d115bb0a9.jpg"
+          ]
+        },
+        "Heather Grey": {
+          "defaultImage": "Assets/Products/Essential Fleece Shorts/mens-fleece-shorts-heather-grey-front-6963d115baaf5.jpg",
+          "images": [
+            "Assets/Products/Essential Fleece Shorts/mens-fleece-shorts-heather-grey-front-6963d115baaf5.jpg",
+            "Assets/Products/Essential Fleece Shorts/mens-fleece-shorts-heather-grey-left-front-6963d115bb861.jpg",
+            "Assets/Products/Essential Fleece Shorts/mens-fleece-shorts-heather-grey-right-front-6963d115bbee3.jpg",
+            "Assets/Products/Essential Fleece Shorts/mens-fleece-shorts-heather-grey-back-6963d115bb184.jpg"
+          ]
+        },
+        "White": {
+          "defaultImage": "Assets/Products/Essential Fleece Shorts/mens-fleece-shorts-white-front-6963d115bab62.jpg",
+          "images": [
+            "Assets/Products/Essential Fleece Shorts/mens-fleece-shorts-white-front-6963d115bab62.jpg",
+            "Assets/Products/Essential Fleece Shorts/mens-fleece-shorts-white-left-front-6963d115bb917.jpg",
+            "Assets/Products/Essential Fleece Shorts/mens-fleece-shorts-white-right-front-6963d115bbf4a.jpg",
+            "Assets/Products/Essential Fleece Shorts/mens-fleece-shorts-white-back-6963d115bb230.jpg"
+          ]
+        }
+      },
+      "sizes": ["S", "M", "L", "XL"]
+    }
+  },
+  {
+    "id": "essential-golf-tee",
+    "name": "Essential Golf Tee",
+    "price": 349.0,
+    "category": "tee",
+    "displayImage": "Assets/Products/Essential Golf Tee/unisex-premium-pique-polo-shirt-black-front-6963cfbe84573.jpg",
+    "description": "Premium pique polo tee for elevated days.",
+    "options": {
+      "colors": {
+        "Black": {
+          "defaultImage": "Assets/Products/Essential Golf Tee/unisex-premium-pique-polo-shirt-black-front-6963cfbe84573.jpg",
+          "images": [
+            "Assets/Products/Essential Golf Tee/unisex-premium-pique-polo-shirt-black-front-6963cfbe84573.jpg",
+            "Assets/Products/Essential Golf Tee/unisex-premium-pique-polo-shirt-black-left-6963cfbe8541e.jpg",
+            "Assets/Products/Essential Golf Tee/unisex-premium-pique-polo-shirt-black-right-6963cfbe85aed.jpg",
+            "Assets/Products/Essential Golf Tee/unisex-premium-pique-polo-shirt-black-back-6963cfbe84d60.jpg"
+          ]
+        },
+        "Navy": {
+          "defaultImage": "Assets/Products/Essential Golf Tee/unisex-premium-pique-polo-shirt-navy-front-6963cfbe847dc.jpg",
+          "images": [
+            "Assets/Products/Essential Golf Tee/unisex-premium-pique-polo-shirt-navy-front-6963cfbe847dc.jpg",
+            "Assets/Products/Essential Golf Tee/unisex-premium-pique-polo-shirt-navy-left-6963cfbe8557a.jpg",
+            "Assets/Products/Essential Golf Tee/unisex-premium-pique-polo-shirt-navy-right-6963cfbe85c40.jpg",
+            "Assets/Products/Essential Golf Tee/unisex-premium-pique-polo-shirt-navy-back-6963cfbe84ec0.jpg"
+          ]
+        },
+        "White": {
+          "defaultImage": "Assets/Products/Essential Golf Tee/unisex-premium-pique-polo-shirt-white-front-6963cfbe848b6.jpg",
+          "images": [
+            "Assets/Products/Essential Golf Tee/unisex-premium-pique-polo-shirt-white-front-6963cfbe848b6.jpg",
+            "Assets/Products/Essential Golf Tee/unisex-premium-pique-polo-shirt-white-left-6963cfbe85643.jpg",
+            "Assets/Products/Essential Golf Tee/unisex-premium-pique-polo-shirt-white-right-6963cfbe85d0a.jpg",
+            "Assets/Products/Essential Golf Tee/unisex-premium-pique-polo-shirt-white-back-6963cfbe84f88.jpg"
+          ]
+        }
+      },
+      "sizes": ["S", "M", "L", "XL"]
+    }
+  },
+  {
+    "id": "essential-heavyweight-sweatpants",
+    "name": "Essential Heavyweight Sweatpants",
+    "price": 599.0,
+    "category": "pants",
+    "displayImage": "Assets/Products/Essential Heavyweight Sweatpants/unisex-heavyweight-sweatpants-black-front-6963d23c2a3d9.jpg",
+    "description": "Heavyweight fleece sweatpants for cooler days.",
+    "options": {
+      "colors": {
+        "Black": {
+          "defaultImage": "Assets/Products/Essential Heavyweight Sweatpants/unisex-heavyweight-sweatpants-black-front-6963d23c2a3d9.jpg",
+          "images": [
+            "Assets/Products/Essential Heavyweight Sweatpants/unisex-heavyweight-sweatpants-black-front-6963d23c2a3d9.jpg",
+            "Assets/Products/Essential Heavyweight Sweatpants/unisex-heavyweight-sweatpants-black-left-front-6963d23c2d9e7.jpg",
+            "Assets/Products/Essential Heavyweight Sweatpants/unisex-heavyweight-sweatpants-black-right-6963d23c2d224.jpg",
+            "Assets/Products/Essential Heavyweight Sweatpants/unisex-heavyweight-sweatpants-black-back-6963d23c2b302.jpg"
+          ]
+        },
+        "Athletic Heather": {
+          "defaultImage": "Assets/Products/Essential Heavyweight Sweatpants/unisex-heavyweight-sweatpants-athletic-heather-front-6963d23c2a340.jpg",
+          "images": [
+            "Assets/Products/Essential Heavyweight Sweatpants/unisex-heavyweight-sweatpants-athletic-heather-front-6963d23c2a340.jpg",
+            "Assets/Products/Essential Heavyweight Sweatpants/unisex-heavyweight-sweatpants-athletic-heather-left-front-6963d23c2d947.jpg",
+            "Assets/Products/Essential Heavyweight Sweatpants/unisex-heavyweight-sweatpants-athletic-heather-right-6963d23c2d18c.jpg",
+            "Assets/Products/Essential Heavyweight Sweatpants/unisex-heavyweight-sweatpants-athletic-heather-back-6963d23c2b273.jpg"
+          ]
+        }
+      },
+      "sizes": ["S", "M", "L", "XL", "2XL"]
+    }
+  },
+  {
+    "id": "loyalty-white-tee",
+    "name": "Loyalty White Tee",
+    "price": 299.0,
+    "category": "tee",
+    "displayImage": "Assets/Products/Loyalty White Tee/unisex-premium-t-shirt-white-front-6963cba04df2b.jpg",
+    "description": "Clean white tee with Loyalty print.",
+    "options": {
+      "colors": {
+        "White": {
+          "defaultImage": "Assets/Products/Loyalty White Tee/unisex-premium-t-shirt-white-front-6963cba04df2b.jpg",
+          "images": [
+            "Assets/Products/Loyalty White Tee/unisex-premium-t-shirt-white-front-6963cba04df2b.jpg",
+            "Assets/Products/Loyalty White Tee/unisex-premium-t-shirt-white-left-6963cba04ea0c.jpg",
+            "Assets/Products/Loyalty White Tee/unisex-premium-t-shirt-white-right-6963cba04ef16.jpg",
+            "Assets/Products/Loyalty White Tee/unisex-premium-t-shirt-white-back-6963cba04e4c7.jpg"
+          ]
+        }
+      },
+      "sizes": ["S", "M", "L", "XL"]
+    }
+  },
+  {
+    "id": "relentless-oversized-tee",
+    "name": "Relentless Oversized Tee",
+    "price": 449.0,
+    "category": "oversized-tee",
+    "displayImage": "Assets/Products/Relentless Oversized Tee/Relentless-Charcoal- Orange-White/oversized-faded-t-shirt-faded-black-front-6963c92fb571e.jpg",
+    "description": "Oversized faded tee with Relentless graphics.",
+    "options": {
+      "colors": {
+        "Charcoal Mix": {
+          "defaultImage": "Assets/Products/Relentless Oversized Tee/Relentless-Charcoal- Orange-White/oversized-faded-t-shirt-faded-black-front-6963c92fb571e.jpg",
+          "images": [
+            "Assets/Products/Relentless Oversized Tee/Relentless-Charcoal- Orange-White/oversized-faded-t-shirt-faded-black-front-6963c92fb571e.jpg",
+            "Assets/Products/Relentless Oversized Tee/Relentless-Charcoal- Orange-White/oversized-faded-t-shirt-faded-black-left-6963c92fb65e0.jpg",
+            "Assets/Products/Relentless Oversized Tee/Relentless-Charcoal- Orange-White/oversized-faded-t-shirt-faded-black-right-6963c92fb6bdb.jpg",
+            "Assets/Products/Relentless Oversized Tee/Relentless-Charcoal- Orange-White/oversized-faded-t-shirt-faded-black-back-6963c92fb71b1.jpg"
+          ]
+        }
+      },
+      "sizes": ["S", "M", "L", "XL", "2XL"]
+    }
+  }
+]

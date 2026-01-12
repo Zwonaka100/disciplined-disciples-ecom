@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -10,6 +10,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="Assets/45.png">
     <script>
         (function () {
             const redirectToLogin = () => {
@@ -40,6 +41,14 @@
             });
         })();
     </script>
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2J1GWH59V4"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-2J1GWH59V4');
+    </script>
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-screen">
     <div id="admin-loading" class="fixed inset-0 bg-white bg-opacity-80 flex items-center justify-center z-40 hidden">
@@ -52,7 +61,7 @@
     <header class="bg-white shadow-sm">
         <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div class="flex items-center space-x-3">
-                <img src="Assets/logo.jpg" alt="Disciplined Disciples" class="h-10 w-10 rounded object-cover" data-admin-logo>
+                <img src="Assets/45.png" alt="Disciplined Disciples" class="h-12 w-12 rounded object-cover" data-admin-logo>
                 <div>
                     <h1 class="text-xl font-semibold text-slate-900">Disciplined Disciples Admin</h1>
                     <p class="text-sm text-slate-500">Order management &amp; customer insights</p>
@@ -138,6 +147,14 @@
                         <option value="out for delivery">Out for delivery</option>
                         <option value="arriving soon">Estimated arrival</option>
                         <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                    <select id="admin-payment-filter" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">All payments</option>
+                        <option value="pending">Pending</option>
+                        <option value="paid">Paid</option>
+                        <option value="refunded">Refunded</option>
+                        <option value="failed">Failed</option>
                         <option value="cancelled">Cancelled</option>
                     </select>
                     <button id="admin-refresh" class="px-4 py-2 text-sm font-medium border border-slate-200 rounded hover:bg-slate-50 transition">
@@ -245,7 +262,7 @@
         </div>
         <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
             <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
-            <p>Built by Zande Technologies (Pty) Ltd</p>
+            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> (Pty) Ltd</p>
         </div>
     </footer>
 
@@ -258,5 +275,28 @@
             }
         });
     </script>
+
+    <!-- WhatsApp Floating Button -->
+    <a href="https://wa.me/27692060618?text=Hi%20Disciplined%20Disciples!%20I%20have%20a%20question%20about%20your%20products." 
+       class="whatsapp-float" 
+       target="_blank" 
+       rel="noopener noreferrer"
+       aria-label="Chat on WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <!-- Cookie Consent Banner (POPIA Compliance) -->
+    <div id="cookie-consent-banner" class="cookie-consent-banner">
+        <div class="cookie-consent-content">
+            <div class="cookie-consent-text">
+                <h3>🍪 We Value Your Privacy</h3>
+                <p>We use cookies to improve your experience and analyze site traffic. By clicking "Accept", you consent to our use of cookies. <a href="privacy-policy.html">Learn more</a></p>
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept">Accept All Cookies</button>
+                <button id="cookie-decline-btn" class="cookie-btn cookie-btn-decline">Decline Analytics</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -8,18 +8,26 @@
     <link rel="stylesheet" href="profile-avatar-fix.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="icon" type="image/jpeg" href="Assets/logo.jpg">
+    <link rel="icon" type="image/png" href="Assets/45.png">
     <!-- Firebase SDK Imports -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2J1GWH59V4"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-2J1GWH59V4');
+    </script>
 </head>
 <body>
     <!-- Header Section -->
     <header class="header bg-white shadow">
         <div class="container flex justify-between items-center py-4">
             <a href="index.html" class="logo flex items-center">
-                <img src="Assets/logo.jpg" alt="Disciplined Disciples Logo" class="site-logo" style="height:40px; width:auto; margin-right:10px;">
+                <img src="Assets/45.png" alt="Disciplined Disciples Logo" class="site-logo" style="height:48px; width:auto; margin-right:10px;">
                 <span class="font-bold text-xl">Disciplined Disciples</span>
             </a>
             <nav class="nav-menu">
@@ -94,31 +102,173 @@
     <!-- Privacy Policy Content Section -->
     <section class="section-padding bg-light-gray">
         <div class="container max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-md">
-            <p class="text-gray-700 mb-4">This Privacy Policy describes how Disciplined Disciples collects, uses, and discloses your personal information when you visit or make a purchase from our website.</p>
+            <p class="text-gray-700 mb-4"><strong>Last Updated:</strong> January 11, 2026</p>
+            <p class="text-gray-700 mb-4">This Privacy Policy describes how Disciplined Disciples collects, uses, and discloses your personal information when you visit or make a purchase from our website. This policy complies with the Protection of Personal Information Act (POPIA) of South Africa.</p>
+
+            <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">POPIA Compliance</h2>
+            <div class="bg-purple-50 border-l-4 border-purple-500 p-4 mb-6">
+                <p class="text-gray-700 mb-2"><strong>Responsible Party:</strong> Disciplined Disciples</p>
+                <p class="text-gray-700 mb-2"><strong>Information Officer:</strong> Zande Technologies (Pty) Ltd</p>
+                <p class="text-gray-700 mb-2"><strong>Information Regulator Registration Number:</strong> 2025-066656</p>
+                <p class="text-gray-700 mb-2"><strong>Organisation Type:</strong> Private Organisation</p>
+                <p class="text-gray-700 mb-2"><strong>Contact:</strong> <a href="mailto:zmabege@gmail.com" class="text-purple-600 hover:underline">zmabege@gmail.com</a></p>
+                <p class="text-gray-700"><strong>Physical Address:</strong> Johannesburg, Gauteng, South Africa</p>
+            </div>
 
             <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">Information We Collect</h2>
             <div class="space-y-4">
                 <p class="text-gray-700">When you visit the Site, we collect certain information about your device, your interaction with the Site, and information necessary to process your purchases. We may also collect additional information if you contact us for customer support.</p>
                 <h3 class="font-semibold text-lg text-gray-900">Personal Information Examples:</h3>
                 <ul class="list-disc list-inside text-gray-700 ml-4">
-                    <li>Name</li>
+                    <li>Name and surname</li>
+                    <li>Email address</li>
+                    <li>Phone number</li>
                     <li>Billing address</li>
                     <li>Shipping address</li>
-                    <li>Payment information (credit card numbers, email, phone number)</li>
+                    <li>Payment information (processed securely by PayFast)</li>
+                    <li>Order history and purchase details</li>
+                    <li>Device information and IP address</li>
+                    <li>Cookies and browsing behavior (with your consent)</li>
                 </ul>
             </div>
 
             <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">How We Use Your Information</h2>
-            <p class="text-gray-700">We use your personal information to provide our services to you, which includes: offering products for sale, processing payments, shipping and fulfillment of your order, and keeping you up to date on new products, services, and offers.</p>
+            <p class="text-gray-700 mb-3">We use your personal information to provide our services to you, which includes:</p>
+            <ul class="list-disc list-inside text-gray-700 ml-4 space-y-2">
+                <li>Processing and fulfilling your orders</li>
+                <li>Processing payments through our secure payment provider (PayFast)</li>
+                <li>Communicating with you about your orders</li>
+                <li>Sending order confirmations and shipping updates</li>
+                <li>Providing customer support</li>
+                <li>Improving our website and services</li>
+                <li>Sending marketing communications (only with your consent)</li>
+                <li>Complying with legal obligations</li>
+            </ul>
+
+            <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">Legal Basis for Processing</h2>
+            <p class="text-gray-700 mb-3">Under POPIA, we process your personal information based on:</p>
+            <ul class="list-disc list-inside text-gray-700 ml-4 space-y-2">
+                <li><strong>Your consent:</strong> When you sign up, place orders, or accept cookies</li>
+                <li><strong>Contractual necessity:</strong> To fulfill orders and provide services</li>
+                <li><strong>Legal compliance:</strong> To comply with tax, accounting, and legal requirements</li>
+                <li><strong>Legitimate interests:</strong> To improve our services and prevent fraud</li>
+            </ul>
+
+            <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">Cookies and Tracking Technologies</h2>
+            <p class="text-gray-700 mb-3">We use cookies and similar tracking technologies to:</p>
+            <ul class="list-disc list-inside text-gray-700 ml-4 space-y-2">
+                <li>Keep you logged in to your account</li>
+                <li>Remember your cart items</li>
+                <li>Analyze website traffic and user behavior (Google Analytics)</li>
+                <li>Improve your browsing experience</li>
+            </ul>
+            <p class="text-gray-700 mt-3"><strong>You can accept or decline cookies</strong> through our cookie consent banner. Declining analytics cookies will disable Google Analytics tracking while preserving essential website functionality.</p>
 
             <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">Sharing Your Personal Information</h2>
-            <p class="text-gray-700">We share your Personal Information with service providers to help us provide our services and fulfill our contracts with you, as described above. For example, we use Firebase for authentication and database services, and Payfast for payment processing. We may also share your Personal Information to comply with applicable laws and regulations, to respond to a subpoena, search warrant or other lawful request for information we receive, or to otherwise protect our rights.</p>
+            <p class="text-gray-700 mb-3">We share your Personal Information with trusted service providers who help us operate our business:</p>
+            <ul class="list-disc list-inside text-gray-700 ml-4 space-y-2">
+                <li><strong>Zande Technologies (Pty) Ltd:</strong> As the registered Information Officer (Reg: 2025-066656) and platform developer, Zande Technologies has administrative access to all data stored in the system, including customer information, orders, and analytics. This access is necessary for platform maintenance, technical support, security monitoring, and compliance purposes.</li>
+                <li><strong>Firebase (Google):</strong> Authentication, database, and hosting services</li>
+                <li><strong>PayFast:</strong> Secure payment processing (PCI DSS compliant)</li>
+                <li><strong>Google Analytics:</strong> Website analytics (only with your consent)</li>
+                <li><strong>Email service providers:</strong> To send order confirmations and updates</li>
+                <li><strong>Courier services:</strong> To deliver your orders</li>
+            </ul>
+            <p class="text-gray-700 mt-3"><strong>Important:</strong> Zande Technologies, as the Information Officer, maintains technical and administrative control over the platform and has the ability to access, modify, and manage all data within the system for operational, security, and compliance purposes.</p>
+            <p class="text-gray-700 mt-3">We do not sell your personal information to third parties. We may also share your information to comply with applicable laws, respond to legal requests, or protect our rights.</p>
 
-            <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">Your Rights</h2>
-            <p class="text-gray-700">If you are a resident of South Africa, you have the right to access the personal information we hold about you and to ask that your personal information be corrected, updated, or deleted. If you would like to exercise this right, please contact us through the contact information below.</p>
+            <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">Data Retention</h2>
+            <p class="text-gray-700">We retain your personal information for as long as necessary to fulfill the purposes outlined in this policy:</p>
+            <ul class="list-disc list-inside text-gray-700 ml-4 space-y-2 mt-3">
+                <li><strong>Account data:</strong> Until you request deletion or 2 years after last activity</li>
+                <li><strong>Order history:</strong> 5 years (for tax and legal compliance)</li>
+                <li><strong>Marketing communications:</strong> Until you unsubscribe</li>
+                <li><strong>Cookies:</strong> Up to 2 years or until you clear them</li>
+            </ul>
 
-            <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">Contact</h2>
-            <p class="text-gray-700">For more information about our privacy practices, if you have questions, or if you would like to make a complaint, please contact us by e-mail at <a href="mailto:info@disciplineddisciples.co.za" class="text-blue-600 hover:underline">info@disciplineddisciples.co.za</a>.</p>
+            <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">Your Rights Under POPIA</h2>
+            <p class="text-gray-700 mb-3">As a South African resident, you have the following rights:</p>
+            <div class="bg-gray-50 p-4 rounded-lg space-y-3">
+                <div>
+                    <p class="font-semibold text-gray-900">1. Right to Access</p>
+                    <p class="text-gray-700 text-sm">Request a copy of your personal information we hold</p>
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-900">2. Right to Correction</p>
+                    <p class="text-gray-700 text-sm">Request correction of inaccurate or incomplete data</p>
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-900">3. Right to Deletion</p>
+                    <p class="text-gray-700 text-sm">Request deletion of your personal information (subject to legal obligations)</p>
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-900">4. Right to Object</p>
+                    <p class="text-gray-700 text-sm">Object to processing of your data for marketing purposes</p>
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-900">5. Right to Data Portability</p>
+                    <p class="text-gray-700 text-sm">Request a copy of your data in a structured format</p>
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-900">6. Right to Withdraw Consent</p>
+                    <p class="text-gray-700 text-sm">Withdraw consent for data processing at any time</p>
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-900">7. Right to Lodge a Complaint</p>
+                    <p class="text-gray-700 text-sm">Lodge a complaint with the Information Regulator of South Africa</p>
+                </div>
+            </div>
+
+            <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">Data Security</h2>
+            <p class="text-gray-700">We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, loss, or misuse. These measures include:</p>
+            <ul class="list-disc list-inside text-gray-700 ml-4 space-y-2 mt-3">
+                <li>SSL/TLS encryption for data transmission</li>
+                <li>Secure Firebase authentication and database rules</li>
+                <li>PCI DSS compliant payment processing through PayFast</li>
+                <li>Regular security audits and updates</li>
+                <li>Access controls limiting who can view your data</li>
+            </ul>
+
+            <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">Children's Privacy</h2>
+            <p class="text-gray-700">Our website is not intended for children under 18. We do not knowingly collect personal information from children. If you believe we have collected information from a child, please contact us immediately.</p>
+
+            <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">Changes to This Policy</h2>
+            <p class="text-gray-700">We may update this Privacy Policy from time to time. We will notify you of significant changes by posting the new policy on this page and updating the "Last Updated" date. We encourage you to review this policy periodically.</p>
+
+            <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">Contact & Complaints</h2>
+            <p class="text-gray-700 mb-3">For questions about this Privacy Policy, to exercise your POPIA rights, or to make a complaint, please contact:</p>
+            <div class="bg-purple-50 p-4 rounded-lg space-y-2">
+                <p class="text-gray-700"><strong>Disciplined Disciples</strong></p>
+                <p class="text-gray-700"><strong>Information Officer:</strong> Zande Technologies (Pty) Ltd</p>
+                <p class="text-gray-700"><strong>Email:</strong> <a href="mailto:zmabege@gmail.com" class="text-purple-600 hover:underline">zmabege@gmail.com</a></p>
+                <p class="text-gray-700"><strong>Phone:</strong> +27 69 206 0618</p>
+                <p class="text-gray-700"><strong>Address:</strong> Johannesburg, Gauteng, South Africa</p>
+            </div>
+            <p class="text-gray-700 mt-4">If you are not satisfied with our response, you may lodge a complaint with:</p>
+            <div class="bg-gray-100 p-4 rounded-lg mt-3 space-y-2">
+                <p class="text-gray-700"><strong>Information Regulator of South Africa</strong></p>
+                <p class="text-gray-700">JD House, 27 Stiemens Street, Braamfontein, Johannesburg, 2001</p>
+                <p class="text-gray-700"><strong>Email:</strong> inforeg@justice.gov.za</p>
+                <p class="text-gray-700"><strong>Website:</strong> <a href="https://inforegulator.org.za" target="_blank" class="text-blue-600 hover:underline">inforegulator.org.za</a></p>
+            </div>
+
+            <h2 class="text-2xl font-semibold text-gray-900 mt-8 mb-4">Technical Development</h2>
+            <p class="text-gray-700 mb-3">This platform was developed and is maintained by <strong>Zande Technologies (Pty) Ltd</strong>, a registered Information Officer with the Information Regulator of South Africa (Registration Number: 2025-066656).</p>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                <h3 class="font-semibold text-gray-900 mb-2">Data Access and Control</h3>
+                <p class="text-gray-700 mb-2">Zande Technologies, as the platform developer and Information Officer, maintains:</p>
+                <ul class="list-disc list-inside text-gray-700 ml-4 space-y-1 text-sm">
+                    <li><strong>Administrative Access:</strong> Full access to all data stored in Firebase (customer accounts, orders, analytics)</li>
+                    <li><strong>Database Control:</strong> Ability to view, modify, backup, and manage all database records</li>
+                    <li><strong>Technical Oversight:</strong> System monitoring, security updates, and performance optimization</li>
+                    <li><strong>Support Functions:</strong> Customer support, order management, and dispute resolution</li>
+                    <li><strong>Compliance Management:</strong> Ensuring POPIA compliance and data protection standards</li>
+                </ul>
+                <p class="text-gray-700 mt-3 text-sm"><strong>Purpose:</strong> This access is necessary for platform operation, maintenance, security, technical support, and legal compliance. All data access by Zande Technologies is governed by strict confidentiality and security protocols.</p>
+            </div>
+            
+            <p class="text-gray-700">Zande Technologies ensures this platform complies with POPIA requirements and implements industry-standard security practices to protect your personal information.</p>
         </div>
     </section>
 
@@ -161,10 +311,33 @@
         </div>
         <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
             <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
-            <p>Built by Zande Technologies (Pty) Ltd</p>
+            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> (Pty) Ltd</p>
         </div>
     </footer>
 
     <script src="script.js"></script>
+
+    <!-- WhatsApp Floating Button -->
+    <a href="https://wa.me/27692060618?text=Hi%20Disciplined%20Disciples!%20I%20have%20a%20question%20about%20your%20products." 
+       class="whatsapp-float" 
+       target="_blank" 
+       rel="noopener noreferrer"
+       aria-label="Chat on WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <!-- Cookie Consent Banner (POPIA Compliance) -->
+    <div id="cookie-consent-banner" class="cookie-consent-banner">
+        <div class="cookie-consent-content">
+            <div class="cookie-consent-text">
+                <h3>🍪 We Value Your Privacy</h3>
+                <p>We use cookies to improve your experience and analyze site traffic. By clicking "Accept", you consent to our use of cookies. <a href="privacy-policy.html">Learn more</a></p>
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept">Accept All Cookies</button>
+                <button id="cookie-decline-btn" class="cookie-btn cookie-btn-decline">Decline Analytics</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

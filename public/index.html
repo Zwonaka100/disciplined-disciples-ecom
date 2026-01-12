@@ -23,7 +23,7 @@
     <meta property="og:site_name" content="Disciplined Disciples">
     <meta property="og:title" content="Disciplined Disciples - Premium South African Streetwear | Shop Online">
     <meta property="og:description" content="Shop premium South African streetwear. High-quality caps, hoodies, oversized tees and more. Fast delivery across SA. Johannesburg, Cape Town, Durban.">
-    <meta property="og:image" content="https://disciplined-disciples-1.web.app/Assets/logo.jpg">
+    <meta property="og:image" content="https://disciplined-disciples-1.web.app/Assets/45.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:locale" content="en_ZA">
@@ -33,7 +33,7 @@
     <meta name="twitter:url" content="https://disciplined-disciples-1.web.app/">
     <meta name="twitter:title" content="Disciplined Disciples - Premium South African Streetwear">
     <meta name="twitter:description" content="Shop premium South African streetwear. High-quality caps, hoodies, t-shirts and more. Fast delivery across South Africa.">
-    <meta name="twitter:image" content="https://disciplined-disciples-1.web.app/Assets/logo.jpg">
+    <meta name="twitter:image" content="https://disciplined-disciples-1.web.app/Assets/45.png">
     <meta name="twitter:site" content="@disciplined_disciples_2023">
     
     <!-- Canonical URL -->
@@ -43,6 +43,15 @@
     <link rel="alternate" hreflang="en-za" href="https://disciplined-disciples-1.web.app/">
     <link rel="alternate" hreflang="x-default" href="https://disciplined-disciples-1.web.app/">
     
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2J1GWH59V4"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-2J1GWH59V4');
+    </script>
+    
     <!-- Schema.org Structured Data - Organization & Local Business -->
     <script type="application/ld+json">
     {
@@ -51,8 +60,8 @@
       "name": "Disciplined Disciples",
       "description": "Premium South African streetwear brand offering high-quality caps, hoodies, t-shirts, and oversized tees with fast delivery across South Africa.",
       "url": "https://disciplined-disciples-1.web.app",
-      "logo": "https://disciplined-disciples-1.web.app/Assets/logo.jpg",
-      "image": "https://disciplined-disciples-1.web.app/Assets/logo.jpg",
+    "logo": "https://disciplined-disciples-1.web.app/Assets/45.png",
+    "image": "https://disciplined-disciples-1.web.app/Assets/45.png",
       "telephone": "+27692060618",
       "email": "zmabege@gmail.com",
       "address": {
@@ -103,24 +112,32 @@
     <link rel="stylesheet" href="profile-avatar-fix.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="icon" type="image/jpeg" href="Assets/logo.jpg">
+    <link rel="icon" type="image/png" href="Assets/45.png">
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
+    <!-- Announcement Bar -->
+    <div class="announcement-bar">
+        <div class="announcement-content">
+            <span class="announcement-text">🚚 FREE SHIPPING ON ORDERS OVER R500</span>
+        </div>
+    </div>
+
     <!-- Header Section - IMPORTANT: This header block must be identical across ALL your HTML pages -->
     <header class="header bg-white shadow">
         <div class="container flex justify-between items-center py-4">
             <a href="index.html" class="logo flex items-center">
-                <img src="Assets/logo.jpg" alt="Disciplined Disciples Logo" style="height:40px; width:auto; margin-right:10px;">
+                <img src="Assets/45.png" alt="Disciplined Disciples Logo" style="height:48px; width:auto; margin-right:10px;">
                 <span class="font-bold text-xl">Disciplined Disciples</span>
             </a>
     <nav class="nav-menu">
     <ul class="flex space-x-6">
         <li><a href="index.html" class="nav-link active">Home</a></li>
         <li><a href="shop.html" class="nav-link">Shop</a></li>
+        <li><a href="about.html" class="nav-link">About</a></li>
         <li><a href="blog.html" class="nav-link">Blog</a></li>
         <li><a href="contact.html" class="nav-link">Contact</a></li>
         <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link"><i class="fab fa-instagram"></i></a></li>
@@ -177,14 +194,28 @@
         </div>
     </div>
 
-    <!-- Hero Section -->
-    <section class="hero-section" style="position:relative; background-color:#111; min-height:400px;">
-        <img src="Assets/Banner.jpg" alt="Disciplined Disciples"
-            style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0.45; z-index:1;">
-        <div class="container text-center py-20" style="position:relative; z-index:2;">
-            <h1 class="hero-title" style="color:#fff;">Forge Your Discipline</h1>
-            <p class="hero-subtitle" style="color:#e0e0e0;">Premium apparel designed for the disciplined mind and spirit.</p>
-            <a href="shop.html" class="btn btn-primary mt-8">Shop Now</a>
+    <!-- Hero Section with Video -->
+    <section class="hero-section" style="position:relative; background-color:#111; min-height:500px; overflow:hidden;">
+        <video 
+            autoplay 
+            muted 
+            loop 
+            playsinline 
+            class="hero-video"
+            style="position:absolute; top:50%; left:50%; min-width:100%; min-height:100%; width:auto; height:auto; transform:translate(-50%, -50%); object-fit:cover; opacity:0.5; z-index:1;">
+            <source src="Assets/homepage-video.mp4" type="video/mp4">
+            <source src="Assets/homepage-video.webm" type="video/webm">
+            <!-- Fallback image -->
+            <img src="Assets/Banner.jpg" alt="Disciplined Disciples" style="width:100%; height:100%; object-fit:cover;">
+        </video>
+        <div class="hero-overlay" style="position:absolute; top:0; left:0; width:100%; height:100%; background:linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 100%); z-index:1;"></div>
+        <div class="container text-center py-20" style="position:relative; z-index:2; min-height:500px; display:flex; flex-direction:column; justify-content:center;">
+            <h1 class="hero-title" style="color:#fff; font-size:3.5rem; font-weight:700; text-shadow:2px 4px 8px rgba(0,0,0,0.5);">Forge Your Discipline</h1>
+            <p class="hero-subtitle" style="color:#e0e0e0; font-size:1.3rem; margin:1.5rem 0; text-shadow:1px 2px 4px rgba(0,0,0,0.5);">Premium apparel designed for the disciplined mind and spirit.</p>
+            <div class="hero-ctas" style="margin-top:2rem;">
+                <a href="shop.html" class="btn btn-primary" style="padding:1rem 3rem; font-size:1.1rem; margin:0 0.5rem;">Shop Now</a>
+                <a href="about.html" class="btn btn-secondary" style="padding:1rem 3rem; font-size:1.1rem; margin:0 0.5rem; background:rgba(255,255,255,0.1); backdrop-filter:blur(10px); border:2px solid white;">Our Story</a>
+            </div>
         </div>
     </section>
 
@@ -223,6 +254,56 @@
             </div>
         </section>
 
+        <!-- Category Grid Section -->
+        <section class="section-padding bg-white">
+            <div class="container">
+                <h2 class="section-title text-center">Shop By Category</h2>
+                <p class="section-subtitle text-center">Find your perfect style</p>
+                <div class="category-grid mt-12">
+                    <a href="shop.html?category=hoodie" class="category-card">
+                        <div class="category-image-wrapper">
+                            <img src="Assets/Products/Hoodies/unisex-premium-hoodie-purple-front-6898dd75e5070.jpg" alt="Hoodies" class="category-image">
+                            <div class="category-overlay">
+                                <span class="category-cta">Shop Now →</span>
+                            </div>
+                        </div>
+                        <h3 class="category-title">Hoodies</h3>
+                        <p class="category-subtitle">Premium comfort</p>
+                    </a>
+                    <a href="shop.html?category=tee" class="category-card">
+                        <div class="category-image-wrapper">
+                            <img src="Assets/Products/Classic tees/unisex-classic-tee-white-front-6898f0127d4ec.jpg" alt="Classic Tees" class="category-image">
+                            <div class="category-overlay">
+                                <span class="category-cta">Shop Now →</span>
+                            </div>
+                        </div>
+                        <h3 class="category-title">Classic Tees</h3>
+                        <p class="category-subtitle">Everyday essentials</p>
+                    </a>
+                    <a href="shop.html?category=oversized" class="category-card">
+                        <div class="category-image-wrapper">
+                            <img src="Assets/Products/Oversized tess/unisex-oversized-t-shirt-white-front-6898eb2686ba9.jpg" alt="Oversized Tees" class="category-image">
+                            <div class="category-overlay">
+                                <span class="category-cta">Shop Now →</span>
+                            </div>
+                        </div>
+                        <h3 class="category-title">Oversized Tees</h3>
+                        <p class="category-subtitle">Relaxed fit</p>
+                    </a>
+                    <a href="shop.html?category=cap" class="category-card">
+                        <div class="category-image-wrapper">
+                            <img src="Assets/Products/Caps/IMG-20250810-WA0005.jpg" alt="Caps" class="category-image">
+                            <div class="category-overlay">
+                                <span class="category-cta">Shop Now →</span>
+                            </div>
+                        </div>
+                        <h3 class="category-title">Caps</h3>
+                        <p class="category-subtitle">Complete the look</p>
+                    </a>
+                </div>
+            </div>
+        </section>
+
         <!-- Featured Products Section -->
         <section class="section-padding">
             <div class="container text-center">
@@ -233,6 +314,42 @@
                     <p>Loading featured products...</p>
                 </div>
                 <a href="shop.html" class="btn btn-primary mt-8">View All Products</a>
+            </div>
+        </section>
+
+        <!-- Trust Badges Section -->
+        <section class="trust-badges-section">
+            <div class="container">
+                <div class="trust-badges-grid">
+                    <div class="trust-badge">
+                        <i class="fas fa-users trust-badge-icon"></i>
+                        <div class="trust-badge-text">
+                            <h4>2,500+ Customers</h4>
+                            <p>Trusted nationwide</p>
+                        </div>
+                    </div>
+                    <div class="trust-badge">
+                        <i class="fas fa-undo trust-badge-icon"></i>
+                        <div class="trust-badge-text">
+                            <h4>30-Day Returns</h4>
+                            <p>Hassle-free policy</p>
+                        </div>
+                    </div>
+                    <div class="trust-badge">
+                        <i class="fas fa-truck trust-badge-icon"></i>
+                        <div class="trust-badge-text">
+                            <h4>Fast Delivery</h4>
+                            <p>2-5 business days</p>
+                        </div>
+                    </div>
+                    <div class="trust-badge">
+                        <i class="fas fa-shield-alt trust-badge-icon"></i>
+                        <div class="trust-badge-text">
+                            <h4>Secure Payments</h4>
+                            <p>PayFast protected</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
@@ -285,33 +402,122 @@
         </div>
         <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
             <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
-            <p>Built by Zande Technologies (Pty) Ltd.</p>
+            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> (Pty) Ltd.</p>
         </div>
     </footer>
 
     <script src="script.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             const featuredGrid = document.getElementById('featured-products-grid');
-            const allProducts = window.getAllProducts?.();
+            if (!featuredGrid) return;
 
-            if (featuredGrid && allProducts) {
-                featuredGrid.innerHTML = ''; // Clear loading text
-                allProducts.forEach(product => {
+            const renderCards = (list) => {
+                featuredGrid.innerHTML = '';
+                list.slice(0, 4).forEach((product, index) => {
                     const productCard = document.createElement('div');
                     productCard.className = 'product-card';
+                    
+                    // Assign badges to products
+                    let badgeHTML = '';
+                    if (index === 0) {
+                        badgeHTML = '<span class="product-badge badge-new">NEW</span>';
+                    } else if (index === 1) {
+                        badgeHTML = '<span class="product-badge badge-trending">🔥 TRENDING</span>';
+                    } else if (index === 2) {
+                        badgeHTML = '<span class="product-badge badge-limited">LIMITED</span>';
+                    }
+                    
                     productCard.innerHTML = `
-                        <img src="${product.displayImage}" alt="${product.name}" class="product-image">
+                        <div class="product-image-wrapper">
+                            ${badgeHTML}
+                            <img src="${product.displayImage}" alt="${product.name}" class="product-image">
+                            <button class="quick-view-btn" data-product-id="${product.id}">Quick View</button>
+                        </div>
                         <h3 class="product-name">${product.name}</h3>
                         <p class="product-price">R ${product.price.toFixed(2)}</p>
                         <a href="Product-detail.html?id=${product.id}" class="btn btn-secondary">View Product</a>
                     `;
+                    
+                    // Add event listener to Quick View button
+                    const quickViewBtn = productCard.querySelector('.quick-view-btn');
+                    if (quickViewBtn) {
+                        quickViewBtn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            window.location.href = `Product-detail.html?id=${product.id}`;
+                        });
+                    }
+                    
                     featuredGrid.appendChild(productCard);
                 });
-            } else if (featuredGrid) {
+            };
+
+            // Try to ensure we have live products; if short, force a fetch and fall back to manifest.
+            let products = window.getAllProducts?.() || [];
+            if ((!products || products.length < 4) && typeof window.initializeProducts === 'function') {
+                try {
+                    await window.initializeProducts();
+                    products = window.getAllProducts?.() || products;
+                } catch (err) {
+                    console.warn('Featured products init retry failed:', err);
+                }
+            }
+
+            if ((!products || products.length === 0) && typeof window.loadProductsManifest === 'function') {
+                try {
+                    const manifest = await window.loadProductsManifest();
+                    products = manifest || products;
+                } catch (err) {
+                    console.warn('Manifest load failed for featured products:', err);
+                }
+            }
+
+            if (products && products.length) {
+                renderCards(products);
+            } else {
                 featuredGrid.innerHTML = '<p>Could not load products.</p>';
             }
         });
     </script>
+
+    <!-- WhatsApp Floating Button -->
+    <a href="https://wa.me/27692060618?text=Hi%20Disciplined%20Disciples!%20I%20have%20a%20question%20about%20your%20products." 
+       class="whatsapp-float" 
+       target="_blank" 
+       rel="noopener noreferrer"
+       aria-label="Chat on WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <!-- Newsletter Popup -->
+    <div id="newsletter-popup" class="newsletter-popup">
+        <div class="newsletter-popup-content">
+            <button class="newsletter-close" id="newsletter-close-btn" aria-label="Close newsletter">&times;</button>
+            <div class="newsletter-header">
+                <h3>Get 10% Off Your First Order! 🎉</h3>
+                <p>Join the Disciplined Disciples community and receive exclusive offers</p>
+            </div>
+            <form id="newsletter-form" class="newsletter-form">
+                <input type="email" id="newsletter-email" placeholder="Enter your email" required class="newsletter-input">
+                <button type="submit" class="newsletter-submit">Get My Discount</button>
+            </form>
+            <p class="newsletter-footer">We respect your privacy. Unsubscribe anytime.</p>
+        </div>
+    </div>
+
+    <!-- Cookie Consent Banner (POPIA Compliance) -->
+    <div id="cookie-consent-banner" class="cookie-consent-banner">
+        <div class="cookie-consent-content">
+            <div class="cookie-consent-text">
+                <h3>🍪 We Value Your Privacy</h3>
+                <p>We use cookies to improve your experience and analyze site traffic. By clicking "Accept", you consent to our use of cookies. <a href="privacy-policy.html">Learn more</a></p>
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept">Accept All Cookies</button>
+                <button id="cookie-decline-btn" class="cookie-btn cookie-btn-decline">Decline Analytics</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
