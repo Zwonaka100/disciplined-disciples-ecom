@@ -1,5 +1,32 @@
-// PASTE THIS INTO BROWSER CONSOLE - UPLOADS ALL 4 PRODUCTS WITH RELENTLESS
+// PASTE THIS INTO BROWSER CONSOLE - UPLOADS ALL 5 PRODUCTS WITH RELENTLESS
 const prods = [
+  {
+    id: 'cap',
+    name: 'Courage Cap',
+    price: 149,
+    category: 'cap',
+    displayImage: 'Assets/Products/Caps/IMG-20250810-WA0005.jpg',
+    description: 'A symbol of casual, everyday discipline. Perfect for any occasion.',
+    colors: {
+      'Black': {
+        defaultImage: 'Assets/Products/Caps/IMG-20250810-WA0004.jpg',
+        images: ['Assets/Products/Caps/IMG-20250810-WA0013.jpg', 'Assets/Products/Caps/IMG-20250810-WA0014.jpg']
+      },
+      'White': {
+        defaultImage: 'Assets/Products/Caps/IMG-20250810-WA0002.jpg',
+        images: ['Assets/Products/Caps/IMG-20250810-WA0011 (1).jpg', 'Assets/Products/Caps/IMG-20250810-WA0010.jpg']
+      },
+      'Blue': {
+        defaultImage: 'Assets/Products/Caps/IMG-20250810-WA0001.jpg',
+        images: ['Assets/Products/Caps/IMG-20250810-WA0001.jpg', 'Assets/Products/Caps/IMG-20250810-WA0001.jpg']
+      },
+      'Red': {
+        defaultImage: 'Assets/Products/Caps/IMG-20250810-WA0005.jpg',
+        images: ['Assets/Products/Caps/IMG-20250810-WA0007.jpg', 'Assets/Products/Caps/IMG-20250810-WA0008.jpg']
+      }
+    },
+    sizes: ['One Size']
+  },
   {
     id: 'hoodie',
     name: 'Faith Hoodie',
@@ -184,4 +211,4 @@ const prods = [
 
 console.log('🔄 Replacing products with correct structure...');
 let c=0;
-prods.forEach((p,i)=>setTimeout(()=>{window.db.collection('products').doc(p.id).set(p).then(()=>{c++;console.log(`✅ ${p.name}`);c===4&&(console.log('✓ Done!'),setTimeout(()=>location.reload(),1e3))}).catch(e=>console.error(`❌ ${p.id}:`,e.message))},i*200));
+prods.forEach((p,i)=>setTimeout(()=>{window.db.collection('products').doc(p.id).set(p).then(()=>{c++;console.log(`✅ ${p.name}`);c===5&&(console.log('✓ Done!'),setTimeout(()=>location.reload(),1e3))}).catch(e=>console.error(`❌ ${p.id}:`,e.message))},i*200));
