@@ -717,7 +717,7 @@ const products = [
     {
         id: 'cap',
         name: 'Courage Cap',
-        price: 249.00,
+        price: 149.00,
         category: 'cap',
         displayImage: 'Assets/Products/Caps/IMG-20250810-WA0005.jpg',
         description: 'A symbol of casual, everyday discipline. Perfect for any occasion.',

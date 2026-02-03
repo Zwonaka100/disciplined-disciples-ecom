@@ -5,7 +5,7 @@ const prods = [
   {
     id: 'hoodie',
     name: 'Faith Hoodie',
-    price: 649,
+    price: 399,
     category: 'hoodie',
     displayImage: 'Assets/Products/Hoodies/unisex-premium-hoodie-black-front-6898d6eb53d0e.jpg',
     description: 'Premium hoodie for disciplined living.',
@@ -38,7 +38,7 @@ const prods = [
   {
     id: 'normal-tee',
     name: 'Purpose Tee',
-    price: 299,
+    price: 249,
     category: 'tee',
     displayImage: 'Assets/Products/Classic tees/unisex-classic-tee-black-front-6898f24c91f11.jpg',
     description: 'Classic tee with powerful statements.',
@@ -91,7 +91,7 @@ const prods = [
   {
     id: 'oversized-tee',
     name: 'Faith Oversized Tee',
-    price: 449,
+    price: 299,
     category: 'oversized-tee',
     displayImage: 'Assets/Products/Oversized tess/unisex-oversized-t-shirt-black-front-6898e814f093a.jpg',
     description: 'Comfortable oversized fit.',

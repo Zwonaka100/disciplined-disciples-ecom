@@ -4,7 +4,7 @@ const productsToUpload = [
     {
         id: 'hoodie',
         name: 'Faith Hoodie',
-        price: 649.00,
+        price: 399.00,
         category: 'hoodie',
         displayImage: 'Assets/Products/Hoodies/unisex-premium-hoodie-black-front-6898d6eb53d0e.jpg',
         description: 'Representing warmth and comfort in the journey of disciplined living. Made from premium, soft-touch fabric for ultimate comfort and durability.',
@@ -67,7 +67,7 @@ const productsToUpload = [
     {
         id: 'normal-tee',
         name: 'Purpose Tee',
-        price: 299.00,
+        price: 249.00,
         category: 'tee',
         displayImage: 'Assets/Products/Classic tees/unisex-classic-tee-black-front-6898f24c91f11.jpg',
         description: 'Simple, yet powerful statements of one\'s values. A classic fit for everyday wear.',
@@ -180,7 +180,7 @@ const productsToUpload = [
     {
         id: 'oversized-tee',
         name: 'Faith Oversized Tee',
-        price: 449.00,
+        price: 299.00,
         category: 'oversized-tee',
         displayImage: 'Assets/Products/Oversized tess/unisex-oversized-t-shirt-black-front-6898e814f093a.jpg',
         description: 'For those who embrace comfort without compromising on style or conviction.',

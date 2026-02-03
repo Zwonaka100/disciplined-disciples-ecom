@@ -2,7 +2,7 @@
   {
     "id": "classic-dyed-tee",
     "name": "Classic Dyed Tee",
-    "price": 349.0,
+    "price": 249.0,
     "category": "tee",
     "displayImage": "Assets/Products/Classic Dyed Tee/unisex-oversized-garment-dyed-t-shirt-vintage-white-front-6963c46d03772.jpg",
     "description": "Soft garment-dyed tee with a lived-in look.",
@@ -33,7 +33,7 @@
   {
     "id": "develop-more-discipline-tee",
     "name": "Develop More Discipline Tee",
-    "price": 299.0,
+    "price": 249.0,
     "category": "tee",
     "displayImage": "Assets/Products/Develop More Discipline Tee/oversized-faded-t-shirt-faded-black-front-6963c18b9532a.jpg",
     "description": "A classic tee reminding you to stay consistent.",
@@ -82,7 +82,7 @@
   {
     "id": "essential-crew-neck-sweatshirt",
     "name": "Essential Crew Neck Sweatshirt",
-    "price": 549.0,
+    "price": 399.0,
     "category": "sweatshirt",
     "displayImage": "Assets/Products/Essential Crew Neck Sweatshirt/unisex-relax-crew-neck-sweatshirt-black-front-6963d52ece9d2.jpg",
     "description": "A cozy midweight crew for everyday layering.",
@@ -113,7 +113,7 @@
   {
     "id": "essential-fleece-shorts",
     "name": "Essential Fleece Shorts",
-    "price": 349.0,
+    "price": 199.0,
     "category": "shorts",
     "displayImage": "Assets/Products/Essential Fleece Shorts/mens-fleece-shorts-black-front-6963d115ba991.jpg",
     "description": "Comfortable everyday fleece shorts.",
@@ -153,7 +153,7 @@
   {
     "id": "essential-golf-tee",
     "name": "Essential Golf Tee",
-    "price": 349.0,
+    "price": 249.0,
     "category": "tee",
     "displayImage": "Assets/Products/Essential Golf Tee/unisex-premium-pique-polo-shirt-black-front-6963cfbe84573.jpg",
     "description": "Premium pique polo tee for elevated days.",
@@ -193,7 +193,7 @@
   {
     "id": "essential-heavyweight-sweatpants",
     "name": "Essential Heavyweight Sweatpants",
-    "price": 599.0,
+    "price": 349.0,
     "category": "pants",
     "displayImage": "Assets/Products/Essential Heavyweight Sweatpants/unisex-heavyweight-sweatpants-black-front-6963d23c2a3d9.jpg",
     "description": "Heavyweight fleece sweatpants for cooler days.",
@@ -224,7 +224,7 @@
   {
     "id": "loyalty-white-tee",
     "name": "Loyalty White Tee",
-    "price": 299.0,
+    "price": 249.0,
     "category": "tee",
     "displayImage": "Assets/Products/Loyalty White Tee/unisex-premium-t-shirt-white-front-6963cba04df2b.jpg",
     "description": "Clean white tee with Loyalty print.",
@@ -246,7 +246,7 @@
   {
     "id": "relentless-oversized-tee",
     "name": "Relentless Oversized Tee",
-    "price": 449.0,
+    "price": 299.0,
     "category": "oversized-tee",
     "displayImage": "Assets/Products/Relentless Oversized Tee/Relentless-Charcoal- Orange-White/oversized-faded-t-shirt-faded-black-front-6963c92fb571e.jpg",
     "description": "Oversized faded tee with Relentless graphics.",
