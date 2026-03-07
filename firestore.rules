@@ -38,11 +38,16 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Allow read access to products (public data)
+    // Products - TEMPORARILY fully open for import, then change back to isAdmin()
     match /products/{productId} {
       allow read: if true;
-      // Only admins can modify products
-      allow create, update, delete: if isAdmin();
+      allow write: if true;
+    }
+
+    // Blogs - public read, open write for now (change to isAdmin() later)
+    match /blogs/{blogId} {
+      allow read: if true;
+      allow write: if true;
     }
 
     // Test document for connectivity checks

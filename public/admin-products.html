@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products • Admin</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" type="image/png" href="Assets/45.png">
+    <style>
+        .sidebar-link.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .product-card:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .status-active { background: #dcfce7; color: #166534; }
+        .status-inactive { background: #e5e7eb; color: #374151; }
+        .status-draft { background: #fef3c7; color: #92400e; }
+        .status-out-of-stock { background: #fee2e2; color: #991b1b; }
+        .modal-backdrop { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        .size-chip { display: inline-flex; align-items: center; padding: 6px 14px; background: #f3f4f6; border-radius: 20px; font-size: 13px; margin: 4px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
+        .size-chip:hover { background: #e5e7eb; }
+        .size-chip.active { background: #667eea; color: white; border-color: #667eea; }
+        .image-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #f9fafb; border-radius: 8px; margin-bottom: 8px; }
+        .image-item img { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; }
+        .image-item.uploading { opacity: 0.6; }
+        .drop-zone { border: 2px dashed #d1d5db; border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.2s; background: #fafafa; }
+        .drop-zone:hover, .drop-zone.dragover { border-color: #667eea; background: #f5f3ff; }
+        .color-upload-zone { border: 2px dashed #d1d5db; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: #f9fafb; }
+        .color-upload-zone:hover { border-color: #667eea; background: #f5f3ff; }
+        .color-preset { display: inline-block; width: 40px; height: 40px; border-radius: 8px; cursor: pointer; border: 3px solid transparent; transition: all 0.2s; }
+        .color-preset:hover, .color-preset.selected { border-color: #667eea; transform: scale(1.1); }
+        .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; z-index: 100; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin text-4xl text-purple-600 mb-4"></i>
+            <p class="text-gray-600">Loading products...</p>
+        </div>
+    </div>
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r border-gray-200 fixed h-full overflow-y-auto z-30">
+            <div class="p-6 border-b border-gray-200">
+                <a href="index.html" class="flex items-center gap-3">
+                    <img src="Assets/45.png" alt="Logo" class="h-10 w-10 rounded-lg object-cover">
+                    <div>
+                        <h1 class="font-bold text-gray-900">Disciplined</h1>
+                        <p class="text-xs text-gray-500">Admin Panel</p>
+                    </div>
+                </a>
+            </div>
+            <nav class="p-4 space-y-2">
+                <a href="admin-dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-chart-line w-5"></i><span>Dashboard</span>
+                </a>
+                <a href="admin-products.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-lg">
+                    <i class="fas fa-box w-5"></i><span>Products</span>
+                </a>
+                <a href="admin-blogs.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-blog w-5"></i><span>Blog Posts</span>
+                </a>
+                <a href="admin-dashboard.html#orders" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-shopping-bag w-5"></i><span>Orders</span>
+                </a>
+                <div class="border-t border-gray-200 my-4"></div>
+                <a href="shop.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-store w-5"></i><span>View Shop</span>
+                </a>
+                <button onclick="logout()" class="w-full sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition">
+                    <i class="fas fa-sign-out-alt w-5"></i>
+                    <span>Logout</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 ml-64 p-8">
+            <header class="flex items-center justify-between mb-8">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Products</h1>
+                    <p class="text-gray-500">Manage your product catalog • Changes appear live in shop</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="importFromManifest()" class="bg-orange-500 text-white px-4 py-3 rounded-lg font-semibold hover:bg-orange-600 transition" title="Import products from manifest">
+                        <i class="fas fa-download mr-2"></i>Import Defaults
+                    </button>
+                    <button onclick="openAddModal()" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition">
+                        <i class="fas fa-plus mr-2"></i>Add Product
+                    </button>
+                </div>
+            </header>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-5 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <p class="text-gray-500 text-sm">Total Products</p>
+                    <p id="stat-total" class="text-3xl font-bold text-gray-900">0</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <p class="text-gray-500 text-sm">✅ Active (Live)</p>
+                    <p id="stat-active" class="text-3xl font-bold text-green-600">0</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <p class="text-gray-500 text-sm">⏸️ Inactive (Hidden)</p>
+                    <p id="stat-inactive" class="text-3xl font-bold text-gray-600">0</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <p class="text-gray-500 text-sm">📝 Draft</p>
+                    <p id="stat-draft" class="text-3xl font-bold text-yellow-600">0</p>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <p class="text-gray-500 text-sm">❌ Out of Stock</p>
+                    <p id="stat-oos" class="text-3xl font-bold text-red-600">0</p>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div id="products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="hidden text-center py-16">
+                <i class="fas fa-box-open text-6xl text-gray-300 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-600 mb-2">No products yet</h3>
+                <p class="text-gray-500 mb-6">Add your first product or import from defaults</p>
+                <button onclick="openAddModal()" class="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700">
+                    <i class="fas fa-plus mr-2"></i>Add Product
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Product Modal -->
+    <div id="product-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center overflow-y-auto py-8">
+        <div class="modal-backdrop absolute inset-0" onclick="closeModal()"></div>
+        <div class="bg-white rounded-2xl shadow-2xl z-10 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+                <h2 id="modal-title" class="text-xl font-bold text-gray-900">Add Product</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            
+            <form id="product-form" class="p-6 space-y-6">
+                <!-- Product Name -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Product Name *</label>
+                    <input type="text" id="prod-name" required 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        placeholder="e.g., Classic Discipline Tee">
+                </div>
+
+                <!-- Category & Status -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                        <select id="prod-category" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                            <option value="">Select category</option>
+                            <option value="cap">Caps</option>
+                            <option value="hoodie">Hoodies</option>
+                            <option value="tee">Classic Tees</option>
+                            <option value="oversized-tee">Oversized Tees</option>
+                            <option value="sweatshirt">Sweatshirts</option>
+                            <option value="shorts">Shorts</option>
+                            <option value="sweatpants">Sweatpants</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+                        <select id="prod-status" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                            <option value="active">✅ Active - Live in shop (customers can see and buy)</option>
+                            <option value="inactive">⏸️ Inactive - Hidden (saved but not visible to customers)</option>
+                            <option value="draft">📝 Draft - Work in progress</option>
+                            <option value="out-of-stock">❌ Out of Stock</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Price -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Price (R) *</label>
+                        <input type="number" id="prod-price" required min="0" step="0.01" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                            placeholder="299.00">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sale Price (R) <span class="text-gray-400">(optional)</span></label>
+                        <input type="number" id="prod-sale-price" min="0" step="0.01" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                            placeholder="249.00">
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea id="prod-description" rows="3" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        placeholder="Describe your product..."></textarea>
+                </div>
+
+                <!-- Sizes -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Available Sizes</label>
+                    <div id="sizes-container" class="flex flex-wrap">
+                        <span class="size-chip" data-size="XS">XS</span>
+                        <span class="size-chip" data-size="S">S</span>
+                        <span class="size-chip" data-size="M">M</span>
+                        <span class="size-chip" data-size="L">L</span>
+                        <span class="size-chip" data-size="XL">XL</span>
+                        <span class="size-chip" data-size="XXL">XXL</span>
+                        <span class="size-chip" data-size="One Size">One Size</span>
+                    </div>
+                </div>
+
+                <!-- Featured -->
+                <div class="flex items-center gap-3 pt-2">
+                    <input type="checkbox" id="prod-featured" class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500">
+                    <label for="prod-featured" class="text-sm text-gray-700">⭐ Featured Product (shows on homepage)</label>
+                </div>
+
+                <!-- Images Section -->
+                <div class="border-t pt-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Product Images</label>
+                    <p class="text-gray-500 text-xs mb-3">Upload images from your computer. First image will be the main display image.</p>
+                    
+                    <!-- Drag & Drop Zone -->
+                    <div class="drop-zone mb-4" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-purple-400 mb-2"></i>
+                        <p class="text-gray-600 font-medium">Click to upload or drag images here</p>
+                        <p class="text-gray-400 text-sm mt-1">PNG, JPG up to 5MB each</p>
+                        <input type="file" id="file-input" multiple accept="image/*" class="hidden">
+                    </div>
+                    
+                    <div id="images-list" class="space-y-2 max-h-60 overflow-y-auto"></div>
+                    <p id="no-images-msg" class="text-gray-400 text-sm">No images uploaded yet. A default placeholder will be used.</p>
+                </div>
+
+                <!-- Color Variants (Different color images) -->
+                <div class="border-t pt-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-sm font-medium text-gray-700">Color Variants - Upload images for different colors</label>
+                        <button type="button" onclick="openColorPicker()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-sm font-medium">
+                            <i class="fas fa-plus mr-1"></i>Add Color
+                        </button>
+                    </div>
+                    <p class="text-gray-500 text-xs mb-3">Upload images from your computer for each color. Customers will see these when they select colors.</p>
+                    <div id="color-variants-list" class="space-y-4"></div>
+                </div>
+
+                <!-- Submit -->
+                <div class="flex justify-end gap-4 pt-4 border-t">
+                    <button type="button" onclick="closeModal()" class="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" id="save-btn" class="px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transition font-semibold">
+                        <i class="fas fa-save mr-2"></i>Save Product
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+        <div class="modal-backdrop absolute inset-0" onclick="closeDeleteModal()"></div>
+        <div class="bg-white rounded-xl p-6 shadow-2xl z-10 max-w-md w-full mx-4">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-trash text-2xl text-red-500"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Delete Product?</h3>
+                <p class="text-gray-600 mb-6">This will permanently remove the product from your shop.</p>
+                <div class="flex gap-3 justify-center">
+                    <button onclick="closeDeleteModal()" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                    <button onclick="confirmDelete()" class="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg transform translate-y-20 transition-all duration-300 z-50 bg-green-500 text-white"></div>
+
+    <script>
+        // Redirect non-www to www for consistent auth sessions
+        if (window.location.hostname === 'disciplineddisciples.co.za') {
+            window.location.href = window.location.href.replace('disciplineddisciples.co.za', 'www.disciplineddisciples.co.za');
+        }
+        
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAR9fmWRVNo93-RYvH-VT8BVHP0hzTNL5k",
+            authDomain: "disciplined-disciples-1.firebaseapp.com",
+            projectId: "disciplined-disciples-1",
+            storageBucket: "disciplined-disciples-1.firebasestorage.app",
+            messagingSenderId: "770742520497",
+            appId: "1:770742520497:web:3bf5d1e8c2f3e8a6e0a6d0"
+        };
+        
+        // Initialize Firebase
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+        
+        // Set auth persistence to LOCAL (survives browser restart)
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+        // State
+        let products = [];
+        let selectedSizes = [];
+        let imageUrls = [];
+        let imageFiles = []; // Track files for upload
+        let colorVariants = []; // { name: 'Black', images: ['url'], files: [{file, preview, name}] }
+        let editingId = null;
+        let deleteId = null;
+        
+        // Get current admin email for tracking
+        function getCurrentAdminEmail() {
+            const user = auth.currentUser;
+            return user ? user.email : 'Unknown';
+        }
+        
+        // Format time ago for display
+        function formatTimeAgo(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+            return date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' });
+        }
+        
+        // Color presets for quick selection
+        const colorPresets = [
+            { name: 'Black', hex: '#000000' },
+            { name: 'White', hex: '#FFFFFF' },
+            { name: 'Navy', hex: '#001f3f' },
+            { name: 'Charcoal', hex: '#36454F' },
+            { name: 'Grey', hex: '#808080' },
+            { name: 'Beige', hex: '#F5F5DC' },
+            { name: 'Olive', hex: '#556B2F' },
+            { name: 'Orange', hex: '#FF4500' },
+            { name: 'Red', hex: '#DC143C' },
+            { name: 'Purple', hex: '#6A0DAD' },
+            { name: 'Blue', hex: '#0066CC' },
+            { name: 'Green', hex: '#228B22' }
+        ];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            setupSizeChips();
+            setupDragDrop();
+            loadProducts();
+        });
+
+        // Load Products from Firestore
+        async function loadProducts() {
+            try {
+                const snapshot = await db.collection('products').get();
+                products = [];
+                snapshot.forEach(doc => {
+                    products.push({ id: doc.id, ...doc.data() });
+                });
+                console.log('Loaded products:', products.length);
+                renderProducts();
+                updateStats();
+            } catch (err) {
+                console.error('Error loading products:', err);
+                showToast('Error loading products: ' + err.message, 'error');
+            } finally {
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+        }
+
+        // Update Stats
+        function updateStats() {
+            document.getElementById('stat-total').textContent = products.length;
+            document.getElementById('stat-active').textContent = products.filter(p => p.status === 'active' || !p.status).length;
+            document.getElementById('stat-inactive').textContent = products.filter(p => p.status === 'inactive').length;
+            document.getElementById('stat-draft').textContent = products.filter(p => p.status === 'draft').length;
+            document.getElementById('stat-oos').textContent = products.filter(p => p.status === 'out-of-stock').length;
+        }
+
+        // Render Products Grid
+        function renderProducts() {
+            const grid = document.getElementById('products-grid');
+            const empty = document.getElementById('empty-state');
+            
+            if (products.length === 0) {
+                grid.innerHTML = '';
+                grid.classList.add('hidden');
+                empty.classList.remove('hidden');
+                return;
+            }
+            
+            grid.classList.remove('hidden');
+            empty.classList.add('hidden');
+            
+            grid.innerHTML = products.map(p => {
+                const mainImage = p.displayImage || p.images?.[0] || 'Assets/45.png';
+                const status = p.status || 'active';
+                const statusClass = status === 'active' ? 'status-active' : status === 'inactive' ? 'status-inactive' : status === 'draft' ? 'status-draft' : 'status-out-of-stock';
+                const statusText = status === 'active' ? '✅ Active' : status === 'inactive' ? '⏸️ Inactive' : status === 'draft' ? '📝 Draft' : '❌ Out of Stock';
+                const displayPrice = p.salePrice && p.salePrice < p.price ? p.salePrice : p.price;
+                
+                // Format last edited info
+                const lastEditedBy = p.lastEditedBy || p.createdBy || 'Unknown';
+                const lastEditedAt = p.lastEditedAt || p.createdAt || null;
+                const editedTimeAgo = lastEditedAt ? formatTimeAgo(lastEditedAt) : 'N/A';
+                const shortEmail = lastEditedBy.split('@')[0]; // Show just username part
+                
+                return `
+                    <div class="product-card bg-white rounded-xl shadow-sm overflow-hidden transition-all duration-200">
+                        <div class="relative">
+                            <img src="${mainImage}" alt="${p.name}" class="w-full h-48 object-cover" onerror="this.src='Assets/45.png'">
+                            <span class="absolute top-3 right-3 ${statusClass} px-2 py-1 rounded-full text-xs font-medium">${statusText}</span>
+                            ${p.featured ? '<span class="absolute top-3 left-3 bg-yellow-400 text-yellow-900 px-2 py-1 rounded-full text-xs font-medium">⭐ Featured</span>' : ''}
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-semibold text-gray-900 truncate">${p.name}</h3>
+                            <p class="text-gray-500 text-sm">${p.category || 'No category'}</p>
+                            <div class="flex items-center justify-between mt-3">
+                                <div>
+                                    ${p.salePrice && p.salePrice < p.price ? 
+                                        `<span class="text-red-600 font-bold">R${p.salePrice}</span> <span class="text-gray-400 line-through text-sm">R${p.price}</span>` :
+                                        `<span class="text-gray-900 font-bold">R${p.price || 0}</span>`
+                                    }
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="editProduct('${p.id}')" class="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="showDeleteModal('${p.id}')" class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Last Edited By -->
+                            <div class="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400">
+                                <i class="fas fa-user-edit mr-1"></i>
+                                <span title="${lastEditedBy}">${shortEmail}</span> • ${editedTimeAgo}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Size Chips
+        function setupSizeChips() {
+            document.querySelectorAll('.size-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const size = chip.dataset.size;
+                    chip.classList.toggle('active');
+                    if (selectedSizes.includes(size)) {
+                        selectedSizes = selectedSizes.filter(s => s !== size);
+                    } else {
+                        selectedSizes.push(size);
+                    }
+                });
+            });
+        }
+
+        // Setup Drag & Drop
+        function setupDragDrop() {
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('file-input');
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+            });
+            
+            dropZone.addEventListener('dragenter', () => dropZone.classList.add('dragover'));
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', e => {
+                dropZone.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+            
+            fileInput.addEventListener('change', e => {
+                handleFiles(e.target.files);
+            });
+        }
+
+        // Handle File Selection
+        async function handleFiles(files) {
+            for (const file of files) {
+                if (!file.type.startsWith('image/')) {
+                    showToast('Only image files allowed', 'error');
+                    continue;
+                }
+                if (file.size > 5 * 1024 * 1024) {
+                    showToast(`${file.name} is too large (max 5MB)`, 'error');
+                    continue;
+                }
+                
+                // Add to list with preview
+                const reader = new FileReader();
+                reader.onload = e => {
+                    imageFiles.push({
+                        file: file,
+                        preview: e.target.result,
+                        name: file.name,
+                        uploaded: false
+                    });
+                    renderImagesList();
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            // Reset file input
+            document.getElementById('file-input').value = '';
+        }
+
+        // Open Add Modal
+        function openAddModal() {
+            editingId = null;
+            document.getElementById('modal-title').textContent = 'Add Product';
+            document.getElementById('product-form').reset();
+            selectedSizes = [];
+            imageUrls = [];
+            imageFiles = [];
+            colorVariants = [];
+            document.querySelectorAll('.size-chip').forEach(c => c.classList.remove('active'));
+            renderImagesList();
+            renderColorVariants();
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
+
+        // Edit Product
+        function editProduct(id) {
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+            
+            editingId = id;
+            document.getElementById('modal-title').textContent = 'Edit Product';
+            
+            // Fill form
+            document.getElementById('prod-name').value = product.name || '';
+            document.getElementById('prod-category').value = product.category || '';
+            document.getElementById('prod-status').value = product.status || 'active';
+            document.getElementById('prod-price').value = product.price || '';
+            document.getElementById('prod-sale-price').value = product.salePrice || '';
+            document.getElementById('prod-description').value = product.description || '';
+            document.getElementById('prod-featured').checked = product.featured || false;
+            
+            // Sizes
+            selectedSizes = product.sizes || product.options?.sizes || [];
+            document.querySelectorAll('.size-chip').forEach(chip => {
+                chip.classList.toggle('active', selectedSizes.includes(chip.dataset.size));
+            });
+            
+            // Images - when editing, show existing URLs (already uploaded)
+            imageUrls = product.images || product.imageUrls || [];
+            if (product.displayImage && !imageUrls.includes(product.displayImage)) {
+                imageUrls.unshift(product.displayImage);
+            }
+            imageFiles = []; // No files when editing, just URLs
+            renderImagesList();
+            
+            // Color Variants
+            colorVariants = [];
+            if (product.options?.colors) {
+                Object.entries(product.options.colors).forEach(([name, data]) => {
+                    if (name !== 'default') {
+                        colorVariants.push({
+                            name: name,
+                            images: data.images || [],
+                            files: [] // No pending files when editing
+                        });
+                    }
+                });
+            }
+            renderColorVariants();
+            
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
+
+        // Close Modal
+        function closeModal() {
+            document.getElementById('product-modal').classList.add('hidden');
+            editingId = null;
+            imageFiles = [];
+        }
+
+        // Add Image URL
+        function addImageUrl() {
+            const input = document.getElementById('image-url-input');
+            const url = input.value.trim();
+            
+            if (!url) {
+                showToast('Please enter an image URL', 'error');
+                return;
+            }
+            
+            imageUrls.push(url);
+            input.value = '';
+            renderImagesList();
+            showToast('Image added');
+        }
+
+        // Render Images List
+        // Render Images List
+        function renderImagesList() {
+            const container = document.getElementById('images-list');
+            const noImagesMsg = document.getElementById('no-images-msg');
+            
+            const totalImages = imageUrls.length + imageFiles.length;
+            
+            if (totalImages === 0) {
+                container.innerHTML = '';
+                noImagesMsg.style.display = 'block';
+                return;
+            }
+            
+            noImagesMsg.style.display = 'none';
+            
+            let html = '';
+            
+            // Show existing uploaded images (URLs)
+            imageUrls.forEach((url, i) => {
+                html += `
+                    <div class="image-item">
+                        <img src="${url}" alt="Product image ${i+1}" onerror="this.src='Assets/45.png'">
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-700 truncate">${url}</p>
+                            ${i === 0 && imageFiles.length === 0 ? '<span class="text-xs text-green-600 font-medium">✓ Main Display Image</span>' : ''}
+                        </div>
+                        <div class="flex gap-1">
+                            <button type="button" onclick="removeUploadedImage(${i})" class="p-1 text-gray-400 hover:text-red-600" title="Remove">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Show pending files (not yet uploaded)
+            imageFiles.forEach((fileData, i) => {
+                html += `
+                    <div class="image-item ${fileData.uploading ? 'uploading' : ''}">
+                        <img src="${fileData.preview}" alt="${fileData.name}">
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-700 truncate">${fileData.name}</p>
+                            ${i === 0 && imageUrls.length === 0 ? '<span class="text-xs text-blue-600 font-medium">📤 Will be main image</span>' : '<span class="text-xs text-gray-500">Ready to upload</span>'}
+                        </div>
+                        <div class="flex gap-1">
+                            <button type="button" onclick="removeFile(${i})" class="p-1 text-gray-400 hover:text-red-600" title="Remove">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // Remove uploaded image URL
+        function removeUploadedImage(index) {
+            imageUrls.splice(index, 1);
+            renderImagesList();
+        }
+
+        // Remove pending file
+        function removeFile(index) {
+            imageFiles.splice(index, 1);
+            renderImagesList();
+        }
+
+        // Move Image Up (to make it main)
+        function moveImageUp(index) {
+            if (index > 0) {
+                const temp = imageUrls[index];
+                imageUrls[index] = imageUrls[index - 1];
+                imageUrls[index - 1] = temp;
+                renderImagesList();
+            }
+        }
+
+        // Remove Image
+        function removeImage(index) {
+            imageUrls.splice(index, 1);
+            renderImagesList();
+        }
+
+        // Open Color Picker Modal
+        function openColorPicker() {
+            const colorName = prompt('Choose color:\n\nCommon colors:\nBlack, White, Navy, Charcoal, Grey, Beige, Olive, Orange, Red, Purple, Blue, Green\n\nOr enter custom color name:');
+            if (!colorName || !colorName.trim()) return;
+            
+            const name = colorName.trim();
+            // Check if color already exists
+            if (colorVariants.some(cv => cv.name.toLowerCase() === name.toLowerCase())) {
+                alert(`Color "${name}" already added!`);
+                return;
+            }
+            
+            colorVariants.push({ name: name, images: [], files: [] });
+            renderColorVariants();
+        }
+
+        // Render Color Variants
+        function renderColorVariants() {
+            const container = document.getElementById('color-variants-list');
+            
+            if (colorVariants.length === 0) {
+                container.innerHTML = '<p class="text-gray-400 text-sm">No color variants yet. Click "Add Color" to upload images for different colors.</p>';
+                return;
+            }
+            
+            container.innerHTML = colorVariants.map((cv, i) => {
+                const totalImages = (cv.images?.length || 0) + (cv.files?.length || 0);
+                
+                return `
+                    <div class="bg-white border-2 border-gray-200 rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="font-semibold text-gray-900 text-lg">${cv.name}</span>
+                                <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">${totalImages} image${totalImages !== 1 ? 's' : ''}</span>
+                            </div>
+                            <button type="button" onclick="removeColorVariant(${i})" class="text-red-500 hover:text-red-700 text-sm font-medium">
+                                <i class="fas fa-trash mr-1"></i>Remove Color
+                            </button>
+                        </div>
+                        
+                        <!-- Upload Zone for this color -->
+                        <div class="color-upload-zone mb-3" onclick="document.getElementById('color-file-${i}').click()">
+                            <i class="fas fa-images text-2xl text-purple-400 mb-1"></i>
+                            <p class="text-gray-600 text-sm font-medium">Click to upload ${cv.name} images</p>
+                            <p class="text-gray-400 text-xs">From your computer • PNG, JPG up to 5MB</p>
+                            <input type="file" id="color-file-${i}" multiple accept="image/*" class="hidden" onchange="handleColorFiles(${i}, event)">
+                        </div>
+                        
+                        <!-- Show uploaded URLs and pending files -->
+                        <div class="space-y-2 max-h-40 overflow-y-auto">
+                            ${(cv.images || []).map((img, j) => `
+                                <div class="image-item">
+                                    <img src="${img}" alt="${cv.name}">
+                                    <div class="flex-1">
+                                        <p class="text-sm text-gray-700 truncate">Uploaded ✓</p>
+                                        <span class="text-xs text-green-600">Live image</span>
+                                    </div>
+                                    <button type="button" onclick="removeColorUploadedImage(${i}, ${j})" class="p-1 text-gray-400 hover:text-red-600">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            `).join('')}
+                            ${(cv.files || []).map((fileData, j) => `
+                                <div class="image-item">
+                                    <img src="${fileData.preview}" alt="${fileData.name}">
+                                    <div class="flex-1">
+                                        <p class="text-sm text-gray-700 truncate">${fileData.name}</p>
+                                        <span class="text-xs text-blue-600">📤 Ready to upload</span>
+                                    </div>
+                                    <button type="button" onclick="removeColorFile(${i}, ${j})" class="p-1 text-gray-400 hover:text-red-600">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Handle Color Files Upload
+        function handleColorFiles(variantIndex, event) {
+            const files = Array.from(event.target.files);
+            
+            files.forEach(file => {
+                if (!file.type.startsWith('image/')) {
+                    showToast(`${file.name} is not an image`, 'error');
+                    return;
+                }
+                if (file.size > 5 * 1024 * 1024) {
+                    showToast(`${file.name} exceeds 5MB`, 'error');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (!colorVariants[variantIndex].files) {
+                        colorVariants[variantIndex].files = [];
+                    }
+                    colorVariants[variantIndex].files.push({
+                        file: file,
+                        preview: e.target.result,
+                        name: file.name
+                    });
+                    renderColorVariants();
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            event.target.value = ''; // Reset input
+        }
+        
+        // Remove uploaded color image URL
+        function removeColorUploadedImage(variantIndex, imageIndex) {
+            if (!colorVariants[variantIndex].images) return;
+            colorVariants[variantIndex].images.splice(imageIndex, 1);
+            renderColorVariants();
+        }
+        
+        // Remove pending color file
+        function removeColorFile(variantIndex, fileIndex) {
+            if (!colorVariants[variantIndex].files) return;
+            colorVariants[variantIndex].files.splice(fileIndex, 1);
+            renderColorVariants();
+        }
+
+        // Remove Color Variant
+        function removeColorVariant(index) {
+            colorVariants.splice(index, 1);
+            renderColorVariants();
+        }
+
+        // Form Submit
+        document.getElementById('product-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = document.getElementById('save-btn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Uploading images...';
+
+            try {
+                // STEP 1: Upload pending files to Firebase Storage
+                const uploadedUrls = [...imageUrls]; // Start with existing URLs
+                
+                for (let i = 0; i < imageFiles.length; i++) {
+                    const fileData = imageFiles[i];
+                    if (!fileData.file) continue;
+                    
+                    btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>Uploading image ${i+1}/${imageFiles.length}...`;
+                    
+                    try {
+                        const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${fileData.file.name}`;
+                        const storageRef = storage.ref(`products/${fileName}`);
+                        
+                        // Upload file
+                        await storageRef.put(fileData.file);
+                        
+                        // Get download URL
+                        const url = await storageRef.getDownloadURL();
+                        uploadedUrls.push(url);
+                        
+                        console.log(`Uploaded: ${fileName}`);
+                    } catch (uploadErr) {
+                        console.error('Upload failed for:', fileData.name, uploadErr);
+                        showToast(`Failed to upload ${fileData.name}`, 'error');
+                    }
+                }
+                
+                // STEP 2: Upload color variant files to Storage
+                for (let variantIndex = 0; variantIndex < colorVariants.length; variantIndex++) {
+                    const variant = colorVariants[variantIndex];
+                    if (!variant.files || variant.files.length === 0) continue;
+                    
+                    if (!variant.images) variant.images = [];
+                    
+                    for (let i = 0; i < variant.files.length; i++) {
+                        const fileData = variant.files[i];
+                        if (!fileData.file) continue;
+                        
+                        btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>Uploading ${variant.name} image ${i+1}/${variant.files.length}...`;
+                        
+                        try {
+                            const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${fileData.file.name}`;
+                            const storageRef = storage.ref(`products/${fileName}`);
+                            await storageRef.put(fileData.file);
+                            const url = await storageRef.getDownloadURL();
+                            variant.images.push(url);
+                            console.log(`Uploaded ${variant.name}:`, fileName);
+                        } catch (uploadErr) {
+                            console.error('Upload failed for:', fileData.name, uploadErr);
+                            showToast(`Failed to upload ${variant.name} image`, 'error');
+                        }
+                    }
+                }
+                
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving product...';
+                
+                // STEP 3: Build color options with all uploaded URLs
+                const colorOptions = {};
+                if (uploadedUrls.length > 0) {
+                    colorOptions['default'] = {
+                        images: uploadedUrls,
+                        defaultImage: uploadedUrls[0]
+                    };
+                }
+                colorVariants.forEach(cv => {
+                    if (cv.images && cv.images.length > 0) {
+                        colorOptions[cv.name] = {
+                            images: cv.images,
+                            defaultImage: cv.images[0]
+                        };
+                    }
+                });
+
+                // STEP 4: Save product data with tracking
+                const adminEmail = getCurrentAdminEmail();
+                const now = new Date().toISOString();
+                
+                const productData = {
+                    name: document.getElementById('prod-name').value.trim(),
+                    category: document.getElementById('prod-category').value,
+                    price: parseFloat(document.getElementById('prod-price').value) || 0,
+                    salePrice: document.getElementById('prod-sale-price').value ? parseFloat(document.getElementById('prod-sale-price').value) : null,
+                    status: document.getElementById('prod-status').value || 'active',
+                    description: document.getElementById('prod-description').value.trim(),
+                    featured: document.getElementById('prod-featured').checked,
+                    sizes: selectedSizes,
+                    displayImage: uploadedUrls[0] || 'Assets/45.png',
+                    images: uploadedUrls,
+                    imageUrls: uploadedUrls,
+                    options: {
+                        colors: colorOptions,
+                        sizes: selectedSizes
+                    },
+                    lastEditedBy: adminEmail,
+                    lastEditedAt: now
+                };
+
+                if (editingId) {
+                    await db.collection('products').doc(editingId).update(productData);
+                    showToast('Product updated successfully!');
+                } else {
+                    productData.createdAt = now;
+                    productData.createdBy = adminEmail;
+                    await db.collection('products').add(productData);
+                    showToast('Product added successfully!');
+                }
+
+                closeModal();
+                loadProducts();
+            } catch (err) {
+                console.error('Save error:', err);
+                showToast('Error: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        });
+
+        // Delete Product
+        function showDeleteModal(id) {
+            deleteId = id;
+            document.getElementById('delete-modal').classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').classList.add('hidden');
+            deleteId = null;
+        }
+
+        async function confirmDelete() {
+            if (!deleteId) return;
+            
+            try {
+                await db.collection('products').doc(deleteId).delete();
+                showToast('Product deleted');
+                closeDeleteModal();
+                loadProducts();
+            } catch (err) {
+                console.error('Delete error:', err);
+                showToast('Error deleting: ' + err.message, 'error');
+            }
+        }
+
+        // Import from Manifest
+        async function importFromManifest() {
+            if (!confirm('This will import default products. Continue?')) return;
+            
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Importing...';
+
+            try {
+                const response = await fetch('products-manifest.json');
+                const manifest = await response.json();
+                
+                // Manifest is an array directly, not { products: [...] }
+                const productsList = Array.isArray(manifest) ? manifest : manifest.products;
+                
+                const adminEmail = getCurrentAdminEmail();
+                const now = new Date().toISOString();
+                
+                let imported = 0;
+                for (const product of productsList) {
+                    const productData = {
+                        name: product.name,
+                        price: product.price,
+                        category: product.category || 'misc',
+                        description: product.description || '',
+                        displayImage: product.displayImage,
+                        images: product.options?.colors 
+                            ? Object.values(product.options.colors).flatMap(c => c.images || [c.defaultImage])
+                            : [product.displayImage],
+                        imageUrls: product.options?.colors 
+                            ? Object.values(product.options.colors).flatMap(c => c.images || [c.defaultImage])
+                            : [product.displayImage],
+                        sizes: product.options?.sizes || [],
+                        options: product.options || {},
+                        status: 'active',
+                        featured: false,
+                        createdBy: adminEmail,
+                        createdAt: now,
+                        lastEditedBy: adminEmail,
+                        lastEditedAt: now
+                    };
+                    
+                    await db.collection('products').doc(product.id).set(productData);
+                    imported++;
+                }
+                
+                showToast(`Imported ${imported} products!`);
+                loadProducts();
+            } catch (err) {
+                console.error('Import error:', err);
+                showToast('Error: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-download mr-2"></i>Import Defaults';
+            }
+        }
+
+        // Logout
+        function logout() {
+            auth.signOut().then(() => {
+                window.location.href = 'login-signup.html';
+            });
+        }
+
+        // Toast
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 z-50 ${
+                type === 'error' ? 'bg-red-500' : 'bg-green-500'
+            } text-white`;
+            toast.style.transform = 'translateY(0)';
+            setTimeout(() => {
+                toast.style.transform = 'translateY(80px)';
+            }, 4000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Management • Admin</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" type="image/png" href="Assets/45.png">
+    <style>
+        .sidebar-link.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .blog-card:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .status-published { background: #dcfce7; color: #166534; }
+        .status-draft { background: #fef3c7; color: #92400e; }
+        .modal-backdrop { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        .drop-zone { border: 2px dashed #d1d5db; border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .drop-zone:hover, .drop-zone.dragover { border-color: #667eea; background: #f5f3ff; }
+        .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; z-index: 100; }
+        .rich-editor { min-height: 200px; border: 1px solid #d1d5db; border-radius: 8px; padding: 12px; }
+        .rich-editor:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .toolbar-btn { padding: 8px 12px; border: 1px solid #e5e7eb; background: white; cursor: pointer; transition: all 0.2s; }
+        .toolbar-btn:hover { background: #f3f4f6; }
+        .toolbar-btn.active { background: #667eea; color: white; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin text-4xl text-purple-600 mb-4"></i>
+            <p class="text-gray-600">Loading blogs...</p>
+        </div>
+    </div>
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r border-gray-200 fixed h-full overflow-y-auto z-30">
+            <div class="p-6 border-b border-gray-200">
+                <a href="index.html" class="flex items-center gap-3">
+                    <img src="Assets/45.png" alt="Logo" class="h-10 w-10 rounded-lg object-cover">
+                    <div>
+                        <h1 class="font-bold text-gray-900">Disciplined</h1>
+                        <p class="text-xs text-gray-500">Admin Panel</p>
+                    </div>
+                </a>
+            </div>
+            <nav class="p-4 space-y-2">
+                <a href="admin-dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-chart-line w-5"></i><span>Dashboard</span>
+                </a>
+                <a href="admin-products.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-box w-5"></i><span>Products</span>
+                </a>
+                <a href="admin-blogs.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-lg">
+                    <i class="fas fa-blog w-5"></i><span>Blog Posts</span>
+                </a>
+                <a href="admin-dashboard.html#orders" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-shopping-bag w-5"></i><span>Orders</span>
+                </a>
+                <div class="border-t border-gray-200 my-4"></div>
+                <a href="blog.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-eye w-5"></i><span>View Blog</span>
+                </a>
+                <a href="shop.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-store w-5"></i><span>View Shop</span>
+                </a>
+                <button onclick="logout()" class="w-full sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition">
+                    <i class="fas fa-sign-out-alt w-5"></i>
+                    <span>Logout</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 ml-64 p-8">
+            <header class="flex items-center justify-between mb-8">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Blog Posts</h1>
+                    <p class="text-gray-500">Create and manage your blog content</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="importDefaultBlogs()" class="bg-orange-500 text-white px-4 py-3 rounded-lg font-semibold hover:bg-orange-600 transition" title="Import default blog posts">
+                        <i class="fas fa-download mr-2"></i>Import Defaults
+                    </button>
+                    <button onclick="openModal()" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition">
+                        <i class="fas fa-plus mr-2"></i>New Post
+                    </button>
+                </div>
+            </header>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-3 gap-6 mb-8">
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                    <p class="text-gray-500 text-sm">Total Posts</p>
+                    <p id="stat-total" class="text-3xl font-bold text-gray-900">0</p>
+                </div>
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                    <p class="text-gray-500 text-sm">Published</p>
+                    <p id="stat-published" class="text-3xl font-bold text-green-600">0</p>
+                </div>
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                    <p class="text-gray-500 text-sm">Drafts</p>
+                    <p id="stat-draft" class="text-3xl font-bold text-yellow-600">0</p>
+                </div>
+            </div>
+
+            <!-- Blog Posts Grid -->
+            <div id="blogs-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            
+            <!-- Empty State -->
+            <div id="empty-state" class="hidden text-center py-16">
+                <i class="fas fa-newspaper text-6xl text-gray-300 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-600 mb-2">No blog posts yet</h3>
+                <p class="text-gray-500 mb-6">Create your first blog post to engage your audience</p>
+                <button onclick="openModal()" class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700">
+                    <i class="fas fa-plus mr-2"></i>Create Post
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Blog Modal -->
+    <div id="blog-modal" class="fixed inset-0 z-50 hidden">
+        <div class="modal-backdrop absolute inset-0" onclick="closeModal()"></div>
+        <div class="absolute inset-4 md:inset-8 bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-w-4xl mx-auto">
+            <div class="flex items-center justify-between p-6 border-b bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
+                <h2 id="modal-title" class="text-xl font-bold">New Blog Post</h2>
+                <button onclick="closeModal()" class="text-white/80 hover:text-white text-2xl">&times;</button>
+            </div>
+            <form id="blog-form" class="flex-1 overflow-y-auto p-6">
+                <div class="space-y-6">
+                    <!-- Title -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Post Title *</label>
+                        <input type="text" id="blog-title" required 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-lg"
+                            placeholder="Enter an engaging title...">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-6">
+                        <!-- Author -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Author</label>
+                            <input type="text" id="blog-author" 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                value="Zolile Nomaqhiza, Founder of Disciplined Disciples">
+                        </div>
+                        <!-- Status -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                            <select id="blog-status" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                <option value="published">✓ Published (Live)</option>
+                                <option value="draft">Draft (Hidden)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Excerpt -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Excerpt / Summary *</label>
+                        <textarea id="blog-excerpt" rows="2" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                            placeholder="A brief summary that appears on the blog listing..."></textarea>
+                    </div>
+                    
+                    <!-- Featured Image -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Featured Image</label>
+                        <div class="flex gap-4 items-start">
+                            <div class="flex-1">
+                                <div class="drop-zone" id="drop-zone" onclick="document.getElementById('image-input').click()">
+                                    <i class="fas fa-image text-3xl text-purple-400 mb-2"></i>
+                                    <p class="text-gray-600">Click or drag to upload</p>
+                                    <p class="text-gray-400 text-sm">PNG, JPG up to 5MB</p>
+                                    <input type="file" id="image-input" accept="image/*" class="hidden" onchange="handleImageUpload(this.files[0])">
+                                </div>
+                            </div>
+                            <div id="image-preview" class="hidden">
+                                <div class="relative">
+                                    <img id="preview-img" class="w-40 h-28 object-cover rounded-lg border">
+                                    <button type="button" onclick="removeImage()" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center">&times;</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Editor -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Content *</label>
+                        <!-- Simple Toolbar -->
+                        <div class="flex gap-1 mb-2 flex-wrap">
+                            <button type="button" class="toolbar-btn rounded-l" onclick="formatText('bold')" title="Bold">
+                                <i class="fas fa-bold"></i>
+                            </button>
+                            <button type="button" class="toolbar-btn" onclick="formatText('italic')" title="Italic">
+                                <i class="fas fa-italic"></i>
+                            </button>
+                            <button type="button" class="toolbar-btn" onclick="formatText('underline')" title="Underline">
+                                <i class="fas fa-underline"></i>
+                            </button>
+                            <button type="button" class="toolbar-btn" onclick="formatText('insertUnorderedList')" title="Bullet List">
+                                <i class="fas fa-list-ul"></i>
+                            </button>
+                            <button type="button" class="toolbar-btn" onclick="formatText('insertOrderedList')" title="Numbered List">
+                                <i class="fas fa-list-ol"></i>
+                            </button>
+                            <button type="button" class="toolbar-btn" onclick="insertHeading()" title="Heading">
+                                <i class="fas fa-heading"></i>
+                            </button>
+                            <button type="button" class="toolbar-btn rounded-r" onclick="insertLink()" title="Link">
+                                <i class="fas fa-link"></i>
+                            </button>
+                        </div>
+                        <div id="blog-content" class="rich-editor" contenteditable="true" 
+                            data-placeholder="Write your blog post content here..."></div>
+                    </div>
+                    
+                    <!-- Tags -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tags (comma separated)</label>
+                        <input type="text" id="blog-tags" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                            placeholder="e.g., faith, discipline, lifestyle, motivation">
+                    </div>
+                </div>
+                
+                <div class="flex justify-end gap-4 mt-8 pt-6 border-t">
+                    <button type="button" onclick="closeModal()" class="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        Cancel
+                    </button>
+                    <button type="button" onclick="saveDraft()" class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                        <i class="fas fa-save mr-2"></i>Save as Draft
+                    </button>
+                    <button type="submit" id="save-btn" class="px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transition font-semibold">
+                        <i class="fas fa-paper-plane mr-2"></i>Publish
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+        <div class="modal-backdrop absolute inset-0" onclick="closeDeleteModal()"></div>
+        <div class="bg-white rounded-xl p-6 shadow-2xl z-10 max-w-md w-full mx-4">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-trash text-2xl text-red-500"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Delete Blog Post?</h3>
+                <p class="text-gray-600 mb-6">This action cannot be undone. The post will be permanently removed.</p>
+            </div>
+            <div class="flex justify-center gap-4">
+                <button onclick="closeDeleteModal()" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancel</button>
+                <button onclick="confirmDelete()" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg transform translate-y-20 transition-all duration-300 z-50"></div>
+
+    <script>
+        // Redirect non-www to www for consistent auth sessions
+        if (window.location.hostname === 'disciplineddisciples.co.za') {
+            window.location.href = window.location.href.replace('disciplineddisciples.co.za', 'www.disciplineddisciples.co.za');
+        }
+        
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBfLT_HQ0rnuz4FXNb8GArOH1d-QOZaZ1E",
+            authDomain: "disciplined-disciples-1.firebaseapp.com",
+            projectId: "disciplined-disciples-1",
+            storageBucket: "disciplined-disciples-1.firebasestorage.app",
+            messagingSenderId: "770742520497",
+            appId: "1:770742520497:web:3bf5d1e8c2f3e8a6e0a6d0"
+        };
+        
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        // State
+        let blogs = [];
+        let editingId = null;
+        let deleteId = null;
+        let uploadedImage = null;
+        let unsubscribe = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            setupDragDrop();
+            
+            // Real-time listener for blogs
+            unsubscribe = db.collection('blogs').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+                blogs = [];
+                snapshot.forEach(doc => blogs.push({ id: doc.id, ...doc.data() }));
+                renderBlogs();
+                updateStats();
+                hideLoading();
+            }, err => {
+                console.error('Firestore error:', err);
+                showToast('Error loading blogs', 'error');
+                hideLoading();
+            });
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (unsubscribe) unsubscribe();
+        });
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+
+        function updateStats() {
+            document.getElementById('stat-total').textContent = blogs.length;
+            document.getElementById('stat-published').textContent = blogs.filter(b => b.status === 'published').length;
+            document.getElementById('stat-draft').textContent = blogs.filter(b => b.status === 'draft').length;
+        }
+
+        function renderBlogs() {
+            const grid = document.getElementById('blogs-grid');
+            const empty = document.getElementById('empty-state');
+            
+            if (blogs.length === 0) {
+                grid.classList.add('hidden');
+                empty.classList.remove('hidden');
+                return;
+            }
+            
+            grid.classList.remove('hidden');
+            empty.classList.add('hidden');
+            
+            grid.innerHTML = blogs.map(blog => {
+                const status = blog.status || 'draft';
+                const date = blog.date || (blog.createdAt?.toDate?.() ? blog.createdAt.toDate().toLocaleDateString('en-ZA', { year: 'numeric', month: 'long', day: 'numeric' }) : 'No date');
+                const image = blog.image || 'Assets/45.png';
+                
+                return `
+                <div class="blog-card bg-white rounded-xl shadow-sm overflow-hidden transition-all duration-200 border border-gray-100">
+                    <div class="h-40 bg-gray-100 relative">
+                        <img src="${image}" alt="${blog.title}" class="w-full h-full object-cover" onerror="this.src='Assets/45.png'">
+                        <span class="absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-semibold status-${status}">
+                            ${status}
+                        </span>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-gray-900 line-clamp-2 mb-1">${blog.title || 'Untitled'}</h3>
+                        <p class="text-gray-500 text-sm mb-2">${date}</p>
+                        <p class="text-gray-600 text-sm line-clamp-2 mb-3">${blog.excerpt || ''}</p>
+                        <div class="flex justify-between items-center pt-2 border-t">
+                            <span class="text-xs text-gray-400">${blog.author || 'Anonymous'}</span>
+                            <div class="flex gap-1">
+                                <button onclick="editBlog('${blog.id}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="previewBlog('${blog.id}')" class="p-2 text-green-600 hover:bg-green-50 rounded-lg transition" title="Preview">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button onclick="showDeleteModal('${blog.id}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        // Modal Functions
+        function openModal(blog = null) {
+            editingId = blog?.id || null;
+            document.getElementById('modal-title').textContent = blog ? 'Edit Blog Post' : 'New Blog Post';
+            
+            document.getElementById('blog-title').value = blog?.title || '';
+            document.getElementById('blog-author').value = blog?.author || 'Zolile Nomaqhiza, Founder of Disciplined Disciples';
+            document.getElementById('blog-status').value = blog?.status || 'published';
+            document.getElementById('blog-excerpt').value = blog?.excerpt || '';
+            document.getElementById('blog-content').innerHTML = blog?.content || '';
+            document.getElementById('blog-tags').value = blog?.tags?.join(', ') || '';
+            
+            // Handle image
+            uploadedImage = blog?.image || null;
+            if (uploadedImage) {
+                document.getElementById('preview-img').src = uploadedImage;
+                document.getElementById('image-preview').classList.remove('hidden');
+            } else {
+                document.getElementById('image-preview').classList.add('hidden');
+            }
+            
+            document.getElementById('blog-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('blog-modal').classList.add('hidden');
+            document.getElementById('blog-form').reset();
+            document.getElementById('blog-content').innerHTML = '';
+            document.getElementById('image-preview').classList.add('hidden');
+            uploadedImage = null;
+            editingId = null;
+        }
+
+        // Rich text editor functions
+        function formatText(command) {
+            document.execCommand(command, false, null);
+            document.getElementById('blog-content').focus();
+        }
+
+        function insertHeading() {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                document.execCommand('formatBlock', false, 'h3');
+            }
+            document.getElementById('blog-content').focus();
+        }
+
+        function insertLink() {
+            const url = prompt('Enter URL:');
+            if (url) {
+                document.execCommand('createLink', false, url);
+            }
+            document.getElementById('blog-content').focus();
+        }
+
+        // Image handling
+        function setupDragDrop() {
+            const dropZone = document.getElementById('drop-zone');
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(event => {
+                dropZone.addEventListener(event, e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+            });
+            
+            dropZone.addEventListener('dragenter', () => dropZone.classList.add('dragover'));
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', e => {
+                dropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length) {
+                    handleImageUpload(e.dataTransfer.files[0]);
+                }
+            });
+        }
+
+        function handleImageUpload(file) {
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                showToast('Only image files allowed', 'error');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('Image too large (max 5MB)', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = e => {
+                uploadedImage = { file, preview: e.target.result, isNew: true };
+                document.getElementById('preview-img').src = e.target.result;
+                document.getElementById('image-preview').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeImage() {
+            uploadedImage = null;
+            document.getElementById('image-preview').classList.add('hidden');
+            document.getElementById('image-input').value = '';
+        }
+
+        // Save functions
+        async function saveBlog(status) {
+            const title = document.getElementById('blog-title').value.trim();
+            const content = document.getElementById('blog-content').innerHTML.trim();
+            const excerpt = document.getElementById('blog-excerpt').value.trim();
+            
+            if (!title) {
+                showToast('Please enter a title', 'error');
+                return;
+            }
+            if (!content) {
+                showToast('Please add some content', 'error');
+                return;
+            }
+            if (!excerpt) {
+                showToast('Please add an excerpt', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('save-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+            
+            try {
+                let imageUrl = uploadedImage;
+                
+                // Upload new image if needed
+                if (uploadedImage?.isNew && uploadedImage?.file) {
+                    const fileName = `blog_${Date.now()}_${uploadedImage.file.name}`;
+                    const ref = storage.ref(`blogs/${fileName}`);
+                    await ref.put(uploadedImage.file);
+                    imageUrl = await ref.getDownloadURL();
+                } else if (typeof uploadedImage === 'object' && uploadedImage?.preview) {
+                    imageUrl = uploadedImage.preview;
+                }
+                
+                const tags = document.getElementById('blog-tags').value
+                    .split(',')
+                    .map(t => t.trim().toLowerCase())
+                    .filter(t => t);
+                
+                const blogData = {
+                    title,
+                    author: document.getElementById('blog-author').value.trim() || 'Anonymous',
+                    status,
+                    excerpt,
+                    content,
+                    image: typeof imageUrl === 'string' ? imageUrl : (imageUrl || ''),
+                    tags,
+                    date: new Date().toLocaleDateString('en-ZA', { year: 'numeric', month: 'long', day: 'numeric' }),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                if (editingId) {
+                    await db.collection('blogs').doc(editingId).update(blogData);
+                    showToast('Blog post updated!');
+                } else {
+                    blogData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                    await db.collection('blogs').add(blogData);
+                    showToast(status === 'published' ? 'Blog post published!' : 'Draft saved!');
+                }
+                
+                closeModal();
+            } catch (err) {
+                console.error('Save error:', err);
+                showToast('Error: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Publish';
+            }
+        }
+
+        function saveDraft() {
+            document.getElementById('blog-status').value = 'draft';
+            saveBlog('draft');
+        }
+
+        // Form submission
+        document.getElementById('blog-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const status = document.getElementById('blog-status').value;
+            saveBlog(status);
+        });
+
+        function editBlog(id) {
+            const blog = blogs.find(b => b.id === id);
+            if (blog) openModal(blog);
+        }
+
+        function previewBlog(id) {
+            window.open(`blog.html?preview=${id}`, '_blank');
+        }
+
+        // Delete
+        function showDeleteModal(id) {
+            deleteId = id;
+            document.getElementById('delete-modal').classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').classList.add('hidden');
+            deleteId = null;
+        }
+
+        async function confirmDelete() {
+            if (!deleteId) return;
+            try {
+                await db.collection('blogs').doc(deleteId).delete();
+                showToast('Blog post deleted');
+                closeDeleteModal();
+            } catch (err) {
+                console.error('Delete error:', err);
+                showToast('Error deleting post', 'error');
+            }
+        }
+
+        // Import default blogs
+        async function importDefaultBlogs() {
+            if (!confirm('This will import the default blog posts. Continue?')) return;
+            
+            const btn = event.target.closest('button');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Importing...';
+            
+            const defaultBlogs = [
+                {
+                    id: 'daily-habits',
+                    title: "The Power of Daily Habits",
+                    date: "July 25, 2025",
+                    image: "Assets/Other/IMG-20250928-WA0006.jpg",
+                    excerpt: "Discover how small, consistent actions can lead to monumental change in your life and spiritual journey...",
+                    author: "Zolile Nomaqhiza, Founder of Disciplined Disciples",
+                    content: `<p>Habits shape our lives more than we realize. Every day, the small choices we make—whether to pray, exercise, read, or reflect—accumulate into powerful forces that define our character and destiny.</p><p>As a believer and entrepreneur, I've learned that discipline is not about grand gestures, but about the quiet commitment to daily growth. Start with one habit: wake up 15 minutes earlier to meditate or journal. Over time, you'll notice a shift in your mindset and productivity.</p><p>Remember, consistency is key. Even when motivation fades, discipline keeps you moving forward. Trust the process, and let your daily habits become the foundation of your faith and success.</p>`,
+                    status: 'published',
+                    tags: ['habits', 'discipline', 'growth']
+                },
+                {
+                    id: 'finding-purpose',
+                    title: "Finding Purpose in Everyday Life",
+                    date: "July 20, 2025",
+                    image: "Assets/Other/IMG-20250928-WA0012.jpg",
+                    excerpt: "Explore practical ways to infuse purpose into your routines and responsibilities, turning mundane tasks into meaningful acts...",
+                    author: "Zolile Nomaqhiza, Founder of Disciplined Disciples",
+                    content: `<p>Purpose isn't reserved for special occasions—it's woven into the fabric of our daily lives. Whether you're at work, at home, or serving others, every moment is an opportunity to live intentionally.</p><p>Ask yourself: Why am I doing this? How does this task serve my values or my community? When you connect your actions to a deeper purpose, even routine chores become acts of service and worship.</p><p>Challenge yourself to find meaning in the ordinary. You'll discover joy, fulfillment, and a renewed sense of direction in everything you do.</p>`,
+                    status: 'published',
+                    tags: ['purpose', 'faith', 'intentional-living']
+                },
+                {
+                    id: 'resilience',
+                    title: "Resilience: Bouncing Back Stronger",
+                    date: "July 15, 2025",
+                    image: "Assets/Other/IMG-20250928-WA0013.jpg",
+                    excerpt: "Learn strategies to build mental and emotional resilience, enabling you to overcome challenges with strength and grace...",
+                    author: "Zolile Nomaqhiza, Founder of Disciplined Disciples",
+                    content: `<p>Life is full of setbacks, but resilience is what allows us to rise again. It's not about avoiding failure, but about learning, adapting, and growing through adversity.</p><p>When faced with challenges, lean on your faith, your support system, and your inner strength. Take time to reflect, but don't dwell on mistakes. Instead, focus on solutions and the lessons learned.</p><p>Remember, every setback is a setup for a comeback. Embrace resilience, and you'll find yourself stronger and wiser with each trial.</p>`,
+                    status: 'published',
+                    tags: ['resilience', 'strength', 'growth']
+                },
+                {
+                    id: 'faith-fitness',
+                    title: "The Journey of Faith and Fitness",
+                    date: "July 10, 2025",
+                    image: "Assets/Products/Caps/WhatsApp Image 2025-08-10 at 14.56.45_da1863d8.jpg",
+                    excerpt: "Discover how integrating your spiritual journey with physical well-being can lead to a more holistic and fulfilling life...",
+                    author: "Zolile Nomaqhiza, Founder of Disciplined Disciples",
+                    content: `<p>Faith and fitness go hand in hand. Caring for your body is an act of stewardship, honoring the gift of life God has given you.</p><p>Start small: take daily walks, stretch, or join a group workout. As you build physical strength, you'll notice improvements in your mental clarity and spiritual focus.</p><p>Let your fitness journey be a reflection of your faith—persistent, purposeful, and rooted in gratitude.</p>`,
+                    status: 'published',
+                    tags: ['faith', 'fitness', 'wellness']
+                },
+                {
+                    id: 'digital-discipline',
+                    title: "Discipline in the Digital Age",
+                    date: "July 5, 2025",
+                    image: "Assets/Products/Classic tees/IMG-20250928-WA0041.jpg",
+                    excerpt: "Navigate the distractions of the modern world with intentional discipline, protecting your focus and mental peace...",
+                    author: "Zolile Nomaqhiza, Founder of Disciplined Disciples",
+                    content: `<p>Technology is a blessing, but it can also be a source of distraction. To thrive in the digital age, set boundaries for your screen time and social media use.</p><p>Schedule regular digital detoxes—unplug for an hour each day to pray, read, or connect with loved ones. Use technology as a tool, not a master.</p><p>Discipline in the digital age means choosing what matters most and protecting your peace of mind.</p>`,
+                    status: 'published',
+                    tags: ['digital', 'discipline', 'focus']
+                },
+                {
+                    id: 'mindful-living',
+                    title: "The Art of Mindful Living",
+                    date: "June 30, 2025",
+                    image: "Assets/Products/Hoodies/IMG-20250928-WA0030.jpg",
+                    excerpt: "Embrace mindfulness to enhance your awareness, reduce stress, and live more fully in the present moment...",
+                    author: "Zolile Nomaqhiza, Founder of Disciplined Disciples",
+                    content: `<p>Mindfulness is the practice of being fully present. In a busy world, it's easy to rush through life without noticing the beauty around us.</p><p>Take time each day to pause, breathe, and reflect. Notice the sights, sounds, and sensations of the moment. Practice gratitude for the simple blessings.</p><p>Mindful living leads to greater peace, joy, and a deeper connection with God and others.</p>`,
+                    status: 'published',
+                    tags: ['mindfulness', 'peace', 'gratitude']
+                }
+            ];
+            
+            try {
+                const batch = db.batch();
+                
+                for (const blog of defaultBlogs) {
+                    const blogData = {
+                        ...blog,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    delete blogData.id;
+                    batch.set(db.collection('blogs').doc(blog.id), blogData);
+                }
+                
+                await batch.commit();
+                showToast(`Imported ${defaultBlogs.length} blog posts!`);
+            } catch (err) {
+                console.error('Import error:', err);
+                showToast('Error: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-download mr-2"></i>Import Defaults';
+            }
+        }
+
+        // Logout
+        function logout() {
+            auth.signOut().then(() => {
+                window.location.href = 'login-signup.html';
+            });
+        }
+
+        // Toast
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 z-50 ${
+                type === 'error' ? 'bg-red-500' : 'bg-green-500'
+            } text-white`;
+            toast.style.transform = 'translateY(0)';
+            setTimeout(() => {
+                toast.style.transform = 'translateY(80px)';
+            }, 4000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+[
+  {
+    "origin": ["https://www.disciplineddisciples.co.za", "https://disciplineddisciples.co.za", "https://disciplined-disciples-1.web.app", "https://disciplined-disciples-1.firebaseapp.com"],
+    "method": ["GET", "POST", "PUT", "DELETE", "HEAD"],
+    "maxAgeSeconds": 3600
+  }
+]

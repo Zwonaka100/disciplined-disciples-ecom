@@ -1,3 +1,8 @@
+// Redirect non-www to www for consistent auth sessions across all pages
+if (window.location.hostname === 'disciplineddisciples.co.za') {
+    window.location.href = window.location.href.replace('disciplineddisciples.co.za', 'www.disciplineddisciples.co.za');
+}
+
 // Global Firebase variables, explicitly declared on window for unambiguous global access
 window.app = null;
 window.auth = null;
@@ -1364,8 +1369,6 @@ function updateAuthUI(isLoggedIn) {
 function setupProfileDropdown() {
     const profileRibbon = document.getElementById('profile-ribbon');
     const profileDropdown = document.getElementById('profile-dropdown');
-    const profileRibbonName = document.getElementById('profile-ribbon-name');
-    const profileRibbonAvatar = document.getElementById('profile-ribbon-avatar');
     const dropdownLogoutBtn = document.getElementById('dropdown-logout-btn');
     
     if (!profileRibbon || !profileDropdown) return;
@@ -1373,42 +1376,21 @@ function setupProfileDropdown() {
     // Load and refresh user profile data
     refreshProfileDropdownData();
     
-    // Remove any existing event listeners to prevent duplicates
-    const existingRibbonHandler = profileRibbon.cloneNode(true);
-    profileRibbon.parentNode.replaceChild(existingRibbonHandler, profileRibbon);
-    
-    // Profile ribbon click handler
-    document.getElementById('profile-ribbon').addEventListener('click', (e) => {
+    // Profile ribbon click handler - use event delegation to avoid clone issues
+    profileRibbon.onclick = (e) => {
         e.stopPropagation();
         const dropdown = document.getElementById('profile-dropdown');
-        const chevron = document.querySelector('#profile-ribbon .fa-chevron-down');
-        
         dropdown.classList.toggle('hidden');
-        
-        // Animate chevron icon
-        if (chevron) {
-            if (dropdown.classList.contains('hidden')) {
-                chevron.style.transform = 'rotate(0deg)';
-            } else {
-                chevron.style.transform = 'rotate(180deg)';
-            }
-        }
-        
         console.log('Profile dropdown toggled:', !dropdown.classList.contains('hidden') ? 'visible' : 'hidden');
-    });
+    };
     
     // Close dropdown when clicking outside
     const outsideClickHandler = (e) => {
         const ribbon = document.getElementById('profile-ribbon');
         const dropdown = document.getElementById('profile-dropdown');
-        const chevron = document.querySelector('#profile-ribbon .fa-chevron-down');
         
         if (ribbon && dropdown && !ribbon.contains(e.target)) {
             dropdown.classList.add('hidden');
-            // Reset chevron rotation
-            if (chevron) {
-                chevron.style.transform = 'rotate(0deg)';
-            }
         }
     };
     
@@ -1458,14 +1440,15 @@ function setupProfileDropdown() {
 
 // --- Function to refresh profile dropdown data ---
 async function refreshProfileDropdownData() {
-    const profileRibbonName = document.getElementById('profile-ribbon-name');
-    const profileRibbonAvatar = document.getElementById('profile-ribbon-avatar');
+    const profileInitials = document.getElementById('profile-ribbon-initials');
+    const dropdownUserName = document.getElementById('dropdown-user-name');
+    const dropdownUserEmail = document.getElementById('dropdown-user-email');
     
     if (!window.auth?.currentUser) return;
     
     const user = window.auth.currentUser;
     let displayName = user.displayName || user.email.split('@')[0];
-    let avatarUrl = user.photoURL;
+    let userEmail = user.email || '';
     
     // Try to get updated profile data from Firestore
     try {
@@ -1476,33 +1459,24 @@ async function refreshProfileDropdownData() {
             if (userDoc.exists) {
                 const userData = userDoc.data();
                 displayName = userData.name || displayName;
-                if (userData.avatarUrl) {
-                    avatarUrl = userData.avatarUrl;
-                }
             }
         }
     } catch (error) {
         console.log('Could not load profile data for dropdown:', error.message);
     }
     
-    // Update profile ribbon display
-    if (profileRibbonName) {
-        profileRibbonName.textContent = displayName;
+    // Update profile button initials
+    if (profileInitials) {
+        const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+        profileInitials.textContent = initials || displayName.charAt(0).toUpperCase();
     }
     
-    if (profileRibbonAvatar) {
-        if (avatarUrl) {
-            profileRibbonAvatar.innerHTML = `<img src="${avatarUrl}" alt="Profile" class="w-full h-full object-cover rounded-full">`;
-        } else {
-            profileRibbonAvatar.textContent = displayName.charAt(0).toUpperCase();
-            profileRibbonAvatar.className = 'w-8 h-8 rounded-full flex items-center justify-center bg-gray-200 text-gray-700 font-bold text-xs border-2 border-gray-300';
-        }
+    // Update dropdown header with user info
+    if (dropdownUserName) {
+        dropdownUserName.textContent = displayName;
     }
-    
-    // Add smooth transition to chevron icon
-    const chevron = document.querySelector('#profile-ribbon .fa-chevron-down');
-    if (chevron) {
-        chevron.style.transition = 'transform 0.2s ease-in-out';
+    if (dropdownUserEmail) {
+        dropdownUserEmail.textContent = userEmail;
     }
 }
 
@@ -1512,8 +1486,9 @@ function updateHeaderUI(user) {
     // Desktop
     const loginSignupLink = document.getElementById('login-signup-link');
     const profileRibbon = document.getElementById('profile-ribbon');
-    const profileRibbonName = document.getElementById('profile-ribbon-name');
-    const profileRibbonAvatar = document.getElementById('profile-ribbon-avatar');
+    const profileInitials = document.getElementById('profile-ribbon-initials');
+    const dropdownUserName = document.getElementById('dropdown-user-name');
+    const dropdownUserEmail = document.getElementById('dropdown-user-email');
     // Mobile
     const loginSignupLinkMobile = document.getElementById('login-signup-link-mobile');
 
@@ -1524,15 +1499,13 @@ function updateHeaderUI(user) {
         if (profileRibbon) profileRibbon.style.display = 'flex';
 
         // Fetch name from Firestore, prioritize customer name over email
-        if (window.db && profileRibbonName && profileRibbonAvatar) {
+        if (window.db && profileInitials) {
             window.db.collection('artifacts').doc('default-app-id').collection('users').doc(user.uid).get().then(doc => {
                 let name = '';
-                let avatarUrl = '';
                 
                 if (doc.exists && doc.data().name && doc.data().name.trim()) {
                     // Use the customer's actual name
                     name = doc.data().name.trim();
-                    avatarUrl = doc.data().avatarUrl || '';
                 } else if (user.displayName) {
                     // Fallback to display name
                     name = user.displayName;
@@ -1541,23 +1514,21 @@ function updateHeaderUI(user) {
                     name = user.email.split('@')[0];
                 }
                 
-                profileRibbonName.textContent = name;
+                // Set initials in the button
+                const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                profileInitials.textContent = initials || name.charAt(0).toUpperCase();
                 
-                // Set avatar
-                if (avatarUrl) {
-                    profileRibbonAvatar.innerHTML = `<img src="${avatarUrl}" alt="Profile" class="w-full h-full object-cover rounded-full">`;
-                } else {
-                    // Generate initials from name
-                    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-                    profileRibbonAvatar.textContent = initials;
-                }
+                // Update dropdown header
+                if (dropdownUserName) dropdownUserName.textContent = name;
+                if (dropdownUserEmail) dropdownUserEmail.textContent = user.email || '';
             }).catch(error => {
                 console.error('Error fetching user profile:', error);
                 // Fallback if Firestore fails
                 const fallbackName = user.displayName || user.email.split('@')[0];
-                profileRibbonName.textContent = fallbackName;
                 const initials = fallbackName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-                profileRibbonAvatar.textContent = initials;
+                profileInitials.textContent = initials || fallbackName.charAt(0).toUpperCase();
+                if (dropdownUserName) dropdownUserName.textContent = fallbackName;
+                if (dropdownUserEmail) dropdownUserEmail.textContent = user.email || '';
             });
         }
         
@@ -2404,23 +2375,19 @@ async function showProfileRibbon(user) {
     let profile = profileSnap.exists() ? profileSnap.data() : {};
     const name = profile.name || user.displayName || user.email || '';
     const email = user.email || '';
-    const avatarUrl = profile.avatarUrl || '';
 
-    // Set name
-    const ribbonName = document.getElementById('profile-ribbon-name');
-    if (ribbonName) ribbonName.textContent = name;
-
-    // Set avatar or initials
-    const ribbonAvatar = document.getElementById('profile-ribbon-avatar');
-    if (ribbonAvatar) {
-        if (avatarUrl) {
-            ribbonAvatar.innerHTML = `<img src="${avatarUrl}" alt="Profile" class="w-full h-full object-cover rounded-full">`;
-        } else {
-            ribbonAvatar.textContent = name
-                ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2)
-                : email[0].toUpperCase();
-        }
+    // Set initials in profile button
+    const profileInitials = document.getElementById('profile-ribbon-initials');
+    if (profileInitials) {
+        const initials = name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2) : email[0].toUpperCase();
+        profileInitials.textContent = initials;
     }
+
+    // Update dropdown header
+    const dropdownUserName = document.getElementById('dropdown-user-name');
+    const dropdownUserEmail = document.getElementById('dropdown-user-email');
+    if (dropdownUserName) dropdownUserName.textContent = name;
+    if (dropdownUserEmail) dropdownUserEmail.textContent = email;
 
     // Show ribbon
     const ribbon = document.getElementById('profile-ribbon');

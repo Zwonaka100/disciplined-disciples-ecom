@@ -58,25 +58,57 @@
         </div>
     </div>
 
-    <header class="bg-white shadow-sm">
-        <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div class="flex items-center space-x-3">
-                <img src="Assets/45.png" alt="Disciplined Disciples" class="h-12 w-12 rounded object-cover" data-admin-logo>
-                <div>
-                    <h1 class="text-xl font-semibold text-slate-900">Disciplined Disciples Admin</h1>
-                    <p class="text-sm text-slate-500">Order management &amp; customer insights</p>
-                </div>
+    <!-- Main Layout with Sidebar -->
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r border-gray-200 fixed h-full overflow-y-auto z-30">
+            <div class="p-6 border-b border-gray-200">
+                <a href="index.html" class="flex items-center gap-3">
+                    <img src="Assets/45.png" alt="Logo" class="h-10 w-10 rounded-lg object-cover">
+                    <div>
+                        <h1 class="font-bold text-gray-900">Disciplined</h1>
+                        <p class="text-xs text-gray-500">Admin Panel</p>
+                    </div>
+                </a>
             </div>
-            <nav class="flex items-center space-x-3">
-                <a href="index.html" class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition">View Storefront</a>
-                <a href="profile.html" class="px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition">Customer Profile</a>
-                <button id="admin-logout" type="button" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition">Logout</button>
+            <nav class="p-4 space-y-2">
+                <a href="admin-dashboard.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-lg text-white transition" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <i class="fas fa-chart-line w-5"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="admin-products.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition">
+                    <i class="fas fa-box w-5"></i>
+                    <span>Products</span>
+                </a>
+                <a href="#orders-section" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition">
+                    <i class="fas fa-shopping-bag w-5"></i>
+                    <span>Orders</span>
+                </a>
+                <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 cursor-not-allowed">
+                    <i class="fas fa-newspaper w-5"></i>
+                    <span>Blog</span>
+                    <span class="ml-auto text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">Soon</span>
+                </a>
+                <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 cursor-not-allowed">
+                    <i class="fas fa-users w-5"></i>
+                    <span>The Tribe</span>
+                    <span class="ml-auto text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">Soon</span>
+                </a>
+                <div class="border-t border-gray-200 my-4"></div>
+                <a href="index.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition">
+                    <i class="fas fa-store w-5"></i>
+                    <span>View Store</span>
+                </a>
+                <button id="admin-logout" type="button" class="w-full sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition">
+                    <i class="fas fa-sign-out-alt w-5"></i>
+                    <span>Logout</span>
+                </button>
             </nav>
-        </div>
-    </header>
+        </aside>
 
-    <main class="container mx-auto px-4 py-8 space-y-8">
-        <div id="admin-alert" class="hidden"></div>
+        <!-- Main Content -->
+        <main class="flex-1 ml-64 p-8 space-y-8">
+            <div id="admin-alert" class="hidden"></div>
 
         <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-6">
             <article class="bg-white rounded-xl shadow p-6">
@@ -104,7 +136,7 @@
             </article>
         </section>
 
-        <section class="bg-white rounded-xl shadow">
+        <section id="orders-section" class="bg-white rounded-xl shadow">
             <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 px-6 py-5 border-b border-slate-200">
                 <div>
                     <h2 class="text-lg font-semibold text-slate-900">Orders</h2>
@@ -130,7 +162,7 @@
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <input type="search" id="admin-customer-filter" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48" placeholder="Search customer, email, order" aria-label="Filter by customer" />
-                    <select id="admin-date-range" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select id="admin-date-range" aria-label="Filter by date range" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="ltd">Lifetime (All)</option>
                         <option value="today">Today</option>
                         <option value="this-week">This week</option>
@@ -140,7 +172,7 @@
                     </select>
                     <input type="date" id="admin-date-from" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-36" aria-label="Filter from date" />
                     <input type="date" id="admin-date-to" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-36" aria-label="Filter to date" />
-                    <select id="admin-status-filter" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select id="admin-status-filter" aria-label="Filter by order status" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="all">All statuses</option>
                         <option value="awaiting payment">Awaiting payment</option>
                         <option value="order placed">Order placed</option>
@@ -149,7 +181,7 @@
                         <option value="delivered">Delivered</option>
                         <option value="cancelled">Cancelled</option>
                     </select>
-                    <select id="admin-payment-filter" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select id="admin-payment-filter" aria-label="Filter by payment status" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="all">All payments</option>
                         <option value="pending">Pending</option>
                         <option value="paid">Paid</option>
@@ -222,17 +254,18 @@
             </div>
         </section>
     </main>
+    </div><!-- End of flex container -->
 
 <!-- Footer Section -->
-    <footer class="footer bg-gray-800 text-white py-8 mt-12">
+    <footer class="footer bg-gray-800 text-white py-8 mt-12 ml-64">
         <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
             <div class="footer-col">
                 <h3 class="footer-heading">Disciplined Disciples</h3>
                 <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
                 <div class="social-links">
-                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="social-link"><i class="fab fa-instagram"></i></a>
-                    <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link" aria-label="Follow us on Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-link" aria-label="Follow us on Twitter"><i class="fab fa-twitter"></i></a>
                 </div>
             </div>
             <div class="footer-col">
@@ -262,7 +295,7 @@
         </div>
         <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
             <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
-            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> (Pty) Ltd</p>
+            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> 💜</p>
         </div>
     </footer>
 

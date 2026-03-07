@@ -37,17 +37,30 @@
                     <li><a href="shop.html" class="nav-link">Shop</a></li>
                     <li><a href="blog.html" class="nav-link">Blog</a></li>
                     <li><a href="contact.html" class="nav-link">Contact</a></li>
-                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link"><i class="fab fa-instagram"></i></a></li>
-                    <li><a href="cart.html" class="nav-link"><i class="fas fa-shopping-cart"></i></a></li>
+                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a></li>
+                    <li><a href="cart.html" class="nav-link" aria-label="Shopping Cart"><i class="fas fa-shopping-cart"></i></a></li>
                 </ul>
                 <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
                 <!-- Standardized Profile Dropdown -->
-                <div id="profile-ribbon" class="relative" style="display: none;">
-                    <div class="flex items-center space-x-2 cursor-pointer select-none hover:bg-gray-50 rounded-lg px-2 py-1 transition-colors">
-                        <span id="profile-ribbon-name" class="font-semibold text-gray-700 text-sm"></span>
-                        <div id="profile-ribbon-avatar" class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-200 text-gray-700 font-bold text-xs border-2 border-gray-300 overflow-hidden"></div>
-                        <i class="fas fa-chevron-down text-gray-500 text-xs"></i>
-                    </div>
+                <div id="profile-ribbon" style="display: none; position: relative;">
+                    <button id="profile-btn" style="
+                        width: 42px;
+                        height: 42px;
+                        border-radius: 50%;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        font-weight: 600;
+                        font-size: 14px;
+                        border: none;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+                        transition: all 0.3s ease;
+                    " onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.5)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)';">
+                        <span id="profile-ribbon-initials" style="letter-spacing: 1px;">U</span>
+                    </button>
                 </div>
             </nav>
             <button class="menu-toggle" aria-label="Toggle navigation">
@@ -61,7 +74,7 @@
                 <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
                 <li><a href="blog.html" class="nav-link-mobile">Blog</a></li>
                 <li><a href="contact.html" class="nav-link-mobile">Contact</a></li>
-                <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
+                <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
                 <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
             </ul>
             <a href="login-signup.html" id="login-signup-link-mobile" class="nav-link-mobile"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
@@ -69,23 +82,38 @@
     </header>
 
     <!-- Profile Dropdown - floating compact dropdown -->
-    <div id="profile-dropdown" class="fixed right-4 bg-white border border-gray-200 rounded shadow-lg min-w-[120px] z-[9999] overflow-hidden hidden" style="top: 60px;">
-        <div class="py-1">
-            <a href="profile.html" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                <i class="fas fa-user mr-2 text-gray-400"></i>
-                Profile
+    <div id="profile-dropdown" class="hidden" style="
+        position: fixed;
+        right: 16px;
+        top: 70px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        min-width: 220px;
+        z-index: 9999;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.05);
+    ">
+        <div style="padding: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <p id="dropdown-user-name" style="font-weight: 600; font-size: 15px; margin: 0;">Welcome!</p>
+            <p id="dropdown-user-email" style="font-size: 12px; opacity: 0.85; margin: 4px 0 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></p>
+        </div>
+        <div style="padding: 8px 0;">
+            <a href="profile.html" style="display: flex; align-items: center; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f3e8ff'; this.style.color='#7c3aed';" onmouseout="this.style.background='transparent'; this.style.color='#374151';">
+                <i class="fas fa-user-circle" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
+                My Profile
             </a>
-            <a href="profile.html#orders" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                <i class="fas fa-shopping-bag mr-2 text-gray-400"></i>
-                Orders
+            <a href="profile.html#orders" style="display: flex; align-items: center; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f3e8ff'; this.style.color='#7c3aed';" onmouseout="this.style.background='transparent'; this.style.color='#374151';">
+                <i class="fas fa-box" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
+                My Orders
             </a>
-            <a href="profile.html#account" class="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                <i class="fas fa-cog mr-2 text-gray-400"></i>
+            <a href="profile.html#account" style="display: flex; align-items: center; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f3e8ff'; this.style.color='#7c3aed';" onmouseout="this.style.background='transparent'; this.style.color='#374151';">
+                <i class="fas fa-cog" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
                 Settings
             </a>
-            <div class="border-t border-gray-100"></div>
-            <button id="dropdown-logout-btn" class="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
-                <i class="fas fa-sign-out-alt mr-2 text-red-500"></i>
+            <div style="height: 1px; background: #e5e7eb; margin: 8px 0;"></div>
+            <button id="dropdown-logout-btn" style="display: flex; align-items: center; width: 100%; padding: 12px 16px; color: #dc2626; background: none; border: none; font-size: 14px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#fef2f2';" onmouseout="this.style.background='transparent';">
+                <i class="fas fa-sign-out-alt" style="margin-right: 12px; width: 16px;"></i>
                 Logout
             </button>
         </div>
@@ -148,9 +176,9 @@
                 <h3 class="footer-heading">Disciplined Disciples</h3>
                 <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
                 <div class="social-links">
-                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" class="social-link"><i class="fab fa-instagram"></i></a>
-                    <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link" aria-label="Follow us on Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-link" aria-label="Follow us on Twitter"><i class="fab fa-twitter"></i></a>
                 </div>
             </div>
             <div class="footer-col">
@@ -180,7 +208,7 @@
         </div>
         <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
             <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
-            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> (Pty) Ltd</p>
+            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> 💜</p>
         </div>
     </footer>
     <script src="script.js"></script>
