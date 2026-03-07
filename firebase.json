@@ -1,13 +1,15 @@
 {
-  "hosting": {
-    "public": "public",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**",
-      "**/*.bat",
-      "**/*.ps1"
-    ],
+  "hosting": [
+    {
+      "target": "main",
+      "public": "public",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**",
+        "**/*.bat",
+        "**/*.ps1"
+      ],
     "cleanUrls": true,
     "trailingSlash": false,
     "headers": [
@@ -21,7 +23,8 @@
         ]
       }
     ]
-  },
+  }
+  ],
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"

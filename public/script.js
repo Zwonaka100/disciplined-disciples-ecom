@@ -651,7 +651,7 @@ function isAwaitingPaymentExpired(orderLike) {
 // Get this from your Firebase project settings -> Your apps -> Web app -> Config.
 // It should be a JavaScript object, NOT a JSON string.
 const firebaseConfig = {
-  apiKey: "AIzaSyBVpuDI_YJI7mxtT6-igSL7ZX3s-cqMRnc",
+  apiKey: window.FIREBASE_API_KEY || "YOUR_API_KEY_HERE",
   authDomain: "disciplined-disciples-1.firebaseapp.com",
   projectId: "disciplined-disciples-1",
   storageBucket: "disciplined-disciples-1.firebasestorage.app",
