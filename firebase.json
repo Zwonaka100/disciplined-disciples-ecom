@@ -10,20 +10,20 @@
         "**/*.bat",
         "**/*.ps1"
       ],
-    "cleanUrls": true,
-    "trailingSlash": false,
-    "headers": [
-      {
-        "source": "**/*.@(html|js)",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache, no-store, must-revalidate"
-          }
-        ]
-      }
-    ]
-  }
+      "cleanUrls": true,
+      "trailingSlash": false,
+      "headers": [
+        {
+          "source": "**/*.@(html|js)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        }
+      ]
+    }
   ],
   "firestore": {
     "rules": "firestore.rules",
@@ -34,7 +34,7 @@
   },
   "functions": {
     "source": "functions",
-    "serviceAccount": "disciplined-disciples-1@appspot.gserviceaccount.com"
+    "codebase": "default"
   },
   "emulators": {
     "auth": {
