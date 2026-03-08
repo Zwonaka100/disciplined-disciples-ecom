@@ -3,1360 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About | Disciplined Disciples</title>
-    <meta name="description" content="Meet Zolile Nomaqhiza, founder of Disciplined Disciples. Discover our journey of 16 years of discipline, faith, and purpose.">
-    <link rel="icon" type="image/png" href="Assets/45.png">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="styles.css">
-    
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2J1GWH59V4"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-2J1GWH59V4');
-    </script>
-
-    <style>
-        .about-hero {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 80px 24px;
-            text-align: center;
-        }
-
-        .about-hero h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 1rem;
-        }
-
-        .about-hero p {
-            font-size: 1.125rem;
-            opacity: 0.95;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .founder-section {
-            padding: 60px 24px;
-            background: white;
-        }
-
-        .founder-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            align-items: center;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .founder-image {
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-        }
-
-        .founder-image img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        .founder-content h2 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            color: #222;
-        }
-
-        .founder-content h3 {
-            font-size: 1.25rem;
-            color: #667eea;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-        }
-
-        .founder-content p {
-            font-size: 1rem;
-            line-height: 1.8;
-            color: #555;
-            margin-bottom: 1.5rem;
-        }
-
-        .founder-content strong {
-            color: #222;
-            font-weight: 600;
-        }
-
-        .story-section {
-            padding: 60px 24px;
-            background: #f8f8f8;
-        }
-
-        .story-container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        .story-section h2 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 2rem;
-            color: #222;
-            text-align: center;
-        }
-
-        .story-intro {
-            font-size: 1rem;
-            line-height: 1.8;
-            color: #555;
-            margin-bottom: 3rem;
-            text-align: center;
-        }
-
-        .timeline {
-            position: relative;
-            padding: 0;
-        }
-
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 20px;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: #667eea;
-        }
-
-        .timeline-item {
-            margin-bottom: 2rem;
-            padding-left: 60px;
-            position: relative;
-        }
-
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: 10px;
-            top: 8px;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #667eea;
-            border: 3px solid white;
-            box-shadow: 0 0 0 2px #667eea;
-        }
-
-        .timeline-year {
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: #667eea;
-            text-transform: uppercase;
-            margin-bottom: 0.5rem;
-        }
-
-        .timeline-text {
-            font-size: 1rem;
-            line-height: 1.7;
-            color: #555;
-        }
-
-        .timeline-text strong {
-            color: #222;
-            font-weight: 600;
-        }
-
-        .mission-section {
-            padding: 60px 24px;
-            background: white;
-        }
-
-        .mission-container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .mission-section h2 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 2rem;
-            color: #222;
-            text-align: center;
-        }
-
-        .mission-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-        }
-
-        .mission-card {
-            background: #f8f8f8;
-            padding: 2rem;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
-        }
-
-        .mission-card h3 {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: #222;
-            margin-bottom: 1rem;
-        }
-
-        .mission-card p {
-            font-size: 1rem;
-            line-height: 1.7;
-            color: #555;
-        }
-
-        .cta-section {
-            padding: 60px 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-align: center;
-        }
-
-        .cta-section h2 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-        }
-
-        .cta-section p {
-            font-size: 1.125rem;
-            margin-bottom: 2rem;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .cta-btn {
-            display: inline-block;
-            background: white;
-            color: #667eea;
-            padding: 12px 40px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .cta-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-
-        @media (max-width: 768px) {
-            .founder-grid {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-            }
-
-            .about-hero h1 {
-                font-size: 1.75rem;
-            }
-
-            .timeline::before {
-                left: 8px;
-            }
-
-            .timeline-item {
-                padding-left: 40px;
-            }
-
-            .timeline-item::before {
-                left: -2px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <header class="header bg-white shadow">
-        <div class="container flex justify-between items-center py-4">
-            <a href="index.html" class="logo flex items-center">
-                <img src="Assets/45.png" alt="Disciplined Disciples Logo" class="logo-img">
-                <span class="font-bold text-xl">Disciplined Disciples</span>
-            </a>
-            <nav class="nav-menu">
-                <ul class="flex space-x-6">
-                    <li><a href="index.html" class="nav-link">Home</a></li>
-                    <li><a href="about.html" class="nav-link active">About</a></li>
-                    <li><a href="shop.html" class="nav-link">Shop</a></li>
-                    <li><a href="blog.html" class="nav-link">Blog</a></li>
-                    <li><a href="contact.html" class="nav-link">Contact</a></li>
-                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link"><i class="fab fa-instagram"></i></a></li>
-                    <li><a href="cart.html" class="nav-link"><i class="fas fa-shopping-cart"></i></a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
-
-    <!-- Hero Section -->
-    <section class="about-hero">
-        <h1>Our Story</h1>
-        <p>More than clothing. More than fashion. We are a movement towards disciplined, faith-filled living.</p>
-    </section>
-
-    <!-- Founder Section -->
-    <section class="founder-section">
-        <div class="founder-grid">
-            <div>
-                <h2>Meet Zolile Nomaqhiza</h2>
-                <h3>Founder & Visionary</h3>
-                <p>In a world that celebrates instant gratification, Zolile Nomaqhiza dared to build something different. Not just a brand — but a <strong>movement</strong>. Not just apparel — but a <strong>declaration of purpose</strong>.</p>
-                <p>Born and raised in South Africa, Zolile witnessed firsthand the transformative power of discipline. From the streets of Johannesburg to the halls of corporate boardrooms, one truth remained constant: <em>"Discipline is the DNA of success."</em></p>
-                <p>Inspired by scripture and driven by faith, Zolile founded <strong>Disciplined Disciples</strong> with a radical vision — to create a tribe of individuals who understand that true freedom comes through discipline, and that every choice, every day, is a step toward greatness or mediocrity.</p>
-                <p><strong>"This is not about fashion. This is about identity. This is about who you choose to become."</strong> - Zolile Nomaqhiza</p>
-            </div>
-            <div class="founder-image">
-                <img src="Assets/Other/WhatsApp Image 2025-09-28 at 12.08.01_503b73c2.jpg" alt="Zolile Nomaqhiza - Founder">
-            </div>
-        </div>
-    </section>
-
-    <!-- Journey Section -->
-    <section class="story-section">
-        <div class="story-container">
-            <h2>The 16-Year Journey</h2>
-            <p class="story-intro">What started as a dream became a calling. Through setbacks, faith, and unwavering discipline, Zolile's journey shaped the foundation of Disciplined Disciples.</p>
-            
-            <div class="timeline">
-                <div class="timeline-item">
-                    <div class="timeline-year">2009</div>
-                    <div class="timeline-text">Walked into Wits University with a dream. Missed the cut for BAccSci by <strong>just 2 points.</strong> A closed door — but God had a different blueprint.</div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-year">2012</div>
-                    <div class="timeline-text">Graduated with a <strong>BCom General.</strong> Something inside refused to settle.</div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-year">2014–2016</div>
-                    <div class="timeline-text">Started SAICA articles. Multiple CTA attempts at Wits and Unisa — <strong>setback after setback,</strong> including a battle with severe eczema.</div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-year">2017</div>
-                    <div class="timeline-text"><strong>CTA passed. Finally, a breakthrough.</strong> That same year, Zolile suffered the loss of his father — his greatest supporter through every attempt.</div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-year">2018–2020</div>
-                    <div class="timeline-text">Sat for the ITC board exams. <strong>Six attempts. Six times the answer was no.</strong></div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-year">2021</div>
-                    <div class="timeline-text">Called it a gap year. But it was surrender. <em>"You cannot kill a calling though."</em></div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-year">2023</div>
-                    <div class="timeline-text">The greatest gift arrived — his daughter <strong>Nkazimulo was born.</strong> Everything shifted. Not the exams. Not the odds. <em>Him.</em> He stopped moving out of desperation and started walking with purpose. That transformation gave birth to <strong>Disciplined Disciples.</strong></div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-year">2024–2025</div>
-                    <div class="timeline-text"><strong>2024 CTA passed. June 2025 IAC passed. December 2025 APC passed.</strong><br>Zolile Nomaqhiza is now eligible to register as a <strong>CA(SA).</strong></div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Mission Section -->
-    <section class="mission-section">
-        <div class="mission-container">
-            <h2>Why We Exist</h2>
-            <div class="mission-cards">
-                <div class="mission-card">
-                    <h3>Discipline as Identity</h3>
-                    <p>We exist to clothe a generation that chooses discipline as a lifestyle — not a phase. Every stitch, every design, is a reminder of who you are committed to becoming.</p>
-                </div>
-                <div class="mission-card">
-                    <h3>Faith-Rooted Purpose</h3>
-                    <p>Anchored in scripture, Disciplined Disciples believes that true freedom is not found in shortcuts — it is earned through daily, intentional choices aligned with purpose and faith.</p>
-                </div>
-                <div class="mission-card">
-                    <h3>A Community, Not Just a Brand</h3>
-                    <p>This is a tribe. A collective of individuals who understand that greatness is not given — it is built, one disciplined decision at a time. Your apparel is your declaration.</p>
-                </div>
-            </div>
-
-            <div style="margin-top: 3rem; padding: 2rem; background: #f8f8f8; border-left: 4px solid #667eea; border-radius: 8px;">
-                <p style="font-size: 1.125rem; font-style: italic; text-align: center; color: #555; margin: 0;">
-                    <strong>"Whoever loves discipline loves knowledge, but whoever hates correction is foolish."</strong>
-                </p>
-                <p style="text-align: center; color: #667eea; font-weight: 600; margin: 0.5rem 0 0 0;">— Proverbs 12:1</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="cta-section">
-        <h2>Ready to Join the Movement?</h2>
-        <p>This is your invitation. Not to buy products, but to become part of something bigger. To declare to the world that you refuse to be average.</p>
-        <a href="shop.html" class="cta-btn">Explore the Collection</a>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div class="footer-col">
-                <h3 class="footer-heading">Disciplined Disciples</h3>
-                <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
-                <div class="social-links">
-                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="social-link"><i class="fab fa-instagram"></i></a>
-                    <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
-                </div>
-            </div>
-            <div class="footer-col">
-                <h3 class="footer-heading">Quick Links</h3>
-                <ul>
-                    <li><a href="index.html" class="footer-link">Home</a></li>
-                    <li><a href="shop.html" class="footer-link">Shop</a></li>
-                    <li><a href="about.html" class="footer-link">About</a></li>
-                    <li><a href="blog.html" class="footer-link">Blog</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h3 class="footer-heading">Support</h3>
-                <ul>
-                    <li><a href="faq.html" class="footer-link">FAQs</a></li>
-                    <li><a href="shipping-returns.html" class="footer-link">Shipping & Returns</a></li>
-                    <li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h3 class="footer-heading">Contact</h3>
-                <p class="footer-text">Email: nomaqhizazolile@gmail.com</p>
-                <p class="footer-text">Phone: +27 69 206 0618</p>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
-        </div>
-    </footer>
-
-    <!-- WhatsApp Button -->
-    <a href="https://wa.me/27692060618" class="whatsapp-float" target="_blank" rel="noopener noreferrer">
-        <i class="fab fa-whatsapp"></i>
-    </a>
-
-    <script src="script.js"></script>
-</body>
-</html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Enhanced SEO Meta Tags -->
-    <title>Our Story | About Disciplined Disciples | Faith-Based Streetwear South Africa</title>
-    <meta name="description" content="Meet Zolile Nomaqhiza, founder of Disciplined Disciples. Discover our journey, mission, and vision to inspire disciplined, faith-filled living through premium South African streetwear.">
-    <meta name="keywords" content="about Disciplined Disciples, Zolile Nomaqhiza, SA streetwear founder, faith-based clothing, discipline philosophy, Christian streetwear brand, South African fashion story">
-    <meta name="author" content="Disciplined Disciples">
-    <meta name="robots" content="index, follow">
-    
-    <!-- Geo-Targeting -->
-    <meta name="geo.region" content="ZA-GP">
-    <meta name="geo.placename" content="Johannesburg">
-    
-    <!-- Open Graph -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://disciplined-disciples-1.web.app/about.html">
-    <meta property="og:title" content="Our Story | Disciplined Disciples | Faith-Based Streetwear">
-    <meta property="og:description" content="Meet Zolile Nomaqhiza and discover the heart behind Disciplined Disciples - a movement of faith, discipline, and purpose.">
-    <meta property="og:image" content="https://disciplined-disciples-1.web.app/Assets/Other/WhatsApp Image 2025-09-28 at 12.08.01_503b73c2.jpg">
-    <meta property="og:locale" content="en_ZA">
-    
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Our Story | Disciplined Disciples">
-    <meta name="twitter:description" content="Meet Zolile Nomaqhiza and discover the heart behind Disciplined Disciples.">
-    <meta name="twitter:image" content="https://disciplined-disciples-1.web.app/Assets/Other/WhatsApp Image 2025-09-28 at 12.08.01_503b73c2.jpg">
-    
-    <!-- Canonical -->
-    <link rel="canonical" href="https://disciplined-disciples-1.web.app/about.html">
-    
-    <!-- Schema.org AboutPage -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "AboutPage",
-      "name": "About Disciplined Disciples",
-      "description": "The story of Zolile Nomaqhiza and Disciplined Disciples - faith-based streetwear inspiring disciplined living",
-      "url": "https://disciplined-disciples-1.web.app/about.html",
-      "mainEntity": {
-        "@type": "Person",
-        "name": "Zolile Nomaqhiza",
-        "jobTitle": "Founder & Creative Director",
-        "description": "Founder of Disciplined Disciples, faith-driven entrepreneur",
-        "image": "https://disciplined-disciples-1.web.app/Assets/Other/WhatsApp Image 2025-09-28 at 12.08.01_503b73c2.jpg"
-      }
-    }
-    </script>
-
-    <link rel="icon" type="image/png" href="Assets/45.png">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    
-    <!-- Google Analytics 4 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2J1GWH59V4"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-2J1GWH59V4');
-    </script>
-
-    <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-        :root {
-            --ink: #0e0e0e;
-            --gold: #C9A84C;
-            --gold-light: #e8c96a;
-            --cream: #F9F5EE;
-            --warm-white: #FDFAF4;
-            --grey: #6b6b6b;
-            --divider: #e0d8c8;
-        }
-
-        html { scroll-behavior: smooth; }
-
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--warm-white);
-            color: var(--ink);
-            overflow-x: hidden;
-        }
-
-        /* ── HEADER ── */
-        .header {
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--divider);
-            padding: 16px 24px;
-        }
-
-        .header .container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-            color: var(--ink);
-            font-weight: 600;
-        }
-
-        .logo img {
-            width: 32px;
-            height: 32px;
-        }
-
-        .nav-menu {
-            display: flex;
-            gap: 32px;
-            align-items: center;
-        }
-
-        .nav-link {
-            text-decoration: none;
-            color: var(--ink);
-            font-size: 14px;
-            font-weight: 500;
-            transition: color 0.3s ease;
-        }
-
-        .nav-link:hover {
-            color: var(--gold);
-        }
-
-        .nav-link.active {
-            color: var(--gold);
-        }
-
-        /* ── HERO ── */
-        .hero {
-            min-height: 100vh;
-            display: grid;
-            grid-template-rows: 1fr auto;
-            background: var(--ink);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero-texture {
-            position: absolute;
-            inset: 0;
-            background-image:
-                repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(201,168,76,0.04) 60px, rgba(201,168,76,0.04) 61px),
-                repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(201,168,76,0.04) 60px, rgba(201,168,76,0.04) 61px);
-        }
-
-        .hero-content {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 120px 24px 60px;
-            position: relative;
-            z-index: 2;
-        }
-
-        .brand-tag {
-            display: inline-block;
-            border: 1px solid var(--gold);
-            color: var(--gold);
-            font-size: 11px;
-            font-weight: 500;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            padding: 6px 18px;
-            margin-bottom: 40px;
-            animation: fadeUp 0.8s ease forwards;
-            opacity: 0;
-        }
-
-        .hero-title {
-            font-family: 'Playfair Display', serif;
-            font-size: clamp(52px, 10vw, 110px);
-            font-weight: 900;
-            color: var(--cream);
-            line-height: 0.9;
-            letter-spacing: -0.02em;
-            animation: fadeUp 0.8s 0.15s ease forwards;
-            opacity: 0;
-        }
-
-        .hero-title em {
-            color: var(--gold);
-            font-style: italic;
-            display: block;
-        }
-
-        .hero-sub {
-            margin-top: 32px;
-            font-size: 16px;
-            font-weight: 300;
-            color: #a0977f;
-            letter-spacing: 0.05em;
-            max-width: 420px;
-            line-height: 1.7;
-            animation: fadeUp 0.8s 0.3s ease forwards;
-            opacity: 0;
-        }
-
-        .hero-scroll {
-            padding: 40px 24px;
-            display: flex;
-            justify-content: center;
-            position: relative;
-            z-index: 2;
-            animation: fadeUp 0.8s 0.5s ease forwards;
-            opacity: 0;
-        }
-
-        .scroll-line {
-            width: 1px;
-            height: 60px;
-            background: linear-gradient(to bottom, var(--gold), transparent);
-        }
-
-        /* ── QUOTE BANNER ── */
-        .quote-banner {
-            background: var(--gold);
-            padding: 28px 24px;
-            text-align: center;
-        }
-
-        .quote-banner p {
-            font-family: 'Playfair Display', serif;
-            font-style: italic;
-            font-size: clamp(18px, 3vw, 26px);
-            color: var(--ink);
-            font-weight: 700;
-        }
-
-        /* ── SECTIONS ── */
-        section { padding: 100px 24px; }
-
-        .container {
-            max-width: 760px;
-            margin: 0 auto;
-        }
-
-        .section-label {
-            font-size: 10px;
-            font-weight: 500;
-            letter-spacing: 0.25em;
-            text-transform: uppercase;
-            color: var(--gold);
-            margin-bottom: 20px;
-        }
-
-        .section-title {
-            font-family: 'Playfair Display', serif;
-            font-size: clamp(36px, 6vw, 60px);
-            font-weight: 900;
-            line-height: 1.05;
-            color: var(--ink);
-            margin-bottom: 36px;
-        }
-
-        .body-text {
-            font-size: 17px;
-            font-weight: 300;
-            line-height: 1.85;
-            color: #2a2a2a;
-            margin-bottom: 24px;
-        }
-
-        .body-text strong {
-            font-weight: 500;
-            color: var(--ink);
-        }
-
-        /* ── FOUNDER INTRO ── */
-        .founder-section {
-            background: var(--cream);
-        }
-
-        .founder-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 60px;
-        }
-
-        @media (min-width: 768px) {
-            .founder-grid {
-                grid-template-columns: 1fr 1fr;
-                align-items: start;
-            }
-        }
-
-        .pull-quote {
-            background: var(--ink);
-            color: var(--cream);
-            padding: 40px 36px;
-            position: relative;
-        }
-
-        .pull-quote::before {
-            content: '"';
-            font-family: 'Playfair Display', serif;
-            font-size: 100px;
-            color: var(--gold);
-            line-height: 0.8;
-            display: block;
-            margin-bottom: 16px;
-        }
-
-        .pull-quote p {
-            font-family: 'Playfair Display', serif;
-            font-style: italic;
-            font-size: 22px;
-            line-height: 1.5;
-            margin-bottom: 20px;
-        }
-
-        .pull-quote cite {
-            font-size: 12px;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            color: var(--gold);
-            font-style: normal;
-        }
-
-        /* ── TIMELINE ── */
-        .timeline-section {
-            background: var(--ink);
-            color: var(--cream);
-        }
-
-        .timeline-section .section-title {
-            color: var(--cream);
-        }
-
-        .timeline-section .body-text {
-            color: #c0b89a;
-        }
-
-        .timeline {
-            margin-top: 60px;
-            position: relative;
-        }
-
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 1px;
-            background: linear-gradient(to bottom, var(--gold), transparent);
-        }
-
-        .tl-item {
-            padding: 0 0 52px 36px;
-            position: relative;
-            opacity: 0;
-            transform: translateX(-16px);
-            transition: opacity 0.6s ease, transform 0.6s ease;
-        }
-
-        .tl-item.visible {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .tl-item::before {
-            content: '';
-            position: absolute;
-            left: -4px;
-            top: 6px;
-            width: 9px;
-            height: 9px;
-            border-radius: 50%;
-            background: var(--gold);
-        }
-
-        .tl-year {
-            font-size: 11px;
-            font-weight: 500;
-            letter-spacing: 0.2em;
-            color: var(--gold);
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
-
-        .tl-text {
-            font-size: 16px;
-            font-weight: 300;
-            line-height: 1.7;
-            color: #c0b89a;
-        }
-
-        .tl-text strong {
-            color: var(--cream);
-            font-weight: 500;
-        }
-
-        /* ── STAT ROW ── */
-        .stat-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 1px;
-            background: var(--divider);
-            border: 1px solid var(--divider);
-            margin: 80px 0 0;
-        }
-
-        .stat {
-            background: var(--ink);
-            padding: 36px 24px;
-            text-align: center;
-        }
-
-        .stat-num {
-            font-family: 'Playfair Display', serif;
-            font-size: 52px;
-            font-weight: 900;
-            color: var(--gold);
-            line-height: 1;
-            margin-bottom: 8px;
-        }
-
-        .stat-label {
-            font-size: 11px;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            color: #706858;
-        }
-
-        /* ── VISION ── */
-        .vision-section {
-            background: var(--warm-white);
-        }
-
-        .vision-card {
-            border: 1px solid var(--divider);
-            padding: 48px 40px;
-            margin-bottom: 24px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .vision-card::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 3px;
-            background: var(--gold);
-        }
-
-        .vision-card h3 {
-            font-family: 'Playfair Display', serif;
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            color: var(--ink);
-        }
-
-        .vision-card p {
-            font-size: 16px;
-            font-weight: 300;
-            line-height: 1.8;
-            color: #3a3a3a;
-        }
-
-        /* ── CLOSING CTA ── */
-        .cta-section {
-            background: var(--gold);
-            text-align: center;
-            padding: 100px 24px;
-        }
-
-        .cta-section .section-title {
-            color: var(--ink);
-            margin-bottom: 20px;
-        }
-
-        .cta-section p {
-            font-size: 17px;
-            font-weight: 300;
-            color: rgba(14,14,14,0.7);
-            max-width: 500px;
-            margin: 0 auto 40px;
-            line-height: 1.7;
-        }
-
-        .cta-btn {
-            display: inline-block;
-            background: var(--ink);
-            color: var(--gold);
-            font-size: 12px;
-            font-weight: 500;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            padding: 18px 48px;
-            text-decoration: none;
-            transition: background 0.2s ease;
-            cursor: pointer;
-        }
-
-        .cta-btn:hover {
-            background: #1a1a1a;
-        }
-
-        /* ── ANIMATIONS ── */
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(24px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .reveal {
-            opacity: 0;
-            transform: translateY(32px);
-            transition: opacity 0.7s ease, transform 0.7s ease;
-        }
-
-        .reveal.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .reveal-delay-1 { transition-delay: 0.1s; }
-        .reveal-delay-2 { transition-delay: 0.2s; }
-        .reveal-delay-3 { transition-delay: 0.3s; }
-
-        hr.divider {
-            border: none;
-            border-top: 1px solid var(--divider);
-            margin: 48px 0;
-        }
-
-        .mobile-menu,
-        .menu-toggle {
-            display: none;
-        }
-
-        @media (max-width: 768px) {
-            .nav-menu {
-                display: none;
-            }
-
-            .menu-toggle {
-                display: block;
-                background: none;
-                border: none;
-                cursor: pointer;
-                color: var(--ink);
-            }
-
-            section {
-                padding: 60px 24px;
-            }
-
-            .hero-content {
-                padding: 80px 24px 40px;
-            }
-
-            .stat-row {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        /* Footer */
-        .footer {
-            background: var(--ink);
-            color: var(--cream);
-            padding: 60px 24px 30px;
-            border-top: 1px solid var(--divider);
-        }
-
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 40px;
-            margin-bottom: 40px;
-        }
-
-        .footer-section h4 {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--gold);
-            margin-bottom: 16px;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-        }
-
-        .footer-section p,
-        .footer-section a {
-            font-size: 14px;
-            color: #a0977f;
-            text-decoration: none;
-            line-height: 1.8;
-            transition: color 0.3s ease;
-        }
-
-        .footer-section a:hover {
-            color: var(--gold);
-        }
-
-        .footer-bottom {
-            border-top: 1px solid var(--divider);
-            padding-top: 20px;
-            text-align: center;
-            color: #706858;
-            font-size: 12px;
-        }
-
-        .whatsapp-float {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 56px;
-            height: 56px;
-            background: #25D366;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 28px;
-            text-decoration: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            transition: transform 0.3s ease;
-            z-index: 999;
-        }
-
-        .whatsapp-float:hover {
-            transform: scale(1.1);
-        }
-    </style>
-</head>
-<body>
-    <!-- HEADER -->
-    <header class="header">
-        <div class="container" style="max-width: 1200px;">
-            <a href="index.html" class="logo">
-                <img src="Assets/45.png" alt="Disciplined Disciples Logo">
-                <span>Disciplined Disciples</span>
-            </a>
-            <nav class="nav-menu">
-                <a href="index.html" class="nav-link">Home</a>
-                <a href="about.html" class="nav-link active">About</a>
-                <a href="shop.html" class="nav-link">Shop</a>
-                <a href="blog.html" class="nav-link">Blog</a>
-                <a href="contact.html" class="nav-link">Contact</a>
-                <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link">
-                    <i class="fab fa-instagram"></i>
-                </a>
-                <a href="cart.html" class="nav-link">
-                    <i class="fas fa-shopping-cart"></i>
-                </a>
-            </nav>
-            <button class="menu-toggle" aria-label="Toggle navigation">
-                <i class="fas fa-bars"></i>
-            </button>
-        </div>
-    </header>
-
-    <!-- HERO -->
-    <section class="hero">
-        <div class="hero-texture"></div>
-        <div class="hero-content">
-            <span class="brand-tag">Disciplined Disciples · Est. 2023</span>
-            <h1 class="hero-title">
-                Not a brand.<br>
-                <em>A movement.</em>
-            </h1>
-            <p class="hero-sub">Born from 16 years of struggle, faith, and the unrelenting belief that discipline is the DNA of success.</p>
-        </div>
-        <div class="hero-scroll">
-            <div class="scroll-line"></div>
-        </div>
-    </section>
-
-    <!-- QUOTE BANNER -->
-    <div class="quote-banner">
-        <p>"What could not happen without Discipline in 14 years, happened with Discipline in 2 years."</p>
-    </div>
-
-    <!-- FOUNDER SECTION -->
-    <section class="founder-section">
-        <div class="container">
-            <div class="reveal">
-                <p class="section-label">Founder & Visionary</p>
-                <h2 class="section-title">Meet Zolile<br>Nomaqhiza</h2>
-            </div>
-
-            <div class="founder-grid">
-                <div>
-                    <p class="body-text reveal reveal-delay-1">
-                        In a world that celebrates instant gratification, Zolile Nomaqhiza dared to build something different. Not just a brand — but a <strong>movement</strong>. Not just apparel — but a <strong>declaration of purpose</strong>.
-                    </p>
-                    <p class="body-text reveal reveal-delay-2">
-                        Born and raised in South Africa, Zolile witnessed firsthand the transformative power of discipline. From the streets of Johannesburg to the halls of corporate boardrooms, one truth remained constant: <em>"Discipline is the DNA of success."</em>
-                    </p>
-                    <p class="body-text reveal reveal-delay-3">
-                        Inspired by scripture and driven by faith, Zolile founded <strong>Disciplined Disciples</strong> with a radical vision — to create a tribe of individuals who understand that true freedom comes through discipline, and that every choice, every day, is a step toward greatness or mediocrity.
-                    </p>
-                </div>
-
-                <div class="reveal reveal-delay-2">
-                    <div class="pull-quote">
-                        <p>"This is not about fashion. This is about identity. This is about who you choose to become."</p>
-                        <cite>— Zolile Nomaqhiza</cite>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- TIMELINE -->
-    <section class="timeline-section">
-        <div class="container">
-            <div class="reveal">
-                <p class="section-label">The Journey</p>
-                <h2 class="section-title">Relentlessly<br>Disciplined Pursuit</h2>
-                <p class="body-text">The story behind Disciplined Disciples wasn't written in a boardroom. It was forged through 16 years of failure, faith, and refusing to quit.</p>
-            </div>
-
-            <div class="timeline">
-                <div class="tl-item">
-                    <p class="tl-year">2009</p>
-                    <p class="tl-text">Walked into Wits University with a dream. Missed the cut for BAccSci by <strong>just 2 points.</strong> A closed door — but God had a different blueprint.</p>
-                </div>
-                <div class="tl-item">
-                    <p class="tl-year">2012</p>
-                    <p class="tl-text">Graduated with a <strong>BCom General.</strong> Something inside refused to settle.</p>
-                </div>
-                <div class="tl-item">
-                    <p class="tl-year">2014–2016</p>
-                    <p class="tl-text">Started SAICA articles. Multiple CTA attempts at Wits and Unisa — <strong>setback after setback,</strong> including a battle with severe eczema.</p>
-                </div>
-                <div class="tl-item">
-                    <p class="tl-year">2017</p>
-                    <p class="tl-text"><strong>CTA passed. Finally, a breakthrough.</strong> That same year, Zolile suffered the loss of his father — his greatest supporter through every attempt.</p>
-                </div>
-                <div class="tl-item">
-                    <p class="tl-year">2018–2020</p>
-                    <p class="tl-text">Sat for the ITC board exams. <strong>Six attempts. Six times the answer was no.</strong></p>
-                </div>
-                <div class="tl-item">
-                    <p class="tl-year">2021</p>
-                    <p class="tl-text">Called it a gap year. But it was surrender. <em>"You cannot kill a calling though."</em></p>
-                </div>
-                <div class="tl-item">
-                    <p class="tl-year">2023</p>
-                    <p class="tl-text">The greatest gift arrived — his daughter <strong>Nkazimulo was born.</strong> Everything shifted. Not the exams. Not the odds. <em>Him.</em> He stopped moving out of desperation and started walking with purpose. That transformation gave birth to <strong>Disciplined Disciples.</strong></p>
-                </div>
-                <div class="tl-item">
-                    <p class="tl-year">2024–2025</p>
-                    <p class="tl-text"><strong>2024 CTA passed. June 2025 IAC passed. December 2025 APC passed.</strong><br>Zolile Nomaqhiza is now eligible to register as a <strong>CA(SA).</strong></p>
-                </div>
-            </div>
-
-            <div class="stat-row reveal">
-                <div class="stat">
-                    <div class="stat-num">16</div>
-                    <div class="stat-label">Years of Pursuit</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-num">6</div>
-                    <div class="stat-label">ITC Attempts</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-num">2</div>
-                    <div class="stat-label">Years with Discipline</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-num">CA</div>
-                    <div class="stat-label">(SA) Eligible</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- VISION -->
-    <section class="vision-section">
-        <div class="container">
-            <div class="reveal">
-                <p class="section-label">Our Mission</p>
-                <h2 class="section-title">Why We Exist</h2>
-            </div>
-
-            <div class="vision-card reveal reveal-delay-1">
-                <h3>Discipline as Identity</h3>
-                <p>We exist to clothe a generation that chooses discipline as a lifestyle — not a phase. Every stitch, every design, is a reminder of who you are committed to becoming.</p>
-            </div>
-
-            <div class="vision-card reveal reveal-delay-2">
-                <h3>Faith-Rooted Purpose</h3>
-                <p>Anchored in scripture, Disciplined Disciples believes that true freedom is not found in shortcuts — it is earned through daily, intentional choices aligned with purpose and faith.</p>
-            </div>
-
-            <div class="vision-card reveal reveal-delay-3">
-                <h3>A Community, Not Just a Brand</h3>
-                <p>This is a tribe. A collective of individuals who understand that greatness is not given — it is built, one disciplined decision at a time. Your apparel is your declaration.</p>
-            </div>
-
-            <hr class="divider">
-
-            <blockquote class="pull-quote reveal">
-                <p>"Whoever loves discipline loves knowledge, but whoever hates correction is foolish."</p>
-                <cite>— Proverbs 12:1</cite>
-            </blockquote>
-        </div>
-    </section>
-
-    <!-- CTA -->
-    <section class="cta-section">
-        <div class="container">
-            <h2 class="section-title reveal">The best chapter<br>starts now.</h2>
-            <p class="reveal reveal-delay-1">This isn't the finish line — it's the opening line. Join the movement and wear your discipline with pride.</p>
-            <a href="shop.html" class="cta-btn reveal reveal-delay-2">Shop the Collection</a>
-        </div>
-    </section>
-
-    <!-- FOOTER -->
-    <footer class="footer">
-        <div class="footer-content">
-            <div class="footer-section">
-                <h4>About</h4>
-                <p>Premium apparel designed to inspire discipline, purpose, and faith. A movement of faith-filled individuals committed to excellence.</p>
-            </div>
-            <div class="footer-section">
-                <h4>Quick Links</h4>
-                <a href="index.html">Home</a><br>
-                <a href="shop.html">Shop</a><br>
-                <a href="blog.html">Blog</a><br>
-                <a href="contact.html">Contact</a>
-            </div>
-            <div class="footer-section">
-                <h4>Support</h4>
-                <a href="faq.html">FAQs</a><br>
-                <a href="shipping-returns.html">Shipping & Returns</a><br>
-                <a href="privacy-policy.html">Privacy Policy</a><br>
-                <a href="terms-of-service.html">Terms of Service</a>
-            </div>
-            <div class="footer-section">
-                <h4>Contact</h4>
-                <p>Email: nomaqhizazolile@gmail.com<br>
-                Phone: +27 69 206 0618<br>
-                Johannesburg, South Africa</p>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
-            <p>Built with purpose by <a href="https://zande.io" target="_blank" rel="noopener noreferrer">Zande Technologies</a></p>
-        </div>
-    </footer>
-
-    <!-- WhatsApp Floating Button -->
-    <a href="https://wa.me/27692060618?text=Hi%20Disciplined%20Disciples!%20I%20have%20a%20question%20about%20your%20products." 
-       class="whatsapp-float" 
-       target="_blank" 
-       rel="noopener noreferrer"
-       aria-label="Chat on WhatsApp">
-        <i class="fab fa-whatsapp"></i>
-    </a>
-
-    <script>
-        // Scroll reveal
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(e => {
-                if (e.isIntersecting) {
-                    e.target.classList.add('visible');
-                }
-            });
-        }, { threshold: 0.15 });
-
-        document.querySelectorAll('.reveal, .tl-item').forEach(el => observer.observe(el));
-
-        // Mobile menu
-        const menuToggle = document.querySelector('.menu-toggle');
-        if (menuToggle) {
-            menuToggle.addEventListener('click', () => {
-                const navMenu = document.querySelector('.nav-menu');
-                navMenu.style.display = navMenu.style.display === 'none' ? 'flex' : 'none';
-            });
-        }
-    </script>
-
-</body>
-</html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- Enhanced SEO Meta Tags -->
     <title>Our Story | About Disciplined Disciples | Faith-Based Streetwear South Africa</title>
@@ -1933,6 +579,119 @@
             opacity: 1;
         }
         
+        .story-intro {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            color: #555;
+            margin-bottom: 3rem;
+            text-align: center;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .timeline {
+            position: relative;
+            padding: 2rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 30px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, #667eea, #764ba2, #667eea);
+            border-radius: 2px;
+        }
+
+        .timeline-item {
+            margin-bottom: 3rem;
+            padding-left: 100px;
+            position: relative;
+            animation: fadeInUp 0.8s ease-out backwards;
+        }
+
+        .timeline-item:nth-child(1) { animation-delay: 0.1s; }
+        .timeline-item:nth-child(2) { animation-delay: 0.2s; }
+        .timeline-item:nth-child(3) { animation-delay: 0.3s; }
+        .timeline-item:nth-child(4) { animation-delay: 0.4s; }
+        .timeline-item:nth-child(5) { animation-delay: 0.5s; }
+        .timeline-item:nth-child(6) { animation-delay: 0.6s; }
+        .timeline-item:nth-child(7) { animation-delay: 0.7s; }
+        .timeline-item:nth-child(8) { animation-delay: 0.8s; }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: white;
+            border: 4px solid #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transition: all 0.3s ease;
+            z-index: 2;
+        }
+
+        .timeline-item:hover::before {
+            width: 36px;
+            height: 36px;
+            left: -6px;
+            top: 2px;
+            border-color: #764ba2;
+            box-shadow: 0 0 0 6px rgba(102, 126, 234, 0.2), 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .timeline-year {
+            font-size: 1.375rem;
+            font-weight: 800;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-item:hover .timeline-year {
+            color: #764ba2;
+            font-size: 1.5rem;
+        }
+
+        .timeline-text {
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #555;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .timeline-item:hover .timeline-text {
+            border-left-color: #764ba2;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.15);
+            transform: translateX(8px);
+            background: #f8f9ff;
+        }
+
+        .timeline-text strong {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .timeline-item:hover .timeline-text strong {
+            color: #764ba2;
+        }
+
+        .timeline-text em {
+            color: #764ba2;
+            font-style: italic;
+            font-weight: 500;
+        }
+
         @media (max-width: 768px) {
             .hero-about h1 {
                 font-size: 2.25rem;
@@ -1970,6 +729,36 @@
             .cta-button {
                 padding: 0.875rem 2.5rem;
                 font-size: 1rem;
+            }
+
+            .timeline::before {
+                left: 18px;
+            }
+
+            .timeline-item {
+                padding-left: 70px;
+            }
+
+            .timeline-item::before {
+                width: 20px;
+                height: 20px;
+                border-width: 3px;
+                left: -2px;
+            }
+
+            .timeline-item:hover::before {
+                width: 28px;
+                height: 28px;
+                left: -4px;
+            }
+
+            .timeline-year {
+                font-size: 1.125rem;
+            }
+
+            .timeline-text {
+                padding: 1rem;
+                font-size: 0.95rem;
             }
         }
     </style>
@@ -2076,7 +865,7 @@
     <section class="hero-about">
         <div class="hero-about-content">
             <h1>Our Story</h1>
-            <p>More than clothing. More than fashion. We are a movement towards disciplined, faith-filled living.</p>
+            <p><strong>Not a brand. A movement.</strong>  Born from 16 years of struggle, faith, and the unrelenting belief that discipline is the DNA of success.</p>
         </div>
     </section>
 
@@ -2097,54 +886,59 @@
         </div>
     </section>
 
-    <!-- Scripture Quote -->
+    <!-- What could not happen -->
     <div class="container">
         <div class="scripture-quote">
-            <p>"Whoever loves discipline loves knowledge, but whoever hates correction is stupid."</p>
-            <cite>— Proverbs 12:1 (NIV)</cite>
+            <p>"What could not happen without Discipline in 14 years, happened with Discipline in 2 years."</p>
         </div>
     </div>
 
-    <!-- Story Section -->
+        <!-- Journey Section -->
     <section class="story-section">
         <div class="story-container">
-            <h2>The Birth of a Movement</h2>
+            <h2>The 16-Year Journey</h2>
+            <p class="story-intro">What started as a dream became a calling. Through setbacks, faith, and unwavering discipline, Zolile's journey shaped the foundation of Disciplined Disciples.</p>
             
-            <div class="story-block">
-                <h3><i class="fas fa-lightbulb"></i> Why We Started</h3>
-                <p>In 2023, Zolile looked around and saw a generation drowning in distractions. Social media promised connection but delivered isolation. Success was measured in likes, not character. Young people were told to "follow their dreams" but never taught the discipline required to achieve them.</p>
-                <p>Something had to change.</p>
-                <p>Disciplined Disciples was born from a simple yet profound conviction: <strong>Discipline is not restrictive—it's liberating.</strong> Like a river that flows powerfully within its banks, discipline gives direction to potential. Without it, even the greatest talent dissipates into wasted opportunity.</p>
-                <p>We started with a question: <em>"What if clothing could carry a message that transforms lives?"</em></p>
-                <p>What if every hoodie, every cap, every tee became a daily reminder that <strong>you are capable of more</strong>? That success isn't luck—it's the compound interest of daily discipline?</p>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-year">2009</div>
+                    <div class="timeline-text">Walked into Wits University with a dream. Missed the cut for BAccSci by <strong>just 2 points.</strong> A closed door — but God had a different blueprint.</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2012</div>
+                    <div class="timeline-text">Graduated with a <strong>BCom General.</strong> Something inside refused to settle.</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2014–2016</div>
+                    <div class="timeline-text">Started SAICA articles. Multiple CTA attempts at Wits and Unisa — <strong>setback after setback,</strong> including a battle with severe eczema.</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2017</div>
+                    <div class="timeline-text"><strong>CTA passed. Finally, a breakthrough.</strong> That same year, Zolile suffered the loss of his father — his greatest supporter through every attempt.</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2018–2020</div>
+                    <div class="timeline-text">Sat for the ITC board exams. <strong>Six attempts. Six times the answer was no.</strong></div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2021</div>
+                    <div class="timeline-text">Called it a gap year. But it was surrender. <em>"You cannot kill a calling though."</em></div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2023</div>
+                    <div class="timeline-text">The greatest gift arrived — his daughter <strong>Nkazimulo was born.</strong> Everything shifted. Not the exams. Not the odds. <em>Him.</em> He stopped moving out of desperation and started walking with purpose. That transformation gave birth to <strong>Disciplined Disciples.</strong></div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-year">2024–2025</div>
+                    <div class="timeline-text"><strong>2024 CTA passed. June 2025 IAC passed. December 2025 APC passed.</strong><br>Zolile Nomaqhiza is now eligible to register as a <strong>CA(SA).</strong></div>
+                </div>
             </div>
+        </div>
+    </section>
 
-            <div class="story-block">
-                <h3><i class="fas fa-heart"></i> What We Represent</h3>
-                <p><strong>Disciplined Disciples</strong> represents the warrior spirit of those who refuse to settle. We represent:</p>
-                <ul style="list-style: none; padding-left: 0; margin-top: 1.5rem;">
-                    <li style="padding: 0.75rem 0; font-size: 1.125rem; color: #4a5568;"><i class="fas fa-check-circle" style="color: #667eea; margin-right: 0.75rem;"></i> <strong>Faith over Fear</strong> — We believe that faith in God anchors discipline and gives purpose to every pursuit.</li>
-                    <li style="padding: 0.75rem 0; font-size: 1.125rem; color: #4a5568;"><i class="fas fa-check-circle" style="color: #667eea; margin-right: 0.75rem;"></i> <strong>Character over Comfort</strong> — Growth happens outside comfort zones. We celebrate the grind, the early mornings, the late nights.</li>
-                    <li style="padding: 0.75rem 0; font-size: 1.125rem; color: #4a5568;"><i class="fas fa-check-circle" style="color: #667eea; margin-right: 0.75rem;"></i> <strong>Purpose over Popularity</strong> — We're not chasing trends. We're building legacies.</li>
-                    <li style="padding: 0.75rem 0; font-size: 1.125rem; color: #4a5568;"><i class="fas fa-check-circle" style="color: #667eea; margin-right: 0.75rem;"></i> <strong>Community over Competition</strong> — We're building a tribe, not competing for followers. Iron sharpens iron.</li>
-                    <li style="padding: 0.75rem 0; font-size: 1.125rem; color: #4a5568;"><i class="fas fa-check-circle" style="color: #667eea; margin-right: 0.75rem;"></i> <strong>Excellence over Excuses</strong> — Mediocrity is easy. Greatness requires discipline. We choose greatness.</li>
-                </ul>
-            </div>
-
-            <div class="story-block">
-                <h3><i class="fas fa-flag"></i> The Philosophy of Discipline</h3>
-                <p>At the core of everything we do is one unshakeable truth: <strong>Discipline is the bridge between goals and accomplishment.</strong></p>
-                <p>We reject the lie that discipline is punishment. Discipline is <em>freedom</em>. It's the freedom to:</p>
-                <ul style="list-style: disc; padding-left: 2rem; margin-top: 1rem; color: #4a5568; font-size: 1.125rem; line-height: 1.9;">
-                    <li>Wake up at 5 AM because you have a vision bigger than your excuses</li>
-                    <li>Say "no" to distractions because you said "yes" to your destiny</li>
-                    <li>Show up every day, even when motivation is gone, because <strong>commitment is stronger than feelings</strong></li>
-                    <li>Build something that outlasts you—a business, a family, a legacy</li>
-                </ul>
-                <p style="margin-top: 1.5rem;">As Proverbs 25:28 warns us: <em>"A person without self-control is like a city with broken-down walls."</em> No protection. No structure. Vulnerable to every attack.</p>
-                <p>But a disciplined life? <strong>That's a fortress.</strong> Unshakeable. Unmovable. Built to last.</p>
-            </div>
-
+    <!-- Story Section -->
+    <section class="story-section">
+        <div class="story-container">    
             <!-- Image Gallery -->
             <div class="image-gallery">
                 <div class="gallery-item">
@@ -2157,96 +951,51 @@
                     <img src="Assets/Other/WhatsApp Image 2025-09-28 at 12.07.34_78f51a25.jpg" alt="Disciplined Disciples Community">
                 </div>
             </div>
-
-            <div class="story-block" style="margin-top: 3rem;">
-                <h3><i class="fas fa-users"></i> Who We're For</h3>
-                <p>Disciplined Disciples is for the <strong>dreamers who are tired of just dreaming</strong>. For the believers who want their faith to translate into action. For the:</p>
-                <ul style="list-style: none; padding-left: 0; margin-top: 1.5rem;">
-                    <li style="padding: 0.75rem 0; font-size: 1.125rem; color: #4a5568;"><i class="fas fa-arrow-right" style="color: #667eea; margin-right: 0.75rem;"></i> <strong>Students</strong> grinding through exams because they know education is investment</li>
-                    <li style="padding: 0.75rem 0; font-size: 1.125rem; color: #4a5568;"><i class="fas fa-arrow-right" style="color: #667eea; margin-right: 0.75rem;"></i> <strong>Athletes</strong> pushing through pain because the prize is worth it</li>
-                    <li style="padding: 0.75rem 0; font-size: 1.125rem; color: #4a5568;"><i class="fas fa-arrow-right" style="color: #667eea; margin-right: 0.75rem;"></i> <strong>Entrepreneurs</strong> building businesses while others sleep</li>
-                    <li style="padding: 0.75rem 0; font-size: 1.125rem; color: #4a5568;"><i class="fas fa-arrow-right" style="color: #667eea; margin-right: 0.75rem;"></i> <strong>Parents</strong> modeling discipline for the next generation</li>
-                    <li style="padding: 0.75rem 0; font-size: 1.125rem; color: #4a5568;"><i class="fas fa-arrow-right" style="color: #667eea; margin-right: 0.75rem;"></i> <strong>Leaders</strong> in boardrooms, classrooms, and living rooms who know that influence requires integrity</li>
-                    <li style="padding: 0.75rem 0; font-size: 1.125rem; color: #4a5568;"><i class="fas fa-arrow-right" style="color: #667eea; margin-right: 0.75rem;"></i> <strong>Believers</strong> who know that faith without works is dead</li>
-                </ul>
-                <p style="margin-top: 1.5rem;">If you're reading this and feeling a fire in your chest—<strong>that's you</strong>. You're one of us. Welcome to the tribe.</p>
-            </div>
-
-            <div class="story-block">
-                <h3><i class="fas fa-rocket"></i> The Future We're Building</h3>
-                <p>This is just the beginning. What started as a clothing brand is becoming a <strong>global movement</strong>. Here's where we're headed:</p>
-                <p><strong>Short-Term Vision (2025-2026):</strong></p>
-                <ul style="list-style: disc; padding-left: 2rem; margin-top: 1rem; color: #4a5568; font-size: 1.125rem; line-height: 1.9;">
-                    <li>Become the #1 faith-based streetwear brand in South Africa</li>
-                    <li>Launch the <strong>Disciplined Disciples Academy</strong> — free online courses on discipline, productivity, and faith</li>
-                    <li>Host quarterly meetups in Johannesburg, Cape Town, and Durban to build real community</li>
-                    <li>Partner with schools to teach discipline workshops to students</li>
-                </ul>
-                <p style="margin-top: 1.5rem;"><strong>Long-Term Vision (2027-2030):</strong></p>
-                <ul style="list-style: disc; padding-left: 2rem; margin-top: 1rem; color: #4a5568; font-size: 1.125rem; line-height: 1.9;">
-                    <li>Expand to <strong>international markets</strong> — UK, USA, Kenya, Nigeria</li>
-                    <li>Launch the <strong>Disciplined Disciples Foundation</strong> — scholarships for students who embody discipline and faith</li>
-                    <li>Open a <strong>flagship store in Sandton</strong> that's part retail, part community hub</li>
-                    <li>Create a documentary series showcasing stories of disciplined individuals changing the world</li>
-                    <li>Build a movement of <strong>1 million Disciplined Disciples worldwide</strong></li>
-                </ul>
-                <p style="margin-top: 1.5rem;">We're not just selling clothes. We're <strong>changing the narrative</strong> of what it means to be young, African, and ambitious. We're proving that discipline, faith, and purpose can coexist with style and culture.</p>
-            </div>
         </div>
     </section>
 
     <!-- Values Section -->
     <section class="section-padding bg-white">
         <div class="container">
-            <h2 class="section-title">Our Core Values</h2>
-            <p class="section-subtitle">The principles that guide everything we do</p>
+            <h2 class="section-title">Why We Exist</h2>
             
             <div class="values-grid">
                 <div class="value-card">
                     <i class="fas fa-pray"></i>
-                    <h4>Faith-Centered</h4>
-                    <p>Every design, every message, every decision is rooted in our Christian faith. We believe God calls us to excellence.</p>
+                    <h4>Faith-Rooted Purpose</h4>
+                    <p>Anchored in scripture, Disciplined Disciples believes that true freedom is not found in shortcuts — it is earned through daily, intentional choices aligned with purpose and faith.</p>
                 </div>
                 
                 <div class="value-card">
                     <i class="fas fa-fire"></i>
-                    <h4>Disciplined</h4>
-                    <p>We practice what we preach. From product quality to customer service, discipline shows in every detail.</p>
+                    <h4>Discipline as Identity</h4>
+                    <p>We exist to clothe a generation that chooses discipline as a lifestyle — not a phase. Every stitch, every design, is a reminder of who you are committed to becoming.</p>
                 </div>
                 
                 <div class="value-card">
                     <i class="fas fa-handshake"></i>
-                    <h4>Community-Driven</h4>
-                    <p>We're building a tribe, not just a customer base. Your success is our success. We rise together.</p>
+                    <h4>A Community, Not Just a Brand</h4>
+                    <p>This is a tribe. A collective of individuals who understand that greatness is not given — it is built, one disciplined decision at a time. Your apparel is your declaration.</p>
                 </div>
                 
-                <div class="value-card">
-                    <i class="fas fa-award"></i>
-                    <h4>Excellence</h4>
-                    <p>Good enough isn't enough. Every product is crafted with premium materials and attention to detail.</p>
-                </div>
-                
-                <div class="value-card">
-                    <i class="fas fa-seedling"></i>
-                    <h4>Growth-Focused</h4>
-                    <p>We believe in constant improvement. Today better than yesterday. Tomorrow better than today.</p>
-                </div>
-                
-                <div class="value-card">
-                    <i class="fas fa-heart"></i>
-                    <h4>Authentic</h4>
-                    <p>No gimmicks. No fake hype. Just real people building something meaningful. What you see is what you get.</p>
-                </div>
             </div>
         </div>
     </section>
 
+        <!-- Scripture Quote -->
+    <div class="container">
+        <div class="scripture-quote">
+            <p>"Whoever loves discipline loves knowledge, but whoever hates correction is foolish."</p>
+            <cite>— Proverbs 12:1 (NIV)</cite>
+        </div>
+    </div>
+
     <!-- Call to Action -->
     <section class="cta-section">
         <div class="container">
-            <h2>Ready to Join the Movement?</h2>
-            <p>This is your invitation. Not to buy products, but to <strong>become part of something bigger</strong>. To declare to the world that you refuse to be average. That you choose discipline. That you're a Disciple.</p>
-            <a href="shop.html" class="cta-button">Explore the Collection</a>
+            <h2>The best chapter Starts now.</h2>
+            <p>This isn't the finish line - it's the opening line. <strong>Join the movement</strong> and wear your discipline with pride.</p>
+            <a href="shop.html" class="cta-button">Shop the Collection</a>
         </div>
     </section>
 
