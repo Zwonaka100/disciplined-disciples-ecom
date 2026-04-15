@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard • Disciplined Disciples</title>
+    <title>Admin Dashboard � Disciplined Disciples</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -54,7 +54,7 @@
     <div id="admin-loading" class="fixed inset-0 bg-white bg-opacity-80 flex items-center justify-center z-40 hidden">
         <div class="text-center">
             <div class="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-blue-600 mx-auto mb-4"></div>
-            <p class="text-sm text-slate-600">Syncing latest store data…</p>
+            <p class="text-sm text-slate-600">Syncing latest store data�</p>
         </div>
     </div>
 
@@ -76,18 +76,22 @@
                     <i class="fas fa-chart-line w-5"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="admin-products.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition">
-                    <i class="fas fa-box w-5"></i>
-                    <span>Products</span>
-                </a>
                 <a href="#orders-section" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition">
                     <i class="fas fa-shopping-bag w-5"></i>
                     <span>Orders</span>
                 </a>
-                <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 cursor-not-allowed">
+                <a href="admin-products.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition">
+                    <i class="fas fa-box w-5"></i>
+                    <span>Products</span>
+                </a>
+                <a href="admin-blogs.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition">
                     <i class="fas fa-newspaper w-5"></i>
-                    <span>Blog</span>
-                    <span class="ml-auto text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">Soon</span>
+                    <span>Blogs</span>
+                </a>
+                <a href="#messages-section" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition">
+                    <i class="fas fa-envelope w-5"></i>
+                    <span>Messages</span>
+                    <span id="msg-sidebar-badge" style="display:none;" class="ml-auto inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-blue-600 rounded-full">0</span>
                 </a>
                 <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 cursor-not-allowed">
                     <i class="fas fa-users w-5"></i>
@@ -127,7 +131,7 @@
                 <p class="text-sm text-slate-500">Paid Revenue</p>
                 <p id="admin-total-revenue" class="text-3xl font-semibold mt-2">R0.00</p>
                 <p id="admin-revenue-breakdown" class="mt-2 text-xs text-slate-500 leading-relaxed">
-                    Paid: R0.00 • Awaiting: R0.00 • Cancelled (paid): R0.00
+                    Paid: R0.00 � Awaiting: R0.00 � Cancelled (paid): R0.00
                 </p>
             </article>
             <article class="bg-white rounded-xl shadow p-6">
@@ -141,11 +145,11 @@
                 <div>
                     <h2 class="text-lg font-semibold text-slate-900">Orders</h2>
                     <p class="text-sm text-slate-500">Track, update, and export the latest purchases</p>
-                    <p id="admin-orders-summary" class="mt-1 text-xs text-slate-400">Showing 0 orders (All statuses • All customers • All dates)</p>
+                    <p id="admin-orders-summary" class="mt-1 text-xs text-slate-400">Showing 0 orders (All statuses � All customers � All dates)</p>
                     <div id="admin-stale-banner" class="mt-3 hidden rounded-lg border border-sky-300 bg-sky-50 px-4 py-3 text-xs text-sky-900">
                         <div class="flex flex-col gap-2">
                             <div class="flex items-start gap-2">
-                                <span class="text-lg leading-none" aria-hidden="true">💡</span>
+                                <span class="text-lg leading-none" aria-hidden="true">??</span>
                                 <div>
                                     <p id="admin-stale-banner-title" class="font-semibold">Awaiting-payment orders auto-hidden</p>
                                     <p id="admin-stale-banner-detail" class="mt-1 text-sky-700"></p>
@@ -253,6 +257,22 @@
                 </table>
             </div>
         </section>
+
+        <!-- Messages Inbox -->
+        <section id="messages-section" class="bg-white rounded-xl shadow">
+            <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-6 py-5 border-b border-slate-200">
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-900">Messages <span id="msg-unread-label" class="ml-2 text-sm font-medium text-blue-600"></span></h2>
+                    <p class="text-sm text-slate-500">Contact form submissions from your website</p>
+                </div>
+                <button onclick="loadMessages()" class="px-4 py-2 text-sm font-medium border border-slate-200 rounded hover:bg-slate-50 transition self-start">
+                    <i class="fas fa-rotate-right mr-2"></i>Refresh
+                </button>
+            </header>
+            <div id="messages-list-container">
+                <div class="px-6 py-8 text-center text-slate-500 text-sm"><i class="fas fa-spinner fa-spin mr-2"></i>Loading messages...</div>
+            </div>
+        </section>
     </main>
     </div><!-- End of flex container -->
 
@@ -295,7 +315,7 @@
         </div>
         <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
             <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
-            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> 💜</p>
+            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> ??</p>
         </div>
     </footer>
 
@@ -306,7 +326,103 @@
             if (window.AdminApp) {
                 window.AdminApp.init();
             }
+            setTimeout(loadMessages, 800);
         });
+
+        var _msgDb = null;
+        function getMsgDb(){
+            if(_msgDb) return _msgDb;
+            var cfg={apiKey:"AIzaSyBVpuDI_YJI7mxtT6-igSL7ZX3s-cqMRnc",authDomain:"disciplined-disciples-1.firebaseapp.com",projectId:"disciplined-disciples-1",storageBucket:"disciplined-disciples-1.firebasestorage.app",messagingSenderId:"565996965931",appId:"1:565996965931:web:b9d18489caa790e7afda6e"};
+            if(!firebase.apps.length) firebase.initializeApp(cfg);
+            _msgDb = firebase.firestore();
+            return _msgDb;
+        }
+
+        function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+        async function loadMessages(){
+            var container=document.getElementById('messages-list-container');
+            var badge=document.getElementById('msg-sidebar-badge');
+            var label=document.getElementById('msg-unread-label');
+            if(!container) return;
+            container.innerHTML='<div class="px-6 py-8 text-center text-slate-500 text-sm"><i class="fas fa-spinner fa-spin mr-2"></i>Loading...</div>';
+            try{
+                var db=getMsgDb();
+                var snap=await db.collection('contactMessages').orderBy('createdAt','desc').get();
+                var msgs=[];
+                snap.forEach(function(doc){msgs.push(Object.assign({id:doc.id},doc.data()));});
+                var unread=msgs.filter(function(m){return m.status==='unread';}).length;
+                if(badge){badge.textContent=unread;badge.style.display=unread?'inline-flex':'none';}
+                if(label) label.textContent=unread?unread+' unread':'';
+                if(!msgs.length){container.innerHTML='<div class="px-6 py-8 text-center text-slate-500 text-sm"><i class="fas fa-inbox mr-2"></i>No messages yet.</div>';return;}
+                var html='<div class="divide-y divide-slate-100">';
+                msgs.forEach(function(m){
+                    var date=m.createdAt&&m.createdAt.toDate?m.createdAt.toDate().toLocaleString('en-ZA',''):'Unknown';
+                    var rowBg=m.status==='unread'?'background:#eff6ff;':'';
+                    var statusBadge=m.status==='replied'?'<span class="text-xs px-2 py-0.5 rounded-full font-medium" style="background:#dcfce7;color:#166534;">Replied</span>'
+                        :m.status==='unread'?'<span class="text-xs px-2 py-0.5 rounded-full font-medium" style="background:#dbeafe;color:#1d4ed8;">Unread</span>'
+                        :'<span class="text-xs px-2 py-0.5 rounded-full font-medium" style="background:#f1f5f9;color:#64748b;">Read</span>';
+                    var replyHtml=m.reply?('<div style="margin-top:12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;"><p style="font-size:0.75rem;font-weight:600;color:#166534;margin:0 0 6px;"><i class="fas fa-reply mr-1"></i>Reply sent:</p><p style="font-size:0.88rem;color:#166534;margin:0;white-space:pre-wrap;">'+escH(m.reply)+'</p></div>'):\';
+                    html+='<div class="px-6 py-4 cursor-pointer hover:bg-slate-50 transition" id="msg-row-'+m.id+'" onclick="toggleMsg(\''+m.id+'\',this)" style="'+rowBg+'">';
+                    html+='<div class="flex items-center justify-between gap-4"><div class="flex items-center gap-3 min-w-0"><div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;font-size:0.75rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+escH((m.name||'?')[0].toUpperCase())+'</div><div class="min-w-0"><p style="font-weight:600;font-size:0.88rem;color:#1e293b;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escH(m.name||'Unknown')+'</p><p style="font-size:0.75rem;color:#94a3b8;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escH(m.email||'')+'</p></div></div><div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">'+statusBadge+'<span style="font-size:0.75rem;color:#94a3b8;">'+date+'</span></div></div>';
+                    html+='<p style="margin:6px 0 0;font-size:0.88rem;color:#475569;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escH(m.subject||'(no subject)')+'</p>';
+                    html+='<div id="msg-detail-'+m.id+'" style="display:none;margin-top:14px;">';
+                    html+='<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:0.9rem;color:#334155;line-height:1.7;white-space:pre-wrap;">'+escH(m.message||'')+'</div>';
+                    html+=replyHtml;
+                    html+='<div style="margin-top:14px;"><label style="display:block;font-size:0.75rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Your Reply</label>';
+                    html+='<textarea id="reply-'+m.id+'" rows="4" placeholder="Type your reply here..." style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px 12px;font-size:0.88rem;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>';
+                    html+='<div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">';
+                    html+='<button onclick="sendReply(\''+m.id+'\',\''+escH(m.email||'')+'\',\''+escH(m.subject||'Your enquiry')+'\',event)" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;background:#007bff;color:#fff;border:none;border-radius:7px;font-size:0.85rem;font-weight:600;cursor:pointer;"><i class="fas fa-reply"></i> Reply via Email</button>';
+                    html+='<button onclick="markMsgRead(\''+m.id+'\',event)" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:1.5px solid #e2e8f0;background:#fff;color:#475569;border-radius:7px;font-size:0.85rem;font-weight:600;cursor:pointer;"><i class="fas fa-check"></i> Mark Read</button>';
+                    html+='<button onclick="deleteMsg(\''+m.id+'\',event)" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;color:#dc2626;background:none;border:none;border-radius:7px;font-size:0.85rem;font-weight:600;cursor:pointer;"><i class="fas fa-trash-alt"></i> Delete</button>';
+                    html+='</div></div></div></div>';
+                });
+                html+='</div>';
+                container.innerHTML=html;
+            }catch(e){
+                container.innerHTML='<div class="px-6 py-8 text-center text-red-500 text-sm"><i class="fas fa-exclamation-circle mr-2"></i>Could not load messages. Make sure you are signed in as admin.</div>';
+            }
+        }
+
+        function toggleMsg(id, row){
+            var detail=document.getElementById('msg-detail-'+id);
+            if(!detail) return;
+            var isOpen=detail.style.display!=='none';
+            document.querySelectorAll('[id^="msg-detail-"]').forEach(function(d){d.style.display='none';});
+            if(!isOpen){
+                detail.style.display='block';
+                row.style.background='';
+                getMsgDb().collection('contactMessages').doc(id).update({status:'read'}).catch(function(){});
+                var badge=document.getElementById('msg-sidebar-badge');
+                if(badge&&parseInt(badge.textContent)>0){badge.textContent=parseInt(badge.textContent)-1;if(parseInt(badge.textContent)===0)badge.style.display='none';}
+            }
+        }
+
+        async function sendReply(msgId, email, subject, e){
+            e.stopPropagation();
+            var ta=document.getElementById('reply-'+msgId);
+            var replyText=ta?(ta.value||'').trim():'';
+            if(!replyText){alert('Please type a reply first.');return;}
+            try{
+                await getMsgDb().collection('contactMessages').doc(msgId).update({reply:replyText,repliedAt:firebase.firestore.FieldValue.serverTimestamp(),status:'replied'});
+            }catch(err){}
+            var mailto='mailto:'+email+'?subject=Re: '+encodeURIComponent(subject)+'&body='+encodeURIComponent(replyText);
+            window.open(mailto);
+            loadMessages();
+        }
+
+        async function markMsgRead(id, e){
+            e.stopPropagation();
+            try{await getMsgDb().collection('contactMessages').doc(id).update({status:'read'});}catch(err){}
+            loadMessages();
+        }
+
+        async function deleteMsg(id, e){
+            e.stopPropagation();
+            if(!confirm('Delete this message?')) return;
+            try{await getMsgDb().collection('contactMessages').doc(id).delete();}catch(err){}
+            loadMessages();
+        }
     </script>
 
     <!-- WhatsApp Floating Button -->
@@ -322,12 +438,12 @@
     <div id="cookie-consent-banner" class="cookie-consent-banner">
         <div class="cookie-consent-content">
             <div class="cookie-consent-text">
-                <h3>🍪 We Value Your Privacy</h3>
+                <h3>?? We Value Your Privacy</h3>
                 <p>We use cookies to improve your experience and analyze site traffic. By clicking "Accept", you consent to our use of cookies. <a href="privacy-policy.html">Learn more</a></p>
             </div>
             <div class="cookie-consent-actions">
-                <button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept">Accept All Cookies</button>
-                <button id="cookie-decline-btn" class="cookie-btn cookie-btn-decline">Decline Analytics</button>
+                <button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept">Accept</button>
+                <button id="cookie-decline-btn" class="cookie-btn cookie-btn-decline">Decline</button>
             </div>
         </div>
     </div>

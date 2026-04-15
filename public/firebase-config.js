@@ -16,12 +16,13 @@ if (!window.FIREBASE_API_KEY) {
  */
 function getFirebaseConfig() {
     return {
-        apiKey: window.FIREBASE_API_KEY || 'YOUR_API_KEY_HERE',
+        apiKey: 'AIzaSyBVpuDI_YJI7mxtT6-igSL7ZX3s-cqMRnc',
         authDomain: 'disciplined-disciples-1.firebaseapp.com',
         projectId: 'disciplined-disciples-1',
         storageBucket: 'disciplined-disciples-1.firebasestorage.app',
-        messagingSenderId: '770742520497',
-        appId: '1:770742520497:web:3bf5d1e8c2f3e8a6e0a6d0'
+        messagingSenderId: '565996965931',
+        appId: '1:565996965931:web:b9d18489caa790e7afda6e',
+        measurementId: 'G-2J1GWH59V4'
     };
 }
 

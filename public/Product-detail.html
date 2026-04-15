@@ -36,7 +36,7 @@
                     <li><a href="shop.html" class="nav-link">Shop</a></li>
                     <li><a href="blog.html" class="nav-link">Blog</a></li>
                     <li><a href="contact.html" class="nav-link">Contact</a></li>
-                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a>
+                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a></li>
                     <li><a href="cart.html" class="nav-link" aria-label="Shopping Cart"><i class="fas fa-shopping-cart"></i></a></li>
                 </ul>
                 <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
@@ -316,33 +316,36 @@
             });
 
             // Populate Colors and initial images
-            // Support both structures: colors directly OR under options.colors
             let colors = product.colors || product.options?.colors;
             const imageUrls = product.imageUrls || [];
 
-            console.log('[Product Detail] Product:', product);
-            console.log('[Product Detail] Colors:', colors);
-            console.log('[Product Detail] Options:', product.options);
-
-            // Fallback: build a single color option from displayImage/imageUrls when colors map is missing
-            if (!colors || Object.keys(colors).length === 0) {
-                console.warn('[Product Detail] No colors found, using fallback');
-                const fallbackImages = imageUrls.length ? imageUrls : (product.displayImage ? [product.displayImage] : []);
-                colors = {
-                    Default: {
-                        defaultImage: product.displayImage || (fallbackImages[0] || ''),
-                        images: fallbackImages
-                    }
-                };
+            // Strip the legacy 'default' key saved by older admin uploads — it was
+            // never a real colour and must never appear as a swatch.
+            if (colors) {
+                const realColors = {};
+                Object.entries(colors).forEach(([k, v]) => {
+                    if (k.toLowerCase() !== 'default') realColors[k] = v;
+                });
+                colors = realColors;
             }
 
-            console.log('[Product Detail] Final colors object:', colors);
-            renderColorSwatches(colors);
-            const firstColorName = Object.keys(colors)[0];
-            const firstColorData = colors[firstColorName];
-            console.log('[Product Detail] First color:', firstColorName, 'Data:', firstColorData);
-            mainImage.src = firstColorData.defaultImage || product.displayImage || '';
-            renderThumbnails(firstColorData.images && firstColorData.images.length ? firstColorData.images : [mainImage.src]);
+            const hasRealColors = colors && Object.keys(colors).length > 0;
+            const fallbackImages = imageUrls.length ? imageUrls : (product.displayImage ? [product.displayImage] : []);
+
+            if (hasRealColors) {
+                // Named colour variants — show swatches and load first colour's images
+                colorSelector.closest('.mb-6').style.display = '';
+                renderColorSwatches(colors);
+                const firstColorName = Object.keys(colors)[0];
+                const firstColorData = colors[firstColorName];
+                mainImage.src = firstColorData.defaultImage || product.displayImage || '';
+                renderThumbnails(firstColorData.images?.length ? firstColorData.images : [mainImage.src]);
+            } else {
+                // No colour variants — hide the colour selector, use the main display image
+                colorSelector.closest('.mb-6').style.display = 'none';
+                mainImage.src = product.displayImage || fallbackImages[0] || '';
+                renderThumbnails(fallbackImages.length ? fallbackImages : [mainImage.src]);
+            }
 
             // --- EVENT LISTENERS ---
             addToCartBtn.addEventListener('click', () => {
@@ -351,7 +354,7 @@
                 const selectedSize = sizeSelector.value;
                 const quantity = parseInt(quantityInput.value);
 
-                if (colors && !selectedColor) {
+                if (hasRealColors && !selectedColor) {
                     alert('Please select a color.');
                     return;
                 }
@@ -409,8 +412,8 @@
                 <p>We use cookies to improve your experience and analyze site traffic. By clicking "Accept", you consent to our use of cookies. <a href="privacy-policy.html">Learn more</a></p>
             </div>
             <div class="cookie-consent-actions">
-                <button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept">Accept All Cookies</button>
-                <button id="cookie-decline-btn" class="cookie-btn cookie-btn-decline">Decline Analytics</button>
+                <button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept">Accept</button>
+                <button id="cookie-decline-btn" class="cookie-btn cookie-btn-decline">Decline</button>
             </div>
         </div>
     </div>

@@ -66,6 +66,14 @@ h1, h2, h3, h4, h5, h6 {
 
 .nav-menu {
     display: flex; /* Always visible on desktop */
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Push login link and profile button away from the nav list */
+#login-signup-link,
+#profile-ribbon {
+    margin-left: 1rem;
 }
 
 .nav-menu ul {

@@ -651,7 +651,7 @@ function isAwaitingPaymentExpired(orderLike) {
 // Get this from your Firebase project settings -> Your apps -> Web app -> Config.
 // It should be a JavaScript object, NOT a JSON string.
 const firebaseConfig = {
-  apiKey: window.FIREBASE_API_KEY || "YOUR_API_KEY_HERE",
+  apiKey: "AIzaSyBVpuDI_YJI7mxtT6-igSL7ZX3s-cqMRnc",
   authDomain: "disciplined-disciples-1.firebaseapp.com",
   projectId: "disciplined-disciples-1",
   storageBucket: "disciplined-disciples-1.firebasestorage.app",
@@ -718,7 +718,7 @@ async function handleLogout() {
 }
 
 // --- Product Data (Hardcoded ONLY for Caps - others from Firebase) ---
-const products = [
+const lproducts = [
     {
         id: 'cap',
         name: 'Courage Cap',
@@ -5821,11 +5821,6 @@ document.addEventListener('DOMContentLoaded', () => {
         window.CookieConsent.init();
     }
     
-    // Initialize newsletter popup
-    if (window.NewsletterPopup) {
-        window.NewsletterPopup.init();
-    }
-
     setTimeout(() => {
         if (typeof handlePaymentCompletion === 'function') {
             handlePaymentCompletion();
@@ -5833,115 +5828,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 2000);
 });
 
-// ============================================
-// Newsletter Popup Module
-// ============================================
-window.NewsletterPopup = (function() {
-    const STORAGE_KEY = 'newsletter_shown';
-    const DELAY_MS = 8000; // Show after 8 seconds
-    
-    function hasShownPopup() {
-        const shown = localStorage.getItem(STORAGE_KEY);
-        if (!shown) return false;
-        
-        const shownDate = new Date(shown);
-        const now = new Date();
-        const daysDiff = (now - shownDate) / (1000 * 60 * 60 * 24);
-        
-        // Show again after 7 days
-        return daysDiff < 7;
-    }
-    
-    function markAsShown() {
-        localStorage.setItem(STORAGE_KEY, new Date().toISOString());
-    }
-    
-    function showPopup() {
-        const popup = document.getElementById('newsletter-popup');
-        if (popup) {
-            popup.classList.add('show');
-        }
-    }
-    
-    function hidePopup() {
-        const popup = document.getElementById('newsletter-popup');
-        if (popup) {
-            popup.classList.remove('show');
-        }
-        markAsShown();
-    }
-    
-    function handleSubmit(e) {
-        e.preventDefault();
-        const emailInput = document.getElementById('newsletter-email');
-        const email = emailInput?.value;
-        
-        if (!email) return;
-        
-        // Store subscriber email in localStorage (in production, send to backend)
-        const subscribers = JSON.parse(localStorage.getItem('newsletter_subscribers') || '[]');
-        if (!subscribers.includes(email)) {
-            subscribers.push(email);
-            localStorage.setItem('newsletter_subscribers', JSON.stringify(subscribers));
-        }
-        
-        // Show success message
-        alert('🎉 Success! Check your email for your 10% discount code!');
-        hidePopup();
-        
-        // In production, you would send this to your backend:
-        // await fetch('/api/newsletter/subscribe', {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify({ email })
-        // });
-    }
-    
-    function init() {
-        // Only show on homepage
-        if (!window.location.pathname.includes('index.html') && window.location.pathname !== '/') {
-            return;
-        }
-        
-        // Don't show if already shown recently
-        if (hasShownPopup()) {
-            return;
-        }
-        
-        const popup = document.getElementById('newsletter-popup');
-        const closeBtn = document.getElementById('newsletter-close-btn');
-        const form = document.getElementById('newsletter-form');
-        
-        if (!popup) return;
-        
-        // Show popup after delay
-        setTimeout(() => {
-            showPopup();
-        }, DELAY_MS);
-        
-        // Close button handler
-        if (closeBtn) {
-            closeBtn.addEventListener('click', hidePopup);
-        }
-        
-        // Click outside to close
-        popup.addEventListener('click', (e) => {
-            if (e.target === popup) {
-                hidePopup();
-            }
-        });
-        
-        // Form submit handler
-        if (form) {
-            form.addEventListener('submit', handleSubmit);
-        }
-        
-        console.log('📧 Newsletter popup initialized');
-    }
-    
-    return {
-        init,
-        show: showPopup,
-        hide: hidePopup
-    };
-})();

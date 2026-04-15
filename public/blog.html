@@ -1,520 +1,474 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en-ZA">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Enhanced SEO Meta Tags -->
-    <title>Streetwear Blog | Fashion Tips & Trends | Disciplined Disciples</title>
-    <meta name="description" content="Discover the latest South African streetwear trends, styling tips, and fashion inspiration. Learn about caps, hoodies, and urban style from Disciplined Disciples.">
-    <meta name="keywords" content="streetwear blog SA, South African fashion trends, styling tips, urban fashion blog, caps style guide, hoodie trends, streetwear inspiration, fashion South Africa">
+    <title>Blog | Discipline, Faith &amp; Streetwear | Disciplined Disciples</title>
+    <meta name="description" content="Real talk on discipline, faith, purpose and South African streetwear culture. Written by Zolile Nomaqhiza, founder of Disciplined Disciples.">
+    <meta name="keywords" content="disciplined disciples blog, streetwear SA, faith and discipline, South African fashion blog, motivation, purpose driven life">
     <meta name="author" content="Disciplined Disciples">
     <meta name="robots" content="index, follow">
-    
-    <!-- Geo-Targeting -->
     <meta name="geo.region" content="ZA">
     <meta name="geo.placename" content="Johannesburg">
-    
-    <!-- Open Graph -->
     <meta property="og:type" content="blog">
     <meta property="og:url" content="https://disciplined-disciples-1.web.app/blog.html">
-    <meta property="og:title" content="Streetwear Blog | Fashion Tips & Trends SA">
-    <meta property="og:description" content="Discover South African streetwear trends, styling tips & fashion inspiration from Disciplined Disciples">
+    <meta property="og:title" content="Blog | Disciplined Disciples">
+    <meta property="og:description" content="Real talk on discipline, faith, purpose and South African streetwear culture.">
     <meta property="og:image" content="https://disciplined-disciples-1.web.app/Assets/45.png">
     <meta property="og:locale" content="en_ZA">
-    
-    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://disciplined-disciples-1.web.app/blog.html">
-    <meta name="twitter:title" content="Streetwear Blog | Fashion Tips SA">
-    <meta name="twitter:description" content="South African streetwear trends, styling tips & fashion inspiration">
+    <meta name="twitter:title" content="Blog | Disciplined Disciples">
+    <meta name="twitter:description" content="Real talk on discipline, faith, purpose and South African streetwear.">
     <meta name="twitter:image" content="https://disciplined-disciples-1.web.app/Assets/45.png">
-    <meta name="twitter:site" content="@disciplined_disciples_2023">
-    
-    <!-- Canonical -->
     <link rel="canonical" href="https://disciplined-disciples-1.web.app/blog.html">
-    
-    <!-- Schema.org Blog -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Blog",
-      "name": "Disciplined Disciples Streetwear Blog",
-      "description": "South African streetwear trends, fashion tips, and style inspiration",
-      "url": "https://disciplined-disciples-1.web.app/blog.html",
-      "publisher": {
-        "@type": "Organization",
-        "name": "Disciplined Disciples",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://disciplined-disciples-1.web.app/Assets/45.png"
-        }
-      },
-      "blogPost": [
-        {
-          "@type": "BlogPosting",
-          "headline": "The Rise of Streetwear in South Africa",
-          "datePublished": "2024-01-15",
-          "author": {
-            "@type": "Organization",
-            "name": "Disciplined Disciples"
-          }
-        }
-      ]
-    }
-    </script>
-    
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="profile-avatar-fix.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="icon" type="image/png" href="Assets/45.png">
-    <!-- Firebase SDKs -->
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Blog","name":"Disciplined Disciples Blog","description":"Discipline, faith, purpose and South African streetwear culture","url":"https://disciplined-disciples-1.web.app/blog.html","publisher":{"@type":"Organization","name":"Disciplined Disciples","logo":{"@type":"ImageObject","url":"https://disciplined-disciples-1.web.app/Assets/45.png"}}}</script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="profile-avatar-fix.css">
+    <link rel="icon" type="image/png" href="Assets/45.png">
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2J1GWH59V4"></script>
+    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-2J1GWH59V4');</script>
     <style>
-        .blog-modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0; top: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.6);
-            align-items: center; justify-content: center;
+        /* ── Blog-specific styles only – everything else from styles.css ── */
+        *{box-sizing:border-box;}
+
+        /* Hero */
+        .blog-hero{position:relative;min-height:380px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#111;}
+        .blog-hero-bg{position:absolute;inset:0;background-image:url('Assets/Other/WhatsApp Image 2025-09-28 at 12.07.34_78f51a25.jpg');background-size:cover;background-position:center;opacity:0.35;transform:scale(1.04);transition:transform 7s ease;}
+        .blog-hero:hover .blog-hero-bg{transform:scale(1);}
+        .blog-hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,0.25) 0%,rgba(0,0,0,0.55) 100%);}
+        .blog-hero-content{position:relative;z-index:2;text-align:center;padding:3rem 1.5rem;max-width:680px;}
+        .blog-hero-content h1{font-family:'Inter',sans-serif;font-size:clamp(2rem,5vw,3rem);font-weight:800;color:#fff;line-height:1.15;margin:0 0 1rem;letter-spacing:-0.5px;}
+        .blog-hero-content p{color:rgba(255,255,255,0.8);font-size:1.05rem;line-height:1.7;margin:0;}
+
+        /* Layout */
+        .blog-layout{max-width:1160px;margin:0 auto;padding:2.5rem 1.5rem;display:grid;grid-template-columns:1fr 300px;gap:2.5rem;align-items:start;}
+        @media(max-width:880px){.blog-layout{grid-template-columns:1fr;}}
+
+        /* Feed */
+        .post-feed{display:flex;flex-direction:column;gap:2rem;}
+
+        /* Post card – social style */
+        .post-card{background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.08);overflow:hidden;border:1px solid #e8e8e8;}
+        .post-card-image{width:100%;max-height:420px;object-fit:cover;display:block;}
+        .post-card-body{padding:1.5rem;}
+        .post-card-meta{display:flex;align-items:center;gap:10px;margin-bottom:0.9rem;}
+        .post-card-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-size:0.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+        .post-card-meta-text{display:flex;flex-direction:column;}
+        .post-card-author{font-weight:600;font-size:0.88rem;color:#222;}
+        .post-card-date{font-size:0.76rem;color:#888;}
+        .post-card-title{font-size:1.35rem;font-weight:700;color:#222;line-height:1.3;margin:0 0 0.8rem;}
+        .post-card-content{font-size:0.95rem;line-height:1.8;color:#444;}
+        .post-card-content-inner{max-height:160px;overflow:hidden;transition:max-height 0.4s ease;}
+        .post-card-content-inner.expanded{max-height:9000px;}
+        .post-card-content-inner p{margin:0 0 1em;}
+        .post-card-content-inner h2,.post-card-content-inner h3{font-weight:700;color:#222;margin:1.2em 0 0.5em;font-size:1.1rem;}
+        .expand-btn{background:none;border:none;color:#007bff;font-size:0.88rem;font-weight:600;cursor:pointer;padding:6px 0;display:inline-flex;align-items:center;gap:5px;margin-top:4px;}
+        .expand-btn:hover{color:#0056b3;text-decoration:underline;}
+
+        /* Divider */
+        .post-card-divider{border:none;border-top:1px solid #eee;margin:1.2rem 0;}
+
+        /* Share bar */
+        .share-bar{display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;}
+        .share-label{font-size:0.78rem;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.06em;margin-right:4px;}
+        .share-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:6px;font-size:0.8rem;font-weight:600;border:none;cursor:pointer;transition:opacity 0.2s;}
+        .share-btn:hover{opacity:0.82;}
+        .share-wa{background:#25D366;color:#fff;}
+        .share-fb{background:#1877F2;color:#fff;}
+        .share-tw{background:#1DA1F2;color:#fff;}
+        .share-copy{background:#f4f4f4;color:#333;border:1px solid #ddd;}
+
+        /* Comments */
+        .comments-section{margin-top:1.2rem;}
+        .comments-heading{font-size:0.9rem;font-weight:700;color:#555;margin:0 0 1rem;text-transform:uppercase;letter-spacing:0.06em;display:flex;align-items:center;gap:8px;}
+        .comments-count-badge{background:#f0f0f0;color:#777;font-size:0.75rem;padding:2px 9px;border-radius:20px;font-weight:500;}
+        .comment-form-wrap{margin-bottom:1.2rem;}
+        .comment-textarea{width:100%;border:1.5px solid #e0e0e0;border-radius:8px;padding:10px 12px;font-family:'Inter',sans-serif;font-size:0.9rem;resize:vertical;min-height:78px;background:#fafafa;color:#333;}
+        .comment-textarea:focus{outline:none;border-color:#007bff;background:#fff;}
+        .comment-form-footer{display:flex;justify-content:space-between;align-items:center;margin-top:6px;}
+        .comment-as{font-size:0.75rem;color:#888;}
+        .btn-post-comment{padding:8px 20px;background:#007bff;color:#fff;border:none;border-radius:6px;font-size:0.84rem;font-weight:600;cursor:pointer;transition:background 0.2s;}
+        .btn-post-comment:hover{background:#0056b3;}
+        .btn-post-comment:disabled{background:#aaa;cursor:not-allowed;}
+        .login-to-comment{background:#f7f9ff;border:1.5px dashed #c8d9f0;border-radius:8px;padding:1rem;text-align:center;margin-bottom:1.2rem;}
+        .login-to-comment p{color:#666;font-size:0.88rem;margin:0 0 0.7rem;}
+        .login-to-comment a{display:inline-block;padding:7px 20px;background:#007bff;color:#fff;border-radius:6px;text-decoration:none;font-weight:600;font-size:0.83rem;}
+        .login-to-comment a:hover{background:#0056b3;}
+        .comment-item{display:flex;gap:10px;margin-bottom:1rem;}
+        .comment-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-size:0.7rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+        .comment-bubble{background:#f7f7f7;border-radius:0 10px 10px 10px;padding:10px 12px;flex:1;}
+        .comment-author-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+        .comment-author-name{font-weight:600;font-size:0.83rem;color:#222;}
+        .comment-timestamp{font-size:0.7rem;color:#aaa;}
+        .comment-text{font-size:0.88rem;line-height:1.6;color:#444;}
+        .comment-delete-btn{background:none;border:none;color:#dc2626;font-size:0.7rem;cursor:pointer;padding:2px 6px;border-radius:4px;opacity:0;transition:opacity 0.2s;}
+        .comment-item:hover .comment-delete-btn{opacity:1;}
+        .comment-delete-btn:hover{background:#fee2e2;}
+        .no-comments{text-align:center;padding:1.2rem;color:#aaa;font-size:0.87rem;}
+
+        /* Sidebar */
+        .blog-sidebar{display:flex;flex-direction:column;gap:1.5rem;position:sticky;top:80px;}
+        @media(max-width:880px){.blog-sidebar{display:none;}}
+        .sidebar-widget{background:#fff;border-radius:12px;padding:1.4rem;box-shadow:0 1px 4px rgba(0,0,0,0.07);border:1px solid #e8e8e8;}
+        .sidebar-widget-title{font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#888;margin:0 0 1rem;padding-bottom:0.7rem;border-bottom:2px solid #e8e8e8;}
+        .recent-post-item{display:flex;gap:10px;align-items:flex-start;padding:8px 0;cursor:pointer;border-bottom:1px solid #f0f0f0;}
+        .recent-post-item:last-child{border-bottom:none;}
+        .recent-post-item:hover .recent-post-title{color:#007bff;}
+        .recent-post-thumb{width:54px;height:44px;border-radius:7px;object-fit:cover;flex-shrink:0;}
+        .recent-post-title{font-size:0.83rem;font-weight:600;color:#333;line-height:1.3;}
+        .recent-post-date{font-size:0.7rem;color:#aaa;margin-top:3px;}
+        .sidebar-cta{background:#111;border-radius:12px;padding:1.6rem 1.4rem;text-align:center;}
+        .sidebar-cta .sidebar-widget-title{color:#888;border-bottom-color:rgba(255,255,255,0.1);}
+        .sidebar-cta p{font-size:0.86rem;color:rgba(255,255,255,0.7);margin:0 0 1.1rem;line-height:1.6;}
+        .sidebar-cta .btn-shop{display:block;padding:11px;background:#007bff;color:#fff;border-radius:7px;font-weight:700;font-size:0.84rem;text-decoration:none;transition:background 0.2s;}
+        .sidebar-cta .btn-shop:hover{background:#0056b3;}
+
+        /* Loading/empty states */
+        .blog-loading{text-align:center;padding:3rem 2rem;}
+        .blog-loading .spinner{width:36px;height:36px;border:3px solid #e0e0e0;border-top-color:#007bff;border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 1rem;}
+        @keyframes spin{to{transform:rotate(360deg);}}
+        .blog-empty{text-align:center;padding:4rem 2rem;color:#aaa;}
+
+        /* Toast */
+        .blog-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:#222;color:#fff;padding:10px 22px;border-radius:7px;font-size:0.86rem;font-weight:500;z-index:9999;opacity:0;transition:opacity 0.25s,transform 0.25s;pointer-events:none;white-space:nowrap;}
+        .blog-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+        /* ── Mobile ── */
+        @media(max-width:600px){
+            .blog-hero{min-height:260px;}
+            .blog-hero-content{padding:2rem 1rem;}
+            .blog-hero-content h1{font-size:1.75rem;}
+            .blog-hero-content p{font-size:0.95rem;}
+            .blog-layout{padding:1.2rem 0.75rem;gap:1.2rem;}
+            .post-feed{gap:1.2rem;}
+            .post-card{border-radius:10px;}
+            .post-card-image{max-height:240px;}
+            .post-card-body{padding:1rem;}
+            .post-card-title{font-size:1.15rem;}
+            /* Share buttons – stack tighter */
+            .share-bar{gap:0.4rem;}
+            .share-btn{padding:7px 11px;font-size:0.78rem;}
+            /* Comment form – stack "As name" above Post button */
+            .comment-form-footer{flex-wrap:wrap;gap:8px;}
+            .btn-post-comment{width:100%;}
+            /* Delete button always visible on touch (no hover on mobile) */
+            .comment-delete-btn{opacity:1 !important;}
+            /* Comment bubble tighter */
+            .comment-bubble{padding:8px 10px;}
         }
-        .blog-modal-content {
-            background: #fff;
-            max-width: 600px;
-            width: 90vw;
-            max-height: 90vh;
-            overflow-y: auto;
-            border-radius: 1rem;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-            padding: 2rem;
-            position: relative;
-        }
-        .blog-modal-close {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            font-size: 1.5rem;
-            color: #888;
-            cursor: pointer;
-            background: none;
-            border: none;
-        }
-        .blog-card-img {
-            width: 100%;
-            height: 160px;
-            object-fit: cover;
-            border-radius: 0.5rem 0.5rem 0 0;
-        }
-        .blog-modal-img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
+        /* Also show delete btn on any touch-primary device regardless of width */
+        @media(hover:none){
+            .comment-delete-btn{opacity:1 !important;}
         }
     </style>
-    <!-- Google Analytics 4 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2J1GWH59V4"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-2J1GWH59V4');
-    </script>
 </head>
 <body>
-    <!-- Header Section -->
-    <header class="header bg-white shadow">
-        <div class="container flex justify-between items-center py-4">
-            <a href="index.html" class="logo flex items-center">
-                <img src="Assets/45.png" alt="Disciplined Disciples Logo" class="site-logo" style="height:48px; width:auto; margin-right:10px;">
-                <span class="font-bold text-xl">Disciplined Disciples</span>
-            </a>
-            <nav class="nav-menu">
-                <ul class="flex space-x-6">
-                    <li><a href="index.html" class="nav-link">Home</a></li>
-                    <li><a href="about.html" class="nav-link">About</a></li>
-                    <li><a href="shop.html" class="nav-link">Shop</a></li>
-                    <li><a href="blog.html" class="nav-link active">Blog</a></li>
-                    <li><a href="contact.html" class="nav-link">Contact</a></li>
-                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a></li>
-                    <li><a href="cart.html" class="nav-link" aria-label="Shopping Cart"><i class="fas fa-shopping-cart"></i></a></li>
-                </ul>
-                <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
-                <!-- Standardized Profile Dropdown -->
-                <div id="profile-ribbon" style="display: none; position: relative;">
-                    <button id="profile-btn" style="
-                        width: 42px;
-                        height: 42px;
-                        border-radius: 50%;
-                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                        color: white;
-                        font-weight: 600;
-                        font-size: 14px;
-                        border: none;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-                        transition: all 0.3s ease;
-                    " onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.5)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)';">
-                        <span id="profile-ribbon-initials" style="letter-spacing: 1px;">U</span>
-                    </button>
-                </div>
-            </nav>
-            <button class="menu-toggle" aria-label="Toggle navigation">
-                <i class="fas fa-bars"></i>
-            </button>
-        </div>
-        <nav class="mobile-menu">
-            <ul class="py-4">
-                <li><a href="index.html" class="nav-link-mobile">Home</a></li>
-                <li><a href="about.html" class="nav-link-mobile">About</a></li>
-                <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
-                <li><a href="blog.html" class="nav-link-mobile active">Blog</a></li>
-                <li><a href="contact.html" class="nav-link-mobile">Contact</a></li>
-                <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
-                <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
+<header class="header bg-white shadow">
+    <div class="container flex justify-between items-center py-4">
+        <a href="index.html" class="logo flex items-center">
+            <img src="Assets/45.png" alt="Disciplined Disciples Logo" style="height:48px;width:auto;margin-right:10px;">
+            <span class="font-bold text-xl">Disciplined Disciples</span>
+        </a>
+        <nav class="nav-menu">
+            <ul class="flex space-x-6">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="about.html" class="nav-link">About</a></li>
+                <li><a href="shop.html" class="nav-link">Shop</a></li>
+                <li><a href="blog.html" class="nav-link active">Blog</a></li>
+                <li><a href="contact.html" class="nav-link">Contact</a></li>
+                <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a></li>
+                <li><a href="cart.html" class="nav-link" aria-label="Cart"><i class="fas fa-shopping-cart"></i></a></li>
             </ul>
-            <a href="login-signup.html" id="login-signup-link-mobile" class="nav-link-mobile"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
+            <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
+            <div id="profile-ribbon" style="display:none;position:relative;">
+                <button id="profile-btn" style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;font-weight:600;font-size:14px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 15px rgba(102,126,234,0.4);transition:all 0.3s ease;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
+                    <span id="profile-ribbon-initials">U</span>
+                </button>
+            </div>
         </nav>
-    </header>
-
-    <!-- Profile Dropdown - floating compact dropdown -->
-    <div id="profile-dropdown" class="hidden" style="
-        position: fixed;
-        right: 16px;
-        top: 70px;
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-        min-width: 220px;
-        z-index: 9999;
-        overflow: hidden;
-        border: 1px solid rgba(0,0,0,0.05);
-    ">
-        <div style="padding: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-            <p id="dropdown-user-name" style="font-weight: 600; font-size: 15px; margin: 0;">Welcome!</p>
-            <p id="dropdown-user-email" style="font-size: 12px; opacity: 0.85; margin: 4px 0 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></p>
-        </div>
-        <div style="padding: 8px 0;">
-            <a href="profile.html" style="display: flex; align-items: center; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f3e8ff'; this.style.color='#7c3aed';" onmouseout="this.style.background='transparent'; this.style.color='#374151';">
-                <i class="fas fa-user-circle" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
-                My Profile
-            </a>
-            <a href="profile.html#orders" style="display: flex; align-items: center; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f3e8ff'; this.style.color='#7c3aed';" onmouseout="this.style.background='transparent'; this.style.color='#374151';">
-                <i class="fas fa-box" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
-                My Orders
-            </a>
-            <a href="profile.html#account" style="display: flex; align-items: center; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f3e8ff'; this.style.color='#7c3aed';" onmouseout="this.style.background='transparent'; this.style.color='#374151';">
-                <i class="fas fa-cog" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
-                Settings
-            </a>
-            <div style="height: 1px; background: #e5e7eb; margin: 8px 0;"></div>
-            <button id="dropdown-logout-btn" style="display: flex; align-items: center; width: 100%; padding: 12px 16px; color: #dc2626; background: none; border: none; font-size: 14px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#fef2f2';" onmouseout="this.style.background='transparent';">
-                <i class="fas fa-sign-out-alt" style="margin-right: 12px; width: 16px;"></i>
-                Logout
-            </button>
-        </div>
+        <button class="menu-toggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
     </div>
+    <nav class="mobile-menu">
+        <ul class="py-4">
+            <li><a href="index.html" class="nav-link-mobile">Home</a></li>
+            <li><a href="about.html" class="nav-link-mobile">About</a></li>
+            <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
+            <li><a href="blog.html" class="nav-link-mobile active">Blog</a></li>
+            <li><a href="contact.html" class="nav-link-mobile">Contact</a></li>
+            <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
+            <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
+        </ul>
+        <a href="login-signup.html" id="login-signup-link-mobile" class="nav-link-mobile"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
+    </nav>
+</header>
 
-    <!-- Blog Hero Section -->
-    <section class="shop-hero-section" style="position:relative; background-color:#111; min-height:320px;">
-        <img src="Assets/Other/WhatsApp Image 2025-09-28 at 12.07.34_78f51a25.jpg" alt="Blog Banner"
-            style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; opacity:0.45; z-index:1;">
-        <div class="container text-center py-16" style="position:relative; z-index:2;">
-            <h1 class="shop-title" style="color:#fff;">Our Blog</h1>
-            <p class="shop-subtitle" style="color:#e0e0e0;">Insights, inspiration, and reflections on discipline and purpose.</p>
-        </div>
-    </section>
-
-    <!-- Blog Posts Section -->
-    <section class="section-padding bg-light-gray">
-        <div class="container">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="blog-list">
-                <!-- Blog cards will be rendered here -->
-            </div>
-        </div>
-    </section>
-
-    <!-- Blog Modal -->
-    <div class="blog-modal" id="blog-modal">
-        <div class="blog-modal-content" id="blog-modal-content">
-            <button class="blog-modal-close" id="blog-modal-close" aria-label="Close">&times;</button>
-            <!-- Blog content will be injected here -->
-        </div>
+<div id="profile-dropdown" class="hidden" style="position:fixed;right:16px;top:70px;background:#fff;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.15);min-width:220px;z-index:9999;overflow:hidden;border:1px solid rgba(0,0,0,0.05);">
+    <div style="padding:16px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;">
+        <p id="dropdown-user-name" style="font-weight:600;font-size:15px;margin:0;">Welcome!</p>
+        <p id="dropdown-user-email" style="font-size:12px;opacity:0.85;margin:4px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></p>
     </div>
-
-    <!-- Footer Section -->
-    <footer class="footer bg-gray-800 text-white py-8 mt-12">
-        <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div class="footer-col">
-                <h3 class="footer-heading">Disciplined Disciples</h3>
-                <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
-                <div class="social-links">
-                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a>
-                    <a href="#" class="social-link" aria-label="Follow us on Facebook"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" class="social-link" aria-label="Follow us on Twitter"><i class="fab fa-twitter"></i></a>
-                </div>
-            </div>
-            <div class="footer-col">
-                <h3 class="footer-heading">Quick Links</h3>
-                <ul>
-                    <li><a href="index.html" class="footer-link">Home</a></li>
-                    <li><a href="shop.html" class="footer-link">Shop</a></li>
-                    <li><a href="blog.html" class="footer-link active">Blog</a></li>
-                    <li><a href="contact.html" class="footer-link">Contact</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h3 class="footer-heading">Support</h3>
-                <ul>
-                    <li><a href="faq.html" class="footer-link">FAQs</a></li>
-                    <li><a href="shipping-returns.html" class="footer-link">Shipping & Returns</a></li>
-                    <li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li>
-                    <li><a href="terms-of-service.html" class="footer-link">Terms of Service</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h3 class="footer-heading text-lg font-semibold mb-4">Contact Us</h3>
-                <p class="footer-text text-gray-300 text-sm mb-2">Email: nomaqhizazolile@gmail.com</p>
-                <p class="footer-text text-gray-300 text-sm mb-2">Phone: +27 69 206 0618</p>
-                <p class="footer-text text-gray-300 text-sm">Johannesburg, South Africa</p>
-            </div>
-        </div>
-        <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
-            <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
-            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> 💜</p>
-        </div>
-    </footer>
-
-    <script>
-        // Redirect non-www to www for consistent auth sessions
-        if (window.location.hostname === 'disciplineddisciples.co.za') {
-            window.location.href = window.location.href.replace('disciplineddisciples.co.za', 'www.disciplineddisciples.co.za');
-        }
-        
-        // Initialize Firestore
-        const firebaseConfig = {
-            apiKey: window.FIREBASE_API_KEY || "YOUR_API_KEY_HERE",
-            authDomain: "disciplined-disciples-1.firebaseapp.com",
-            projectId: "disciplined-disciples-1",
-            storageBucket: "disciplined-disciples-1.firebasestorage.app",
-            messagingSenderId: "770742520497",
-            appId: "1:770742520497:web:3bf5d1e8c2f3e8a6e0a6d0"
-        };
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        // Fallback blog data (used if Firestore is empty)
-        const defaultBlogs = [
-            {
-                id: 1,
-                title: "The Power of Daily Habits",
-                date: "July 25, 2025",
-                image: "assets/Other/IMG-20250928-WA0006.jpg",
-                excerpt: "Discover how small, consistent actions can lead to monumental change in your life and spiritual journey...",
-                author: "Zolile Nomaqhiza, Founder of Disciplined Disciples",
-                content: `
-                    <p>Habits shape our lives more than we realize. Every day, the small choices we make—whether to pray, exercise, read, or reflect—accumulate into powerful forces that define our character and destiny.</p>
-                    <p>As a believer and entrepreneur, I've learned that discipline is not about grand gestures, but about the quiet commitment to daily growth. Start with one habit: wake up 15 minutes earlier to meditate or journal. Over time, you'll notice a shift in your mindset and productivity.</p>
-                    <p>Remember, consistency is key. Even when motivation fades, discipline keeps you moving forward. Trust the process, and let your daily habits become the foundation of your faith and success.</p>
-                `
-            },
-            {
-                id: 2,
-                title: "Finding Purpose in Everyday Life",
-                date: "July 20, 2025",
-                image: "assets/Other/IMG-20250928-WA0012.jpg",
-                excerpt: "Explore practical ways to infuse purpose into your routines and responsibilities, turning mundane tasks into meaningful acts...",
-                author: "Zolile Nomaqhiza, Founder of Disciplined Disciples",
-                content: `
-                    <p>Purpose isn't reserved for special occasions—it's woven into the fabric of our daily lives. Whether you're at work, at home, or serving others, every moment is an opportunity to live intentionally.</p>
-                    <p>Ask yourself: Why am I doing this? How does this task serve my values or my community? When you connect your actions to a deeper purpose, even routine chores become acts of service and worship.</p>
-                    <p>Challenge yourself to find meaning in the ordinary. You'll discover joy, fulfillment, and a renewed sense of direction in everything you do.</p>
-                `
-            },
-            {
-                id: 3,
-                title: "Resilience: Bouncing Back Stronger",
-                date: "July 15, 2025",
-                image: "assets/Other/IMG-20250928-WA0013.jpg",
-                excerpt: "Learn strategies to build mental and emotional resilience, enabling you to overcome challenges with strength and grace...",
-                author: "Zolile Nomaqhiza, Founder of Disciplined Disciples",
-                content: `
-                    <p>Life is full of setbacks, but resilience is what allows us to rise again. It's not about avoiding failure, but about learning, adapting, and growing through adversity.</p>
-                    <p>When faced with challenges, lean on your faith, your support system, and your inner strength. Take time to reflect, but don't dwell on mistakes. Instead, focus on solutions and the lessons learned.</p>
-                    <p>Remember, every setback is a setup for a comeback. Embrace resilience, and you'll find yourself stronger and wiser with each trial.</p>
-                `
-            },
-            {
-                id: 4,
-                title: "The Journey of Faith and Fitness",
-                date: "July 10, 2025",
-                image: "assets/Products/Caps/WhatsApp Image 2025-08-10 at 14.56.45_da1863d8.jpg",
-                excerpt: "Discover how integrating your spiritual journey with physical well-being can lead to a more holistic and fulfilling life...",
-                author: "Zolile Nomaqhiza, Founder of Disciplined Disciples",
-                content: `
-                    <p>Faith and fitness go hand in hand. Caring for your body is an act of stewardship, honoring the gift of life God has given you.</p>
-                    <p>Start small: take daily walks, stretch, or join a group workout. As you build physical strength, you'll notice improvements in your mental clarity and spiritual focus.</p>
-                    <p>Let your fitness journey be a reflection of your faith—persistent, purposeful, and rooted in gratitude.</p>
-                `
-            },
-            {
-                id: 5,
-                title: "Discipline in the Digital Age",
-                date: "July 5, 2025",
-                image: "assets/Products/Tees/WhatsApp Image 2025-08-10 at 14.56.45_7c6e4b7d.jpg",
-                excerpt: "Navigate the distractions of the modern world with intentional discipline, protecting your focus and mental peace...",
-                author: "Zolile Nomaqhiza, Founder of Disciplined Disciples",
-                content: `
-                    <p>Technology is a blessing, but it can also be a source of distraction. To thrive in the digital age, set boundaries for your screen time and social media use.</p>
-                    <p>Schedule regular digital detoxes—unplug for an hour each day to pray, read, or connect with loved ones. Use technology as a tool, not a master.</p>
-                    <p>Discipline in the digital age means choosing what matters most and protecting your peace of mind.</p>
-                `
-            },
-            {
-                id: 6,
-                title: "The Art of Mindful Living",
-                date: "June 30, 2025",
-                image: "assets/Products/Hoodies/WhatsApp Image 2025-08-10 at 14.56.45_8e7f4c2a.jpg",
-                excerpt: "Embrace mindfulness to enhance your awareness, reduce stress, and live more fully in the present moment...",
-                author: "Zolile Nomaqhiza, Founder of Disciplined Disciples",
-                content: `
-                    <p>Mindfulness is the practice of being fully present. In a busy world, it's easy to rush through life without noticing the beauty around us.</p>
-                    <p>Take time each day to pause, breathe, and reflect. Notice the sights, sounds, and sensations of the moment. Practice gratitude for the simple blessings.</p>
-                    <p>Mindful living leads to greater peace, joy, and a deeper connection with God and others.</p>
-                `
-            }
-        ];
-
-        // Active blogs array (loaded from Firestore or fallback)
-        let blogs = [];
-
-        // Load blogs from Firestore
-        async function loadBlogs() {
-            try {
-                // Simple query - get all blogs and filter client-side
-                const snapshot = await db.collection('blogs').get();
-                
-                if (!snapshot.empty) {
-                    blogs = [];
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        // Only show published blogs
-                        if (data.status === 'published' || !data.status) {
-                            blogs.push({ id: doc.id, ...data });
-                        }
-                    });
-                    // Sort by date (newest first)
-                    blogs.sort((a, b) => {
-                        const dateA = a.createdAt?.toDate?.() || new Date(a.date || 0);
-                        const dateB = b.createdAt?.toDate?.() || new Date(b.date || 0);
-                        return dateB - dateA;
-                    });
-                    console.log('Loaded', blogs.length, 'blogs from Firestore');
-                }
-                
-                // If no blogs in Firestore, use defaults
-                if (blogs.length === 0) {
-                    blogs = defaultBlogs;
-                    console.log('Using default blogs (Firestore empty)');
-                }
-            } catch (err) {
-                console.error('Error loading blogs:', err);
-                blogs = defaultBlogs;
-            }
-            renderBlogs();
-        }
-
-        // Render blog cards
-        function renderBlogs() {
-            const blogList = document.getElementById('blog-list');
-            blogList.innerHTML = '';
-            
-            if (blogs.length === 0) {
-                blogList.innerHTML = '<p class="text-center text-gray-500 col-span-3">No blog posts yet. Check back soon!</p>';
-                return;
-            }
-            
-            blogs.forEach(blog => {
-                const card = document.createElement('div');
-                card.className = "bg-white rounded-lg shadow-md overflow-hidden flex flex-col";
-                card.innerHTML = `
-                    <img src="${blog.image || 'Assets/45.png'}" alt="${blog.title}" class="blog-card-img" onerror="this.src='Assets/45.png'">
-                    <div class="p-6 flex flex-col flex-1">
-                        <h3 class="text-xl font-semibold text-gray-900 mb-2">${blog.title}</h3>
-                        <p class="text-gray-600 text-sm mb-2">By ${blog.author} | ${blog.date}</p>
-                        <p class="text-gray-700 mb-4">${blog.excerpt}</p>
-                        <button class="btn btn-primary mt-auto read-more-btn" data-id="${blog.id}">Read More &rarr;</button>
-                    </div>
-                `;
-                blogList.appendChild(card);
-            });
-        }
-
-        // Show blog modal
-        function showBlogModal(blogId) {
-            const blog = blogs.find(b => b.id == blogId);
-            if (!blog) return;
-            const modal = document.getElementById('blog-modal');
-            const modalContent = document.getElementById('blog-modal-content');
-            modalContent.innerHTML = `
-                <button class="blog-modal-close" id="blog-modal-close" aria-label="Close">&times;</button>
-                <img src="${blog.image || 'Assets/45.png'}" alt="${blog.title}" class="blog-modal-img" onerror="this.src='Assets/45.png'">
-                <h2 class="text-2xl font-bold mb-2">${blog.title}</h2>
-                <p class="text-gray-600 text-sm mb-2">By ${blog.author} | ${blog.date}</p>
-                <div class="text-gray-800 mb-4">${blog.content}</div>
-            `;
-            modal.style.display = "flex";
-            document.getElementById('blog-modal-close').onclick = () => {
-                modal.style.display = "none";
-            };
-        }
-
-        // Event delegation for read more buttons
-        document.addEventListener('DOMContentLoaded', () => {
-            // Load blogs from Firestore (with fallback)
-            loadBlogs();
-            
-            document.getElementById('blog-list').addEventListener('click', function(e) {
-                if (e.target.classList.contains('read-more-btn')) {
-                    showBlogModal(e.target.getAttribute('data-id'));
-                }
-            });
-            document.getElementById('blog-modal').addEventListener('click', function(e) {
-                if (e.target === this) this.style.display = "none";
-            });
-        });
-    </script>
-    <script src="script.js"></script>
-
-    <!-- WhatsApp Floating Button -->
-    <a href="https://wa.me/27692060618?text=Hi%20Disciplined%20Disciples!%20I%20have%20a%20question%20about%20your%20products." 
-       class="whatsapp-float" 
-       target="_blank" 
-       rel="noopener noreferrer"
-       aria-label="Chat on WhatsApp">
-        <i class="fab fa-whatsapp"></i>
-    </a>
-
-    <!-- Cookie Consent Banner (POPIA Compliance) -->
-    <div id="cookie-consent-banner" class="cookie-consent-banner">
-        <div class="cookie-consent-content">
-            <div class="cookie-consent-text">
-                <h3>🍪 We Value Your Privacy</h3>
-                <p>We use cookies to improve your experience and analyze site traffic. By clicking "Accept", you consent to our use of cookies. <a href="privacy-policy.html">Learn more</a></p>
-            </div>
-            <div class="cookie-consent-actions">
-                <button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept">Accept All Cookies</button>
-                <button id="cookie-decline-btn" class="cookie-btn cookie-btn-decline">Decline Analytics</button>
-            </div>
-        </div>
+    <div style="padding:8px 0;">
+        <a href="profile.html" style="display:flex;align-items:center;padding:12px 16px;color:#374151;text-decoration:none;font-size:14px;" onmouseover="this.style.background='#f0f4ff';this.style.color='#007bff';" onmouseout="this.style.background='transparent';this.style.color='#374151';"><i class="fas fa-user-circle" style="margin-right:12px;color:#9ca3af;width:16px;"></i>My Profile</a>
+        <a href="profile.html#orders" style="display:flex;align-items:center;padding:12px 16px;color:#374151;text-decoration:none;font-size:14px;" onmouseover="this.style.background='#f0f4ff';this.style.color='#007bff';" onmouseout="this.style.background='transparent';this.style.color='#374151';"><i class="fas fa-box" style="margin-right:12px;color:#9ca3af;width:16px;"></i>My Orders</a>
+        <div style="height:1px;background:#e5e7eb;margin:8px 0;"></div>
+        <button id="dropdown-logout-btn" style="display:flex;align-items:center;width:100%;padding:12px 16px;color:#dc2626;background:none;border:none;font-size:14px;cursor:pointer;" onmouseover="this.style.background='#fef2f2';" onmouseout="this.style.background='transparent';"><i class="fas fa-sign-out-alt" style="margin-right:12px;width:16px;"></i>Logout</button>
     </div>
+</div>
+
+<section class="blog-hero">
+    <div class="blog-hero-bg"></div>
+    <div class="blog-hero-overlay"></div>
+    <div class="blog-hero-content">
+        <h1>Stories Worth Reading</h1>
+        <p>Real talk on discipline, faith, purpose, and South African culture &mdash; from the founder himself.</p>
+    </div>
+</section>
+
+<div class="blog-layout">
+    <div id="blog-main">
+        <div id="blog-loading" class="blog-loading"><div class="spinner"></div><p style="color:#888;font-size:0.9rem;">Loading posts...</p></div>
+        <div id="post-feed" class="post-feed"></div>
+        <div id="blog-empty" class="blog-empty" style="display:none;"><i class="fas fa-pen-nib" style="font-size:2.5rem;color:#ccc;display:block;margin-bottom:1rem;"></i><p>No posts yet. Come back soon.</p></div>
+    </div>
+    <aside class="blog-sidebar">
+        <div class="sidebar-widget">
+            <p class="sidebar-widget-title">Recent Posts</p>
+            <div id="recent-posts-list"><p style="color:#aaa;font-size:0.85rem;">Loading...</p></div>
+        </div>
+        <div class="sidebar-cta">
+            <p class="sidebar-widget-title">The Collection</p>
+            <p>Wear your discipline. Browse the latest drops from Disciplined Disciples.</p>
+            <a href="shop.html" class="btn-shop"><i class="fas fa-shopping-bag"></i> Shop Now</a>
+        </div>
+    </aside>
+</div>
+
+<div class="blog-toast" id="blog-toast"></div>
+
+<footer class="footer bg-gray-800 text-white py-8 mt-12">
+    <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div class="footer-col">
+            <h3 class="footer-heading">Disciplined Disciples</h3>
+            <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
+            <div class="social-links">
+                <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="social-link"><i class="fab fa-instagram"></i></a>
+                <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+            </div>
+        </div>
+        <div class="footer-col"><h3 class="footer-heading">Quick Links</h3><ul><li><a href="index.html" class="footer-link">Home</a></li><li><a href="shop.html" class="footer-link">Shop</a></li><li><a href="blog.html" class="footer-link active">Blog</a></li><li><a href="contact.html" class="footer-link">Contact</a></li></ul></div>
+        <div class="footer-col"><h3 class="footer-heading">Support</h3><ul><li><a href="faq.html" class="footer-link">FAQs</a></li><li><a href="shipping-returns.html" class="footer-link">Shipping &amp; Returns</a></li><li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li><li><a href="terms-of-service.html" class="footer-link">Terms of Service</a></li></ul></div>
+        <div class="footer-col"><h3 class="footer-heading">Contact Us</h3><p class="footer-text">Email: nomaqhizazolile@gmail.com</p><p class="footer-text">Phone: +27 69 206 0618</p><p class="footer-text">Johannesburg, South Africa</p></div>
+    </div>
+    <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
+        <p>&copy; 2026 Disciplined Disciples. All rights reserved.</p>
+        <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color:#007bff;">Zande Technologies</a></p>
+    </div>
+</footer>
+
+<a href="https://wa.me/27692060618?text=Hi%20Disciplined%20Disciples!%20I%20have%20a%20question." class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp"><i class="fab fa-whatsapp"></i></a>
+
+<div id="cookie-consent-banner" class="cookie-consent-banner">
+    <div class="cookie-consent-content">
+        <div class="cookie-consent-text"><h3>We Value Your Privacy</h3><p>We use cookies to improve your experience. <a href="privacy-policy.html">Learn more</a></p></div>
+        <div class="cookie-consent-actions"><button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept">Accept</button><button id="cookie-decline-btn" class="cookie-btn cookie-btn-decline">Decline</button></div>
+    </div>
+</div>
+
+<script>
+if(window.location.hostname==='disciplineddisciples.co.za'){window.location.href=window.location.href.replace('disciplineddisciples.co.za','www.disciplineddisciples.co.za');}
+
+const firebaseConfig={apiKey:"AIzaSyBVpuDI_YJI7mxtT6-igSL7ZX3s-cqMRnc",authDomain:"disciplined-disciples-1.firebaseapp.com",projectId:"disciplined-disciples-1",storageBucket:"disciplined-disciples-1.firebasestorage.app",messagingSenderId:"565996965931",appId:"1:565996965911:web:b9d18489caa790e7afda6e",measurementId:"G-2J1GWH59V4"};
+if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+const auth=firebase.auth();
+const ADMIN_EMAILS=['zmabege@gmail.com','nomaqhizazolile@gmail.com'];
+let allBlogs=[],currentUser=null,isAdminUser=false;
+
+auth.onAuthStateChanged(u=>{currentUser=u;isAdminUser=!!(u&&ADMIN_EMAILS.includes(u.email));renderFeed();});
+
+/* ── Data loading ── */
+async function loadBlogs(){
+    try{
+        const snap=await db.collection('blogs').get();
+        allBlogs=[];
+        snap.forEach(doc=>{const d=doc.data();if(d.status==='published'||!d.status)allBlogs.push({id:doc.id,...d});});
+        allBlogs.sort((a,b)=>{const da=a.createdAt?.toDate?.()||new Date(a.date||0);const db2=b.createdAt?.toDate?.()||new Date(b.date||0);return db2-da;});
+        if(!allBlogs.length)allBlogs=getFallback();
+    }catch(e){allBlogs=getFallback();}
+    renderFeed();
+    renderSidebar();
+}
+
+/* ── Render feed ── */
+function renderFeed(){
+    document.getElementById('blog-loading').style.display='none';
+    const feed=document.getElementById('post-feed');
+    const empty=document.getElementById('blog-empty');
+    if(!allBlogs.length){feed.innerHTML='';empty.style.display='block';return;}
+    empty.style.display='none';
+    feed.innerHTML=allBlogs.map(b=>buildPostCard(b)).join('');
+    allBlogs.forEach(b=>loadAndRenderComments(b.id));
+}
+
+function buildPostCard(b){
+    const date=fmtDate(b.createdAt,b.date);
+    const enc=encodeURIComponent(window.location.origin+window.location.pathname+'?post='+encodeURIComponent(b.id));
+    const encT=encodeURIComponent(b.title);
+    const imgHtml=b.image?'<img src="'+b.image+'" alt="'+esc(b.title)+'" class="post-card-image" onerror="this.style.display=\'none\'">'  :'';
+    return '<article class="post-card" id="post-'+b.id+'">'
+        +imgHtml
+        +'<div class="post-card-body">'
+        +'<div class="post-card-meta">'
+        +'<div class="post-card-avatar">'+initials(b.author)+'</div>'
+        +'<div class="post-card-meta-text"><span class="post-card-author">'+esc(shortName(b.author))+'</span><span class="post-card-date">'+date+'</span></div>'
+        +'</div>'
+        +'<h2 class="post-card-title">'+esc(b.title)+'</h2>'
+        +'<div class="post-card-content">'
+        +'<div class="post-card-content-inner" id="content-'+b.id+'">'+(b.content||'<p>'+esc(b.excerpt||'')+'</p>')+'</div>'
+        +'<button class="expand-btn" id="expand-'+b.id+'" onclick="toggleExpand(\''+b.id+'\')" style="'+(needsExpand(b)?'':'display:none;')+'"><i class="fas fa-chevron-down"></i> Read more</button>'
+        +'</div>'
+        +'<hr class="post-card-divider">'
+        +'<div class="share-bar"><span class="share-label"><i class="fas fa-share-alt"></i></span>'
+        +'<button class="share-btn share-wa" onclick="sharePost(\'wa\',\''+enc+'\',\''+encT+'\')"><i class="fab fa-whatsapp"></i> WhatsApp</button>'
+        +'<button class="share-btn share-fb" onclick="sharePost(\'fb\',\''+enc+'\',\''+encT+'\')"><i class="fab fa-facebook-f"></i> Facebook</button>'
+        +'<button class="share-btn share-tw" onclick="sharePost(\'tw\',\''+enc+'\',\''+encT+'\')"><i class="fab fa-twitter"></i> Twitter</button>'
+        +'<button class="share-btn share-copy" onclick="copyLink(\''+enc+'\')"><i class="fas fa-link"></i> Copy</button>'
+        +'</div>'
+        +'<hr class="post-card-divider">'
+        +'<div class="comments-section" id="cmt-section-'+b.id+'">'
+        +'<p class="comments-heading"><i class="far fa-comment"></i> Comments <span class="comments-count-badge" id="cmt-badge-'+b.id+'">0</span></p>'
+        +'<div id="cmt-form-'+b.id+'"><p style="color:#aaa;font-size:0.85rem;"><i class="fas fa-spinner fa-spin"></i> Loading...</p></div>'
+        +'<div id="cmt-list-'+b.id+'"></div>'
+        +'</div>'
+        +'</div></article>';
+}
+
+/* Posts with long content need expand button — we show it always; JS detects if content overflows */
+function needsExpand(b){return !!(b.content&&b.content.length>300);}
+
+function toggleExpand(id){
+    const inner=document.getElementById('content-'+id);
+    const btn=document.getElementById('expand-'+id);
+    const expanded=inner.classList.toggle('expanded');
+    btn.innerHTML=expanded?'<i class="fas fa-chevron-up"></i> Show less':'<i class="fas fa-chevron-down"></i> Read more';
+}
+
+function renderSidebar(){
+    document.getElementById('recent-posts-list').innerHTML=allBlogs.slice(0,5).map(b=>
+        '<div class="recent-post-item" onclick="document.getElementById(\'post-'+b.id+'\').scrollIntoView({behavior:\'smooth\',block:\'start\'})">'
+        +'<img src="'+(b.image||'Assets/45.png')+'" alt="'+esc(b.title)+'" class="recent-post-thumb" onerror="this.src=\'Assets/45.png\'">'
+        +'<div><div class="recent-post-title">'+esc(b.title)+'</div><div class="recent-post-date">'+fmtDate(b.createdAt,b.date)+'</div></div></div>').join('');
+}
+
+/* ── Comments ── */
+async function loadAndRenderComments(blogId){
+    const formEl=document.getElementById('cmt-form-'+blogId);
+    const listEl=document.getElementById('cmt-list-'+blogId);
+    const badge=document.getElementById('cmt-badge-'+blogId);
+    try{
+        const snap=await db.collection('blogs').doc(blogId).collection('comments').orderBy('createdAt','asc').get();
+        const cmts=[];snap.forEach(d=>cmts.push({id:d.id,...d.data()}));
+        if(badge)badge.textContent=cmts.length;
+        if(currentUser){
+            formEl.innerHTML='<div class="comment-form-wrap"><textarea class="comment-textarea" id="cmt-input-'+blogId+'" placeholder="Share your thoughts..." rows="3" maxlength="800"></textarea><div class="comment-form-footer"><span class="comment-as">As <strong>'+esc(currentUser.displayName||currentUser.email.split('@')[0])+'</strong></span><button class="btn-post-comment" onclick="postComment(\''+blogId+'\')"><i class="fas fa-paper-plane"></i> Post</button></div></div>';
+        }else{
+            formEl.innerHTML='<div class="login-to-comment"><p><i class="far fa-comment-dots"></i> Sign in to join the conversation</p><a href="login-signup.html">Sign In / Sign Up</a></div>';
+        }
+        listEl.innerHTML=cmts.length?cmts.map(c=>{
+            const ts=c.createdAt?.toDate?.()? timeAgo(c.createdAt.toDate()):'just now';
+            const canDel=isAdminUser||(currentUser&&currentUser.uid===c.userId);
+            return '<div class="comment-item" id="cmt-'+c.id+'">'
+                +'<div class="comment-avatar">'+initials(c.authorName)+'</div>'
+                +'<div class="comment-bubble">'
+                +'<div class="comment-author-row">'
+                +'<span class="comment-author-name">'+esc(c.authorName)+'</span>'
+                +'<div style="display:flex;align-items:center;gap:6px;">'
+                +'<span class="comment-timestamp">'+ts+'</span>'
+                +(canDel?'<button class="comment-delete-btn" onclick="delComment(\''+blogId+'\',\''+c.id+'\')"><i class="fas fa-trash-alt"></i></button>':'')
+                +'</div></div>'
+                +'<p class="comment-text">'+esc(c.text)+'</p>'
+                +'</div></div>';
+        }).join(''):'<div class="no-comments"><i class="far fa-comments" style="font-size:1.5rem;color:#ddd;display:block;margin-bottom:6px;"></i>Be the first to comment</div>';
+    }catch(e){
+        if(formEl)formEl.innerHTML=currentUser?'<div class="comment-form-wrap"><textarea class="comment-textarea" id="cmt-input-'+blogId+'" placeholder="Share your thoughts..." rows="3" maxlength="800"></textarea><div class="comment-form-footer"><span class="comment-as">As <strong>'+esc(currentUser.displayName||currentUser.email.split('@')[0])+'</strong></span><button class="btn-post-comment" onclick="postComment(\''+blogId+'\')"><i class="fas fa-paper-plane"></i> Post</button></div></div>':'<div class="login-to-comment"><p>Sign in to comment</p><a href="login-signup.html">Sign In / Sign Up</a></div>';
+        if(listEl)listEl.innerHTML='';
+    }
+}
+
+async function postComment(blogId){
+    if(!currentUser){showToast('Please sign in');return;}
+    const input=document.getElementById('cmt-input-'+blogId);
+    const text=(input&&input.value||'').trim();
+    if(!text){showToast('Comment cannot be empty');return;}
+    if(text.length>800){showToast('Max 800 characters');return;}
+    const btn=document.querySelector('#cmt-form-'+blogId+' .btn-post-comment');
+    if(btn){btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';}
+    try{
+        await db.collection('blogs').doc(blogId).collection('comments').add({text,authorName:currentUser.displayName||currentUser.email.split('@')[0],authorEmail:currentUser.email,userId:currentUser.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+        if(input)input.value='';
+        showToast('Comment posted!');
+        await loadAndRenderComments(blogId);
+    }catch(e){showToast('Error posting comment');}
+    finally{if(btn){btn.disabled=false;btn.innerHTML='<i class="fas fa-paper-plane"></i> Post';}}
+}
+
+async function delComment(blogId,commentId){
+    if(!confirm('Delete this comment?'))return;
+    try{
+        await db.collection('blogs').doc(blogId).collection('comments').doc(commentId).delete();
+        const el=document.getElementById('cmt-'+commentId);if(el)el.remove();
+        const badge=document.getElementById('cmt-badge-'+blogId);
+        if(badge&&parseInt(badge.textContent)>0)badge.textContent=parseInt(badge.textContent)-1;
+        showToast('Deleted');
+    }catch(e){showToast('Error deleting comment');}
+}
+
+/* ── Share / copy ── */
+function sharePost(p,enc,t){
+    const urls={wa:'https://wa.me/?text='+t+'%20'+enc,fb:'https://www.facebook.com/sharer/sharer.php?u='+enc,tw:'https://twitter.com/intent/tweet?text='+t+'&url='+enc};
+    window.open(urls[p],'_blank','width=600,height=450');
+}
+function copyLink(enc){
+    const url=decodeURIComponent(enc);
+    if(navigator.clipboard){navigator.clipboard.writeText(url).then(()=>showToast('Link copied!'));}
+    else{const ta=document.createElement('textarea');ta.value=url;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast('Link copied!');}
+}
+
+/* ── Utilities ── */
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function initials(n){if(!n)return'?';return n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();}
+function shortName(n){if(!n)return'Anonymous';return n.replace(', Founder of Disciplined Disciples','').trim();}
+function fmtDate(ts,fb){if(ts?.toDate)return ts.toDate().toLocaleDateString('en-ZA',{day:'numeric',month:'long',year:'numeric'});return fb||'';}
+function timeAgo(d){const s=Math.floor((Date.now()-d.getTime())/1000);if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';if(s<604800)return Math.floor(s/86400)+'d ago';return d.toLocaleDateString('en-ZA');}
+function showToast(msg){const t=document.getElementById('blog-toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+
+/* ── Fallback posts ── */
+function getFallback(){return[
+    {id:'daily-habits',title:"The Power of Daily Habits",date:"July 25, 2025",image:"Assets/Other/IMG-20250928-WA0006.jpg",excerpt:"Discover how small, consistent actions lead to monumental change.",author:"Zolile Nomaqhiza, Founder of Disciplined Disciples",content:"<p>Habits shape our lives more than we realize. Every day, the small choices we make &mdash; whether to pray, exercise, read, or reflect &mdash; accumulate into powerful forces that define our character.</p><p>Discipline is not about grand gestures, but the quiet commitment to daily growth. Start small. Trust the process. The compound effect is real.</p><p>Pick one habit to lock in this week. Just one. Master it before adding another. That is how champions are built &mdash; one rep, one page, one prayer at a time.</p>",status:'published',tags:['habits','discipline']},
+    {id:'purpose',title:"Finding Purpose in Everyday Life",date:"July 20, 2025",image:"Assets/Other/IMG-20250928-WA0012.jpg",excerpt:"Practical ways to infuse purpose into your routines.",author:"Zolile Nomaqhiza, Founder of Disciplined Disciples",content:"<p>Purpose is not something you find &mdash; it is something you build. Every moment is an opportunity to live intentionally and connect your actions to something bigger than yourself.</p><p>Start with the question: <em>Why am I doing this?</em> If you cannot answer it, stop. If you can, let it fuel you.</p>",status:'published',tags:['purpose','faith']},
+    {id:'resilience',title:"Resilience: Bouncing Back Stronger",date:"July 15, 2025",image:"Assets/Other/IMG-20250928-WA0013.jpg",excerpt:"Build mental and emotional resilience to overcome any challenge.",author:"Zolile Nomaqhiza, Founder of Disciplined Disciples",content:"<p>Life is full of setbacks. But resilience is what allows us to rise again, often stronger and wiser than before. Every setback is a setup for a comeback.</p><p>Do not run from pain. Sit with it. Learn from it. Then use it as fuel.</p>",status:'published',tags:['resilience','growth']},
+    {id:'digital',title:"Discipline in the Digital Age",date:"July 5, 2025",image:"Assets/Other/WhatsApp Image 2025-09-28 at 12.07.34_78f51a25.jpg",excerpt:"Navigate modern distractions with intentional discipline.",author:"Zolile Nomaqhiza, Founder of Disciplined Disciples",content:"<p>Technology is a blessing, but also one of the greatest sources of distraction our generation has ever faced. The same phone that holds your Bible also holds social media, games, and endless noise.</p><p>Set hard limits. Use screen time tools. Designate phone-free hours. Your focus is your most valuable asset &mdash; guard it.</p>",status:'published',tags:['discipline','digital']}
+];}
+
+/* ── Init ── */
+document.addEventListener('DOMContentLoaded',()=>{
+    loadBlogs();
+    const postId=new URLSearchParams(window.location.search).get('post');
+    if(postId){
+        const t=setInterval(()=>{
+            const el=document.getElementById('post-'+postId);
+            if(el){clearInterval(t);setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),300);}
+        },150);
+        setTimeout(()=>clearInterval(t),5000);
+    }
+});
+</script>
+<script src="script.js"></script>
 </body>
 </html>

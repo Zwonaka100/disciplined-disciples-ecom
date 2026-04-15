@@ -220,18 +220,93 @@
         </div>
     </section>
 
-    <!-- Contact Form Section (Google Forms Embed) -->
+    <!-- Contact Form Section -->
+    <style>
+        .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;align-items:start;}
+        @media(max-width:700px){.contact-grid{grid-template-columns:1fr;}}
+        .cf-label{display:block;font-size:0.83rem;font-weight:600;color:#555;margin-bottom:5px;}
+        .cf-input{width:100%;padding:10px 12px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.92rem;color:#333;font-family:'Inter',sans-serif;box-sizing:border-box;transition:border-color 0.2s;}
+        .cf-input:focus{outline:none;border-color:#007bff;}
+        .cf-field{margin-bottom:1rem;}
+        .cf-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+        @media(max-width:480px){.cf-row{grid-template-columns:1fr;}}
+        .cf-submit{width:100%;padding:13px;background:#007bff;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;transition:background 0.2s;font-family:'Inter',sans-serif;}
+        .cf-submit:hover{background:#0056b3;}
+        .cf-submit:disabled{background:#aaa;cursor:not-allowed;}
+        .info-icon-box{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    </style>
     <section class="section-padding bg-light-gray">
-        <div class="container max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-md">
-            <p class="text-center text-gray-700 mb-8">Have a question about our products, an order, or just want to share your journey? Fill out the form below or reach out directly.</p>
-            <div class="mb-8 flex justify-center">
-                <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSf0E8SzoGlzRjvPOPkihdJ0__ob8HC2t7_FhnHy-OYE6CR5_A/viewform?embedded=true" title="Contact Form" width="100%" height="800" frameborder="0" marginheight="0" marginwidth="0" style="border-radius: 0.5rem;">Loading…</iframe>
-            </div>
-            <div class="mt-8 text-center text-gray-700">
-                <h3 class="font-semibold text-lg mb-2">Direct Contact</h3>
-                <p><i class="fas fa-envelope mr-2"></i> Email: nomaqhizazolile@gmail.com</p>
-                <p><i class="fas fa-phone-alt mr-2"></i> Phone: +27 69 206 0618</p>
-                <p><i class="fas fa-map-marker-alt mr-2"></i> Address: Johannesburg, South Africa</p>
+        <div class="container" style="max-width:960px;margin:0 auto;">
+            <div class="contact-grid">
+
+                <!-- Form Card -->
+                <div style="background:#fff;padding:2rem;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.08);border:1px solid #e8e8e8;">
+                    <h2 style="font-size:1.4rem;font-weight:700;color:#222;margin:0 0 0.3rem;">Send a Message</h2>
+                    <p style="color:#888;font-size:0.9rem;margin:0 0 1.8rem;">We read everything and get back to you.</p>
+
+                    <div id="contact-success" style="display:none;background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:1.4rem;text-align:center;margin-bottom:1.5rem;">
+                        <i class="fas fa-check-circle" style="font-size:2rem;color:#22c55e;margin-bottom:0.6rem;display:block;"></i>
+                        <p style="color:#166534;font-weight:600;margin:0 0 0.3rem;">Message sent!</p>
+                        <p style="color:#166534;font-size:0.85rem;margin:0 0 1rem;">We’ll get back to you as soon as possible.</p>
+                        <button onclick="document.getElementById('contact-success').style.display='none';document.getElementById('contact-form').style.display='block';document.getElementById('contact-form').reset();" style="padding:7px 20px;background:#fff;border:1.5px solid #86efac;color:#166534;border-radius:6px;font-size:0.85rem;font-weight:600;cursor:pointer;">Send another</button>
+                    </div>
+
+                    <form id="contact-form">
+                        <div class="cf-row">
+                            <div>
+                                <label class="cf-label">Name <span style="color:#e53e3e;">*</span></label>
+                                <input type="text" id="cf-name" class="cf-input" required placeholder="Your name">
+                            </div>
+                            <div>
+                                <label class="cf-label">Email <span style="color:#e53e3e;">*</span></label>
+                                <input type="email" id="cf-email" class="cf-input" required placeholder="your@email.com">
+                            </div>
+                        </div>
+                        <div class="cf-field">
+                            <label class="cf-label">Subject</label>
+                            <input type="text" id="cf-subject" class="cf-input" placeholder="What’s it about?">
+                        </div>
+                        <div class="cf-field">
+                            <label class="cf-label">Message <span style="color:#e53e3e;">*</span></label>
+                            <textarea id="cf-message" class="cf-input" required rows="6" placeholder="Tell us what’s on your mind…" style="resize:vertical;min-height:130px;"></textarea>
+                        </div>
+                        <button type="submit" id="cf-submit" class="cf-submit">
+                            <i class="fas fa-paper-plane" style="margin-right:8px;"></i>Send Message
+                        </button>
+                        <p id="cf-error" style="display:none;color:#dc2626;font-size:0.84rem;text-align:center;margin-top:10px;"></p>
+                    </form>
+                </div>
+
+                <!-- Contact Info -->
+                <div style="display:flex;flex-direction:column;gap:1.2rem;">
+                    <div style="background:#fff;padding:1.5rem;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.08);border:1px solid #e8e8e8;">
+                        <h3 style="font-size:1.05rem;font-weight:700;color:#222;margin:0 0 1.2rem;">Direct Contact</h3>
+                        <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:1rem;">
+                            <div class="info-icon-box" style="background:#eff6ff;"><i class="fas fa-envelope" style="color:#007bff;"></i></div>
+                            <div><p style="font-weight:600;font-size:0.85rem;margin:0 0 2px;">Email</p><a href="mailto:nomaqhizazolile@gmail.com" style="color:#007bff;font-size:0.88rem;text-decoration:none;">nomaqhizazolile@gmail.com</a></div>
+                        </div>
+                        <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:1rem;">
+                            <div class="info-icon-box" style="background:#f0fdf4;"><i class="fab fa-whatsapp" style="color:#25D366;font-size:1.1rem;"></i></div>
+                            <div><p style="font-weight:600;font-size:0.85rem;margin:0 0 2px;">WhatsApp</p><a href="https://wa.me/27692060618" target="_blank" rel="noopener noreferrer" style="color:#25D366;font-size:0.88rem;text-decoration:none;">+27 69 206 0618</a></div>
+                        </div>
+                        <div style="display:flex;align-items:flex-start;gap:12px;">
+                            <div class="info-icon-box" style="background:#f5f3ff;"><i class="fas fa-map-marker-alt" style="color:#7c3aed;"></i></div>
+                            <div><p style="font-weight:600;font-size:0.85rem;margin:0 0 2px;">Location</p><p style="color:#666;font-size:0.88rem;margin:0;">Johannesburg, South Africa</p></div>
+                        </div>
+                    </div>
+                    <div style="background:#fff;padding:1.5rem;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.08);border:1px solid #e8e8e8;">
+                        <h3 style="font-size:1.05rem;font-weight:700;color:#222;margin:0 0 1rem;">Follow Us</h3>
+                        <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;text-decoration:none;color:#333;transition:background 0.2s;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background='transparent'">
+                            <i class="fab fa-instagram" style="font-size:1.4rem;color:#E1306C;"></i>
+                            <span style="font-weight:600;font-size:0.88rem;">@disciplined_disciples_2023</span>
+                        </a>
+                    </div>
+                    <div style="background:#111;color:#fff;border-radius:12px;padding:1.5rem;">
+                        <p style="font-weight:700;font-size:0.95rem;margin:0 0 0.5rem;"><i class="fas fa-clock" style="margin-right:8px;color:#aaa;"></i>Response time</p>
+                        <p style="color:rgba(255,255,255,0.7);font-size:0.87rem;margin:0;line-height:1.7;">We usually reply within 24 hours on weekdays. For urgent matters, WhatsApp is the fastest way to reach us.</p>
+                    </div>
+                </div>
+
             </div>
         </div>
     </section>
@@ -279,6 +354,37 @@
         </div>
     </footer>
     <script src="script.js"></script>
+    <script>
+    (function(){
+        var firebaseConfig={apiKey:"AIzaSyBVpuDI_YJI7mxtT6-igSL7ZX3s-cqMRnc",authDomain:"disciplined-disciples-1.firebaseapp.com",projectId:"disciplined-disciples-1",storageBucket:"disciplined-disciples-1.firebasestorage.app",messagingSenderId:"565996965931",appId:"1:565996965931:web:b9d18489caa790e7afda6e"};
+        if(!firebase.apps.length)firebase.initializeApp(firebaseConfig);
+        var db=firebase.firestore();
+
+        document.getElementById('contact-form').addEventListener('submit',async function(e){
+            e.preventDefault();
+            var name=(document.getElementById('cf-name').value||'').trim();
+            var email=(document.getElementById('cf-email').value||'').trim();
+            var subject=(document.getElementById('cf-subject').value||'').trim();
+            var message=(document.getElementById('cf-message').value||'').trim();
+            var btn=document.getElementById('cf-submit');
+            var errEl=document.getElementById('cf-error');
+            errEl.style.display='none';
+            if(!name||!email||!message){errEl.textContent='Please fill in all required fields.';errEl.style.display='block';return;}
+            if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){errEl.textContent='Please enter a valid email address.';errEl.style.display='block';return;}
+            if(message.length>2000){errEl.textContent='Message is too long (max 2000 characters).';errEl.style.display='block';return;}
+            btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i>Sending...';
+            try{
+                await db.collection('contactMessages').add({name:name,email:email,subject:subject||'(no subject)',message:message,status:'unread',createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+                document.getElementById('contact-form').style.display='none';
+                document.getElementById('contact-success').style.display='block';
+            }catch(err){
+                errEl.textContent='Something went wrong. Please try again or contact us directly.';
+                errEl.style.display='block';
+            }
+            btn.disabled=false;btn.innerHTML='<i class="fas fa-paper-plane" style="margin-right:8px;"></i>Send Message';
+        });
+    })();
+    </script>
 
     <!-- WhatsApp Floating Button -->
     <a href="https://wa.me/27692060618?text=Hi%20Disciplined%20Disciples!%20I%20have%20a%20question%20about%20your%20products." 
@@ -297,8 +403,8 @@
                 <p>We use cookies to improve your experience and analyze site traffic. By clicking "Accept", you consent to our use of cookies. <a href="privacy-policy.html">Learn more</a></p>
             </div>
             <div class="cookie-consent-actions">
-                <button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept">Accept All Cookies</button>
-                <button id="cookie-decline-btn" class="cookie-btn cookie-btn-decline">Decline Analytics</button>
+                <button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept">Accept</button>
+                <button id="cookie-decline-btn" class="cookie-btn cookie-btn-decline">Decline</button>
             </div>
         </div>
     </div>

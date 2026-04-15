@@ -38,21 +38,44 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Products - TEMPORARILY fully open for import, then change back to isAdmin()
+    // Products - public read, admin-only write
     match /products/{productId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isAdmin();
     }
 
-    // Blogs - public read, open write for now (change to isAdmin() later)
+    // Blogs - public read, admin-only write
     match /blogs/{blogId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isAdmin();
     }
 
-    // Test document for connectivity checks
+    // Blog comments - anyone can read; signed-in users can create their own; admins or comment owner can delete
+    match /blogs/{blogId}/comments/{commentId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 800;
+      allow delete: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
+      allow update: if false;
+    }
+
+    // Test document - restricted to signed-in users only
     match /test/{document} {
-      allow read, write: if true;
+      allow read, write: if isSignedIn();
+    }
+
+    // Contact messages - anyone can create; only admins can read/update/delete
+    match /contactMessages/{messageId} {
+      allow create: if request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.email is string
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 2000;
+      allow read, update, delete: if isAdmin();
     }
 
     // Default rule - deny all other access

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -10,9 +10,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <!-- Google Analytics 4 -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-2J1GWH59V4"></script>
     <script>
@@ -176,7 +176,7 @@
                                 <input type="radio" name="delivery_method" value="paxi_standard" class="mt-1" required onchange="updateDeliveryMethod()">
                                 <div class="flex-1">
                                     <div class="flex justify-between">
-                                        <span class="font-medium">📦 PAXI Standard</span>
+                                        <span class="font-medium">?? PAXI Standard</span>
                                         <span class="text-purple-600 font-bold">R59.95</span>
                                     </div>
                                     <p class="text-sm text-gray-500">Delivered to your nearest PEP store (7-9 business days)</p>
@@ -189,7 +189,7 @@
                                 <input type="radio" name="delivery_method" value="paxi_express" class="mt-1" onchange="updateDeliveryMethod()">
                                 <div class="flex-1">
                                     <div class="flex justify-between">
-                                        <span class="font-medium">🚀 PAXI Express</span>
+                                        <span class="font-medium">?? PAXI Express</span>
                                         <span class="text-purple-600 font-bold">R109.95</span>
                                     </div>
                                     <p class="text-sm text-gray-500">Delivered to your nearest PEP store (3-5 business days)</p>
@@ -203,7 +203,7 @@
                                 <input type="radio" name="delivery_method" value="collection" class="mt-1" onchange="updateDeliveryMethod()">
                                 <div class="flex-1">
                                     <div class="flex justify-between">
-                                        <span class="font-medium">🏢 Collect in Person</span>
+                                        <span class="font-medium">?? Collect in Person</span>
                                         <span class="text-green-600 font-bold">FREE</span>
                                     </div>
                                     <p class="text-sm text-gray-500">SASOL Place: 50 Katherine St, Wierda Valley, Sandton, 2196</p>
@@ -294,7 +294,7 @@
         </div>
         <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
             <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
-            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> 💜</p>
+            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> ??</p>
         </div>
     </footer>
 
@@ -482,7 +482,7 @@
                 key: 'pending_payment',
                 status: 'Awaiting Payment',
                 label: 'Awaiting payment',
-                icon: '⌛',
+                icon: '?',
                 message: 'We have created your order and are waiting for your secure payment confirmation.'
             };
             
@@ -572,12 +572,12 @@
     <div id="cookie-consent-banner" class="cookie-consent-banner">
         <div class="cookie-consent-content">
             <div class="cookie-consent-text">
-                <h3>🍪 We Value Your Privacy</h3>
+                <h3>?? We Value Your Privacy</h3>
                 <p>We use cookies to improve your experience and analyze site traffic. By clicking "Accept", you consent to our use of cookies. <a href="privacy-policy.html">Learn more</a></p>
             </div>
             <div class="cookie-consent-actions">
-                <button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept">Accept All Cookies</button>
-                <button id="cookie-decline-btn" class="cookie-btn cookie-btn-decline">Decline Analytics</button>
+                <button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept">Accept</button>
+                <button id="cookie-decline-btn" class="cookie-btn cookie-btn-decline">Decline</button>
             </div>
         </div>
     </div>

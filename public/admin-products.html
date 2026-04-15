@@ -59,14 +59,21 @@
                 <a href="admin-dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
                     <i class="fas fa-chart-line w-5"></i><span>Dashboard</span>
                 </a>
+                <a href="admin-dashboard.html#orders-section" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-shopping-bag w-5"></i><span>Orders</span>
+                </a>
                 <a href="admin-products.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-lg">
                     <i class="fas fa-box w-5"></i><span>Products</span>
                 </a>
                 <a href="admin-blogs.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
-                    <i class="fas fa-blog w-5"></i><span>Blog Posts</span>
+                    <i class="fas fa-blog w-5"></i><span>Blogs</span>
                 </a>
-                <a href="admin-dashboard.html#orders" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
-                    <i class="fas fa-shopping-bag w-5"></i><span>Orders</span>
+                <a href="admin-dashboard.html#messages-section" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
+                    <i class="fas fa-envelope w-5"></i><span>Messages</span>
+                </a>
+                <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 cursor-not-allowed">
+                    <i class="fas fa-users w-5"></i><span>The Tribe</span>
+                    <span class="ml-auto text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">Soon</span>
                 </a>
                 <div class="border-t border-gray-200 my-4"></div>
                 <a href="shop.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
@@ -294,12 +301,13 @@
         
         // Firebase Config
         const firebaseConfig = {
-            apiKey: window.FIREBASE_API_KEY || "YOUR_API_KEY_HERE",
+            apiKey: "AIzaSyBVpuDI_YJI7mxtT6-igSL7ZX3s-cqMRnc",
             authDomain: "disciplined-disciples-1.firebaseapp.com",
             projectId: "disciplined-disciples-1",
             storageBucket: "disciplined-disciples-1.firebasestorage.app",
-            messagingSenderId: "770742520497",
-            appId: "1:770742520497:web:3bf5d1e8c2f3e8a6e0a6d0"
+            messagingSenderId: "565996965931",
+            appId: "1:565996965931:web:b9d18489caa790e7afda6e",
+            measurementId: "G-2J1GWH59V4"
         };
         
         // Initialize Firebase
@@ -897,14 +905,10 @@
                 
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving product...';
                 
-                // STEP 3: Build color options with all uploaded URLs
+                // STEP 3: Build color options — only real named colour variants
+                // Main display images are stored at the top level (displayImage / images),
+                // NOT as a 'default' colour, so no phantom swatch appears in the shop.
                 const colorOptions = {};
-                if (uploadedUrls.length > 0) {
-                    colorOptions['default'] = {
-                        images: uploadedUrls,
-                        defaultImage: uploadedUrls[0]
-                    };
-                }
                 colorVariants.forEach(cv => {
                     if (cv.images && cv.images.length > 0) {
                         colorOptions[cv.name] = {

@@ -119,13 +119,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
-    <!-- Announcement Bar -->
-    <div class="announcement-bar">
-        <div class="announcement-content">
-            <span class="announcement-text">🚚 FREE SHIPPING ON ORDERS OVER R500</span>
-        </div>
-    </div>
-
     <!-- Header Section - IMPORTANT: This header block must be identical across ALL your HTML pages -->
     <header class="header bg-white shadow">
         <div class="container flex justify-between items-center py-4">
@@ -515,22 +508,6 @@
         <i class="fab fa-whatsapp"></i>
     </a>
 
-    <!-- Newsletter Popup -->
-    <div id="newsletter-popup" class="newsletter-popup">
-        <div class="newsletter-popup-content">
-            <button class="newsletter-close" id="newsletter-close-btn" aria-label="Close newsletter">&times;</button>
-            <div class="newsletter-header">
-                <h3>Get 10% Off Your First Order! 🎉</h3>
-                <p>Join the Disciplined Disciples community and receive exclusive offers</p>
-            </div>
-            <form id="newsletter-form" class="newsletter-form">
-                <input type="email" id="newsletter-email" placeholder="Enter your email" required class="newsletter-input">
-                <button type="submit" class="newsletter-submit">Get My Discount</button>
-            </form>
-            <p class="newsletter-footer">We respect your privacy. Unsubscribe anytime.</p>
-        </div>
-    </div>
-
     <!-- Cookie Consent Banner (POPIA Compliance) -->
     <div id="cookie-consent-banner" class="cookie-consent-banner">
         <div class="cookie-consent-content">
@@ -539,8 +516,8 @@
                 <p>We use cookies to improve your experience and analyze site traffic. By clicking "Accept", you consent to our use of cookies. <a href="privacy-policy.html">Learn more</a></p>
             </div>
             <div class="cookie-consent-actions">
-                <button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept">Accept All Cookies</button>
-                <button id="cookie-decline-btn" class="cookie-btn cookie-btn-decline">Decline Analytics</button>
+                <button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept">Accept</button>
+                <button id="cookie-decline-btn" class="cookie-btn cookie-btn-decline">Decline</button>
             </div>
         </div>
     </div>
