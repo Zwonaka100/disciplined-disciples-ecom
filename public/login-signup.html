@@ -131,7 +131,7 @@
                         </div>
                         <div>
                             <label for="login-password" class="form-label">Password</label>
-                            <input type="password" id="login-password" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+                            <input type="password" id="login-password" class="form-input" placeholder="ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" required autocomplete="current-password">
                         </div>
                         <button type="submit" class="btn btn-primary w-full">Login</button>
                         <p class="text-center text-gray-600 mt-4">Forgot password? <a href="#" class="text-blue-600 hover:underline">Reset it</a></p>
@@ -150,11 +150,11 @@
                         </div>
                         <div>
                             <label for="signup-password" class="form-label">Password</label>
-                            <input type="password" id="signup-password" class="form-input" placeholder="•••••••• (min 6 characters)" required autocomplete="new-password">
+                            <input type="password" id="signup-password" class="form-input" placeholder="ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (min 6 characters)" required autocomplete="new-password">
                         </div>
                         <div>
                             <label for="signup-confirm-password" class="form-label">Confirm Password</label>
-                            <input type="password" id="signup-confirm-password" class="form-input" placeholder="••••••••" required autocomplete="new-password">
+                            <input type="password" id="signup-confirm-password" class="form-input" placeholder="ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" required autocomplete="new-password">
                         </div>
                         <button type="submit" class="btn btn-primary w-full">Sign Up</button>
                     </form>
@@ -206,7 +206,7 @@
         </div>
     </footer>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=20260416b"></script>
     <script>
         // Firebase is already initialized in script.js
         document.addEventListener('DOMContentLoaded', async () => {
@@ -490,7 +490,7 @@
                         || (localStorage.getItem('userLoggedIn') && localStorage.getItem('userId'));
 
                     if (cameFromProfile && hasSession) {
-                        console.log('User authenticated but came from profile with session set — not redirecting');
+                        console.log('User authenticated but came from profile with session set ï¿½ not redirecting');
                         return;
                     }
 
