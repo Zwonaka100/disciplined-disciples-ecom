@@ -718,7 +718,7 @@ async function handleLogout() {
 }
 
 // --- Product Data (Hardcoded ONLY for Caps - others from Firebase) ---
-const lproducts = [
+const products = [
     {
         id: 'cap',
         name: 'Courage Cap',
