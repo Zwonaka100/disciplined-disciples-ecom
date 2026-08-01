@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customers &middot; Admin &middot; Disciplined Disciples</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="js/admin-auth-guard.js?v=20260602a"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" type="image/png" href="Assets/45.png">
+    <script src="firebase-config.js"></script>
+    <script>
+        // Guard handled by shared admin-auth-guard.js
+    </script>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-900">
+    <div class="flex min-h-screen">
+        <aside id="admin-sidebar" class="w-64 bg-white border-r border-gray-200 fixed h-full overflow-y-auto z-30"></aside>
+
+        <main class="flex-1 ml-64 p-8 space-y-6">
+            <header class="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                    <h1 class="text-2xl font-bold">Customers</h1>
+                    <p class="text-slate-500">Lifetime value, order history, and eBook ownership at a glance.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="cust-export" class="px-4 py-2 text-sm font-medium border border-slate-200 rounded hover:bg-slate-50 transition"><i class="fas fa-file-csv mr-2"></i>Export CSV</button>
+                    <button id="cust-refresh" class="px-4 py-2 text-sm font-medium border border-slate-200 rounded hover:bg-slate-50 transition"><i class="fas fa-rotate-right mr-2"></i>Refresh</button>
+                </div>
+            </header>
+
+            <div id="cust-alert" class="hidden rounded-lg border px-4 py-3 text-sm"></div>
+
+            <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+                <article class="bg-white rounded-xl shadow p-5"><p class="text-sm text-slate-500">Total Customers</p><p id="cust-stat-total" class="text-3xl font-semibold mt-2">&mdash;</p></article>
+                <article class="bg-white rounded-xl shadow p-5"><p class="text-sm text-slate-500">Paying Customers</p><p id="cust-stat-paying" class="text-3xl font-semibold mt-2">&mdash;</p></article>
+                <article class="bg-white rounded-xl shadow p-5"><p class="text-sm text-slate-500">eBook Owners</p><p id="cust-stat-ebook" class="text-3xl font-semibold mt-2">&mdash;</p></article>
+                <article class="bg-white rounded-xl shadow p-5"><p class="text-sm text-slate-500">Total LTV (Paid)</p><p id="cust-stat-ltv" class="text-3xl font-semibold mt-2">&mdash;</p></article>
+            </section>
+
+            <section class="bg-white rounded-xl shadow p-5 space-y-4">
+                <div class="flex flex-wrap items-center gap-3">
+                    <input id="cust-search" type="search" placeholder="Search by name or email&hellip;" class="flex-1 min-w-[240px] px-3 py-2 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                    <select id="cust-filter-segment" class="px-3 py-2 border border-slate-200 rounded text-sm">
+                        <option value="all">All customers</option>
+                        <option value="paying">Paying customers</option>
+                        <option value="ebook">eBook owners</option>
+                        <option value="physical">Physical buyers</option>
+                        <option value="nopurchase">Never purchased</option>
+                    </select>
+                    <select id="cust-sort" class="px-3 py-2 border border-slate-200 rounded text-sm">
+                        <option value="ltv-desc">Sort: LTV (high → low)</option>
+                        <option value="ltv-asc">Sort: LTV (low → high)</option>
+                        <option value="orders-desc">Sort: Orders (most)</option>
+                        <option value="recent-desc">Sort: Most recent order</option>
+                        <option value="name-asc">Sort: Name (A→Z)</option>
+                        <option value="created-desc">Sort: Newest signup</option>
+                    </select>
+                </div>
+
+                <div class="overflow-x-auto -mx-5">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wide">
+                            <tr>
+                                <th class="text-left px-5 py-3">Customer</th>
+                                <th class="text-left px-5 py-3">Email</th>
+                                <th class="text-right px-5 py-3">Orders</th>
+                                <th class="text-right px-5 py-3">LTV</th>
+                                <th class="text-left px-5 py-3">Last Order</th>
+                                <th class="text-left px-5 py-3">Tags</th>
+                                <th class="text-left px-5 py-3">Joined</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cust-tbody" class="divide-y divide-slate-100">
+                            <tr><td colspan="7" class="px-5 py-8 text-center text-slate-400">Loading customers&hellip;</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p id="cust-empty" class="hidden text-center text-slate-400 text-sm py-6">No customers match your filters.</p>
+            </section>
+        </main>
+
+        <!-- Customer detail drawer -->
+        <div id="drawer-backdrop" class="hidden fixed inset-0 bg-black/40 z-40 transition-opacity" data-drawer-close></div>
+        <aside id="customer-drawer" class="fixed top-0 right-0 h-full w-full sm:w-[560px] bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-200 overflow-y-auto">
+            <header class="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 flex items-start justify-between gap-3 z-10">
+                <div class="min-w-0">
+                    <h2 id="drawer-name" class="text-lg font-bold text-slate-900 truncate">Customer</h2>
+                    <p id="drawer-email" class="text-sm text-slate-500 truncate">&mdash;</p>
+                </div>
+                <button class="text-slate-400 hover:text-slate-700 text-xl px-2" data-drawer-close aria-label="Close"><i class="fas fa-xmark"></i></button>
+            </header>
+
+            <div class="p-5 space-y-5">
+                <div id="drawer-tags" class="flex flex-wrap gap-1.5"></div>
+
+                <section class="grid grid-cols-3 gap-3">
+                    <div class="bg-slate-50 rounded-lg p-3 text-center"><p class="text-xs text-slate-500">LTV</p><p id="drawer-ltv" class="text-base font-bold text-emerald-600 mt-0.5">R0</p></div>
+                    <div class="bg-slate-50 rounded-lg p-3 text-center"><p class="text-xs text-slate-500">Paid orders</p><p id="drawer-paid" class="text-base font-bold text-slate-900 mt-0.5">0</p></div>
+                    <div class="bg-slate-50 rounded-lg p-3 text-center"><p class="text-xs text-slate-500">Joined</p><p id="drawer-joined" class="text-base font-bold text-slate-900 mt-0.5">&mdash;</p></div>
+                </section>
+
+                <section>
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-bold text-slate-900"><i class="fas fa-bag-shopping text-emerald-500 mr-1.5"></i>Order history</h3>
+                        <span id="drawer-order-count" class="text-xs text-slate-400">0 orders</span>
+                    </div>
+                    <div id="drawer-orders" class="space-y-2"><p class="text-sm text-slate-400">No orders yet.</p></div>
+                </section>
+
+                <section>
+                    <h3 class="text-sm font-bold text-slate-900 mb-2"><i class="fas fa-compass text-violet-500 mr-1.5"></i>Mentorship</h3>
+                    <div id="drawer-mentee" class="text-sm text-slate-500">No mentorship application.</div>
+                </section>
+
+                <section>
+                    <h3 class="text-sm font-bold text-slate-900 mb-2"><i class="fas fa-location-dot text-amber-500 mr-1.5"></i>Address book</h3>
+                    <div id="drawer-addresses" class="space-y-2 text-sm"><p class="text-slate-400">No saved delivery addresses.</p></div>
+                </section>
+
+                <section class="pt-3 border-t border-slate-200 flex flex-wrap gap-2">
+                    <a id="drawer-email-btn" href="#" class="px-3 py-2 text-sm font-medium border border-slate-200 rounded hover:bg-slate-50"><i class="fas fa-envelope mr-1.5"></i>Email</a>
+                    <button id="drawer-copy-btn" class="px-3 py-2 text-sm font-medium border border-slate-200 rounded hover:bg-slate-50"><i class="fas fa-copy mr-1.5"></i>Copy email</button>
+                    <a id="drawer-orders-link" href="admin-orders.html" class="px-3 py-2 text-sm font-medium border border-slate-200 rounded hover:bg-slate-50"><i class="fas fa-receipt mr-1.5"></i>All orders</a>
+                </section>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+    (function() {
+        const ADMIN_EMAILS = ['zmabege@gmail.com', 'nomaqhizazolile@gmail.com'];
+        const NS = 'artifacts/default-app-id';
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(getFirebaseConfig());
+        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        const els = {
+            alert: document.getElementById('cust-alert'),
+            tbody: document.getElementById('cust-tbody'),
+            empty: document.getElementById('cust-empty'),
+            search: document.getElementById('cust-search'),
+            segment: document.getElementById('cust-filter-segment'),
+            sort: document.getElementById('cust-sort'),
+            statTotal: document.getElementById('cust-stat-total'),
+            statPaying: document.getElementById('cust-stat-paying'),
+            statEbook: document.getElementById('cust-stat-ebook'),
+            statLTV: document.getElementById('cust-stat-ltv'),
+            refresh: document.getElementById('cust-refresh'),
+            exportBtn: document.getElementById('cust-export'),
+        };
+
+        const state = { rows: [], filtered: [], mentorship: new Map(), ordersByKey: new Map() };
+
+        function showAlert(msg, kind) {
+            els.alert.classList.remove('hidden', 'bg-red-50', 'border-red-200', 'text-red-700', 'bg-emerald-50', 'border-emerald-200', 'text-emerald-700', 'bg-indigo-50', 'border-indigo-200', 'text-indigo-700');
+            if (kind === 'error') els.alert.classList.add('bg-red-50', 'border-red-200', 'text-red-700');
+            else if (kind === 'success') els.alert.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-700');
+            else els.alert.classList.add('bg-indigo-50', 'border-indigo-200', 'text-indigo-700');
+            els.alert.textContent = msg;
+        }
+        function hideAlert() { els.alert.classList.add('hidden'); }
+
+        const PAID_STATUSES = ['paid', 'complete', 'completed', 'success'];
+        function isPaid(o) {
+            const s = String(o.status || '').toLowerCase();
+            const p = String(o.paymentStatus || '').toLowerCase();
+            return PAID_STATUSES.includes(p) || PAID_STATUSES.includes(s);
+        }
+        function isEbookItem(item) {
+            const pid = String(item?.productId || item?.id || '').toLowerCase();
+            const name = String(item?.name || '').toLowerCase();
+            const ful = String(item?.fulfillmentType || '').toLowerCase();
+            return pid === 'ebook' || name.includes('ebook') || ful === 'digital';
+        }
+        function orderHasEbook(o) {
+            if (o.hasEbookItem === true) return true;
+            if (o.orderType === 'digital' || o.orderType === 'mixed') return true;
+            return Array.isArray(o.items) && o.items.some(isEbookItem);
+        }
+        function orderHasPhysical(o) {
+            if (o.orderType === 'physical' || o.orderType === 'mixed') return true;
+            return Array.isArray(o.items) && o.items.some(i => !isEbookItem(i));
+        }
+        function fmtZAR(n) {
+            return 'R' + (Number(n) || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+        function fmtDate(d) {
+            if (!d) return '—';
+            const dt = d.toDate ? d.toDate() : (d instanceof Date ? d : new Date(d));
+            if (isNaN(dt.getTime())) return '—';
+            return dt.toLocaleDateString('en-ZA', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+        function escapeHtml(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        async function loadAll() {
+            hideAlert();
+            els.tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-8 text-center text-slate-400">Loading customers&hellip;</td></tr>`;
+            try {
+                const [usersSnap, ordersSnap, mentSnap] = await Promise.all([
+                    db.collection('artifacts').doc('default-app-id').collection('users').get(),
+                    db.collection('artifacts').doc('default-app-id').collection('orders').get(),
+                    db.collection('mentorshipApplications').get().catch(() => ({ docs: [], forEach: () => {} }))
+                ]);
+
+                // Index mentorship apps by lowercased email for fast lookup
+                state.mentorship = new Map();
+                mentSnap.forEach && mentSnap.forEach(d => {
+                    const m = d.data() || {};
+                    const e = String(m.email || '').toLowerCase();
+                    if (!e) return;
+                    const prev = state.mentorship.get(e);
+                    if (!prev) state.mentorship.set(e, { id: d.id, ...m });
+                });
+                state.ordersByKey = new Map();
+
+                // Aggregate orders by userId (registered) or by email (guest checkouts)
+                const byUser = new Map();
+                const byEmail = new Map();
+                ordersSnap.forEach(doc => {
+                    const o = { id: doc.id, ...(doc.data() || {}) };
+                    const uid = o.userId || o.uid;
+                    const email = (o.customerEmail || (o.customer && o.customer.email) || '').toLowerCase();
+                    const target = uid ? byUser : (email ? byEmail : null);
+                    const key = uid || email;
+                    if (!target || !key) return;
+                    // Cache by both uid and email so drawer can find
+                    if (uid) {
+                        if (!state.ordersByKey.has(uid)) state.ordersByKey.set(uid, []);
+                        state.ordersByKey.get(uid).push(o);
+                    }
+                    if (email) {
+                        if (!state.ordersByKey.has(email)) state.ordersByKey.set(email, []);
+                        state.ordersByKey.get(email).push(o);
+                    }
+                    if (!target.has(key)) target.set(key, { orders: [], paidOrders: [], ltv: 0, lastOrderAt: null, hasEbook: false, hasPhysical: false, name: '', email: email });
+                    const agg = target.get(key);
+                    if (!agg.name) agg.name = o.customerName || (o.customer && o.customer.name) || '';
+                    if (!agg.email && email) agg.email = email;
+                    agg.orders.push(o);
+                    if (isPaid(o)) {
+                        agg.paidOrders.push(o);
+                        agg.ltv += Number(o.totalAmount || o.total || 0);
+                        if (orderHasEbook(o)) agg.hasEbook = true;
+                        if (orderHasPhysical(o)) agg.hasPhysical = true;
+                    }
+                    const at = o.orderDate || o.createdAt || o.placedAt || o.timestamp;
+                    if (at) {
+                        const dt = at.toDate ? at.toDate() : new Date(at);
+                        if (!isNaN(dt.getTime()) && (!agg.lastOrderAt || dt > agg.lastOrderAt)) agg.lastOrderAt = dt;
+                    }
+                });
+
+                const rows = [];
+                const seenEmails = new Set();
+                usersSnap.forEach(doc => {
+                    const u = doc.data() || {};
+                    const agg = byUser.get(doc.id) || { orders: [], paidOrders: [], ltv: 0, lastOrderAt: null, hasEbook: false, hasPhysical: false };
+                    const createdAt = u.createdAt || u.created || null;
+                    const created = createdAt ? (createdAt.toDate ? createdAt.toDate() : new Date(createdAt)) : null;
+                    const email = (u.email || u.contactEmail || agg.email || '').toLowerCase();
+                    if (email) seenEmails.add(email);
+                    rows.push({
+                        uid: doc.id,
+                        name: u.displayName || u.name || [u.firstName, u.lastName].filter(Boolean).join(' ') || agg.name || '(no name)',
+                        email: email,
+                        ordersCount: agg.orders.length,
+                        paidCount: agg.paidOrders.length,
+                        ltv: agg.ltv,
+                        lastOrderAt: agg.lastOrderAt,
+                        hasEbook: agg.hasEbook,
+                        hasPhysical: agg.hasPhysical,
+                        createdAt: created,
+                        isGuest: false
+                    });
+                });
+
+                // Add guest-checkout customers (orders without a userId) that don't already match a known user
+                byEmail.forEach((agg, email) => {
+                    if (seenEmails.has(email)) return;
+                    rows.push({
+                        uid: 'guest:' + email,
+                        name: agg.name || email,
+                        email: email,
+                        ordersCount: agg.orders.length,
+                        paidCount: agg.paidOrders.length,
+                        ltv: agg.ltv,
+                        lastOrderAt: agg.lastOrderAt,
+                        hasEbook: agg.hasEbook,
+                        hasPhysical: agg.hasPhysical,
+                        createdAt: agg.lastOrderAt,
+                        isGuest: true
+                    });
+                });
+
+                state.rows = rows;
+                renderStats();
+                applyFilters();
+            } catch (err) {
+                console.error('Customers load error:', err);
+                showAlert('Failed to load customers: ' + (err.message || err), 'error');
+                els.tbody.innerHTML = `<tr><td colspan="7" class="px-5 py-8 text-center text-red-500">Load failed.</td></tr>`;
+            }
+        }
+
+        function renderStats() {
+            const total = state.rows.length;
+            const paying = state.rows.filter(r => r.paidCount > 0).length;
+            const ebook = state.rows.filter(r => r.hasEbook).length;
+            const ltv = state.rows.reduce((s, r) => s + (r.ltv || 0), 0);
+            els.statTotal.textContent = total.toString();
+            els.statPaying.textContent = paying.toString();
+            els.statEbook.textContent = ebook.toString();
+            els.statLTV.textContent = fmtZAR(ltv);
+        }
+
+        function applyFilters() {
+            const q = (els.search.value || '').trim().toLowerCase();
+            const seg = els.segment.value;
+            const sort = els.sort.value;
+            let rows = state.rows.slice();
+            if (q) rows = rows.filter(r => (r.name || '').toLowerCase().includes(q) || (r.email || '').toLowerCase().includes(q));
+            if (seg === 'paying') rows = rows.filter(r => r.paidCount > 0);
+            else if (seg === 'ebook') rows = rows.filter(r => r.hasEbook);
+            else if (seg === 'physical') rows = rows.filter(r => r.hasPhysical);
+            else if (seg === 'nopurchase') rows = rows.filter(r => r.paidCount === 0);
+            const cmp = {
+                'ltv-desc': (a, b) => b.ltv - a.ltv,
+                'ltv-asc': (a, b) => a.ltv - b.ltv,
+                'orders-desc': (a, b) => b.paidCount - a.paidCount,
+                'recent-desc': (a, b) => (b.lastOrderAt?.getTime() || 0) - (a.lastOrderAt?.getTime() || 0),
+                'name-asc': (a, b) => (a.name || '').localeCompare(b.name || ''),
+                'created-desc': (a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0),
+            }[sort] || ((a, b) => b.ltv - a.ltv);
+            rows.sort(cmp);
+            state.filtered = rows;
+            render();
+        }
+
+        function render() {
+            const rows = state.filtered;
+            if (!rows.length) {
+                els.tbody.innerHTML = '';
+                els.empty.classList.remove('hidden');
+                return;
+            }
+            els.empty.classList.add('hidden');
+            els.tbody.innerHTML = rows.map(r => {
+                const tags = [];
+                if (r.hasEbook) tags.push('<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">📖 eBook</span>');
+                if (r.hasPhysical) tags.push('<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-700">📦 Physical</span>');
+                if (r.paidCount === 0) tags.push('<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600">No purchase</span>');
+                if (r.paidCount >= 3) tags.push('<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">⭐ Repeat</span>');
+                if (r.isGuest) tags.push('<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-200 text-slate-700">👤 Guest</span>');
+                return `<tr class="hover:bg-slate-50 cursor-pointer" data-row-uid="${escapeHtml(r.uid)}">
+                    <td class="px-5 py-3"><div class="font-medium text-slate-900">${escapeHtml(r.name)}</div><div class="text-xs text-slate-400 font-mono">${escapeHtml(r.uid)}</div></td>
+                    <td class="px-5 py-3"><a href="mailto:${escapeHtml(r.email)}" class="text-indigo-600 hover:underline" onclick="event.stopPropagation()">${escapeHtml(r.email || '—')}</a></td>
+                    <td class="px-5 py-3 text-right">${r.paidCount}<span class="text-slate-400 text-xs"> / ${r.ordersCount}</span></td>
+                    <td class="px-5 py-3 text-right font-semibold">${fmtZAR(r.ltv)}</td>
+                    <td class="px-5 py-3 text-slate-600">${fmtDate(r.lastOrderAt)}</td>
+                    <td class="px-5 py-3"><div class="flex flex-wrap gap-1">${tags.join('') || '<span class="text-slate-300 text-xs">—</span>'}</div></td>
+                    <td class="px-5 py-3 text-slate-600">${fmtDate(r.createdAt)}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        function exportCSV() {
+            const rows = state.filtered.length ? state.filtered : state.rows;
+            const header = ['UID', 'Name', 'Email', 'PaidOrders', 'TotalOrders', 'LTV_ZAR', 'LastOrderAt', 'HasEbook', 'HasPhysical', 'JoinedAt'];
+            const body = rows.map(r => [
+                r.uid, r.name, r.email, r.paidCount, r.ordersCount, r.ltv.toFixed(2),
+                r.lastOrderAt ? r.lastOrderAt.toISOString() : '',
+                r.hasEbook ? 'yes' : 'no', r.hasPhysical ? 'yes' : 'no',
+                r.createdAt ? r.createdAt.toISOString() : ''
+            ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+            const csv = [header.join(','), ...body].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `customers-${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        els.search.addEventListener('input', applyFilters);
+        els.segment.addEventListener('change', applyFilters);
+        els.sort.addEventListener('change', applyFilters);
+        els.refresh.addEventListener('click', loadAll);
+        els.exportBtn.addEventListener('click', exportCSV);
+
+        // ---------- Drawer ----------
+        const drawer = document.getElementById('customer-drawer');
+        const backdrop = document.getElementById('drawer-backdrop');
+        function openDrawer() { backdrop.classList.remove('hidden'); requestAnimationFrame(() => drawer.classList.remove('translate-x-full')); }
+        function closeDrawer() { drawer.classList.add('translate-x-full'); backdrop.classList.add('hidden'); }
+        document.querySelectorAll('[data-drawer-close]').forEach(b => b.addEventListener('click', closeDrawer));
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+        els.tbody.addEventListener('click', e => {
+            const tr = e.target.closest('tr[data-row-uid]');
+            if (!tr) return;
+            const row = state.rows.find(r => r.uid === tr.dataset.rowUid);
+            if (row) showCustomer(row);
+        });
+
+        function statusChip(o) {
+            const ps = String(o.paymentStatus || '').toLowerCase();
+            const st = String(o.status || '').toLowerCase();
+            if (isPaid(o)) return '<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-700">Paid</span>';
+            if (st === 'cancelled' || ps === 'cancelled' || st === 'refunded') return '<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-rose-100 text-rose-700">' + escapeHtml(st || ps) + '</span>';
+            return '<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-700">' + escapeHtml(st || ps || 'pending') + '</span>';
+        }
+
+        function showCustomer(r) {
+            document.getElementById('drawer-name').textContent = r.name || 'Customer';
+            document.getElementById('drawer-email').textContent = r.email || 'no email';
+            document.getElementById('drawer-ltv').textContent = fmtZAR(r.ltv);
+            document.getElementById('drawer-paid').textContent = r.paidCount + ' / ' + r.ordersCount;
+            document.getElementById('drawer-joined').textContent = r.createdAt ? fmtDate(r.createdAt) : '—';
+
+            const tags = [];
+            if (r.hasEbook) tags.push('<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">eBook</span>');
+            if (r.hasPhysical) tags.push('<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-700">Physical</span>');
+            if (r.paidCount >= 3) tags.push('<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">Repeat</span>');
+            if (r.paidCount === 0) tags.push('<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600">No purchase</span>');
+            if (r.isGuest) tags.push('<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-200 text-slate-700">Guest</span>');
+            document.getElementById('drawer-tags').innerHTML = tags.join(' ') || '<span class="text-xs text-slate-300">No tags</span>';
+
+            const realUid = r.isGuest ? r.email : r.uid;
+            const orders = (state.ordersByKey.get(realUid) || state.ordersByKey.get(r.email) || []).slice().sort((a, b) => {
+                const da = (a.orderDate || a.createdAt || a.placedAt);
+                const db_ = (b.orderDate || b.createdAt || b.placedAt);
+                const dta = da ? (da.toDate ? da.toDate() : new Date(da)) : null;
+                const dtb = db_ ? (db_.toDate ? db_.toDate() : new Date(db_)) : null;
+                return (dtb?.getTime() || 0) - (dta?.getTime() || 0);
+            });
+            document.getElementById('drawer-order-count').textContent = orders.length + ' order' + (orders.length === 1 ? '' : 's');
+            const ordersEl = document.getElementById('drawer-orders');
+            ordersEl.innerHTML = orders.length ? orders.map(o => {
+                const items = Array.isArray(o.items) ? o.items : [];
+                const itemSummary = items.length ? items.slice(0, 3).map(i => escapeHtml((i.name || i.title || 'Item') + (i.quantity > 1 ? ' ×' + i.quantity : ''))).join(', ') + (items.length > 3 ? ' +' + (items.length - 3) + ' more' : '') : '<span class="text-slate-400">No items recorded</span>';
+                const at = o.orderDate || o.createdAt || o.placedAt;
+                const dt = at ? (at.toDate ? at.toDate() : new Date(at)) : null;
+                return `<div class="border border-slate-200 rounded-lg p-3">
+                    <div class="flex items-center justify-between gap-2 mb-1">
+                        <div class="min-w-0"><p class="font-semibold text-sm text-slate-900 truncate">${escapeHtml(o.orderId || o.id)}</p><p class="text-[11px] text-slate-400">${dt ? dt.toLocaleString('en-ZA', {dateStyle:'medium', timeStyle:'short'}) : '—'}</p></div>
+                        <div class="text-right"><p class="font-bold text-emerald-600 text-sm">${fmtZAR(o.totalAmount || o.total || 0)}</p>${statusChip(o)}</div>
+                    </div>
+                    <p class="text-xs text-slate-600 mt-1">${itemSummary}</p>
+                    <div class="flex gap-2 mt-2">
+                        <button class="text-[11px] px-2 py-1 rounded border border-slate-200 hover:bg-slate-50" data-reorder='${escapeHtml(JSON.stringify({items, email:r.email, name:r.name}))}'><i class="fas fa-rotate-left mr-1"></i>Re-order</button>
+                        <a class="text-[11px] px-2 py-1 rounded border border-slate-200 hover:bg-slate-50" href="admin-orders.html"><i class="fas fa-arrow-up-right-from-square mr-1"></i>Open</a>
+                    </div>
+                </div>`;
+            }).join('') : '<p class="text-sm text-slate-400">No orders yet.</p>';
+
+            // Wire re-order buttons
+            ordersEl.querySelectorAll('[data-reorder]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    try {
+                        const payload = JSON.parse(btn.dataset.reorder);
+                        const items = (payload.items || []).map(i => ({
+                            id: i.productId || i.id, productId: i.productId || i.id,
+                            name: i.name || i.title || 'Item',
+                            price: Number(i.price || 0), quantity: Number(i.quantity || 1),
+                            image: i.image || i.imageUrl || ''
+                        }));
+                        if (!items.length) { alert('No items to re-order.'); return; }
+                        sessionStorage.setItem('ddCart', JSON.stringify(items));
+                        sessionStorage.setItem('ddReorderFor', payload.email || '');
+                        window.open('cart.html', '_blank');
+                    } catch (err) {
+                        alert('Could not start re-order: ' + err.message);
+                    }
+                });
+            });
+
+            // Mentee section
+            const ment = r.email ? state.mentorship.get(r.email.toLowerCase()) : null;
+            const menteeEl = document.getElementById('drawer-mentee');
+            if (ment) {
+                const pkg = ment.packageKey || ment.package || '—';
+                const st = String(ment.status || 'new').toLowerCase();
+                const stColor = { new:'bg-blue-100 text-blue-700', contacted:'bg-amber-100 text-amber-700', accepted:'bg-violet-100 text-violet-700', active:'bg-indigo-100 text-indigo-700', completed:'bg-emerald-100 text-emerald-700' }[st] || 'bg-slate-100 text-slate-700';
+                const at = ment.createdAt || ment.submittedAt;
+                const dt = at ? (at.toDate ? at.toDate() : new Date(at)) : null;
+                menteeEl.innerHTML = `<div class="border border-violet-200 bg-violet-50/40 rounded-lg p-3">
+                    <div class="flex items-center justify-between mb-1"><span class="text-xs text-slate-500">Package</span><span class="font-semibold text-slate-900 text-sm">${escapeHtml(pkg)}</span></div>
+                    <div class="flex items-center justify-between mb-1"><span class="text-xs text-slate-500">Status</span><span class="px-2 py-0.5 rounded text-[11px] font-semibold ${stColor}">${escapeHtml(st)}</span></div>
+                    ${dt ? `<div class="flex items-center justify-between mb-2"><span class="text-xs text-slate-500">Applied</span><span class="text-xs text-slate-700">${fmtDate(dt)}</span></div>` : ''}
+                    ${ment.goal ? `<p class="text-xs text-slate-600 mt-2 line-clamp-3">${escapeHtml(ment.goal)}</p>` : ''}
+                    <a class="inline-block mt-2 text-[11px] px-2 py-1 rounded border border-violet-200 text-violet-700 hover:bg-violet-100" href="admin-mentorship.html"><i class="fas fa-arrow-up-right-from-square mr-1"></i>Open in mentorship</a>
+                </div>`;
+            } else {
+                menteeEl.innerHTML = '<p class="text-sm text-slate-400">No mentorship application from this email.</p>';
+            }
+
+            // Address book (dedupe from order deliveryAddress)
+            const addresses = new Map();
+            orders.forEach(o => {
+                const a = o.deliveryAddress || o.shippingAddress || o.address;
+                if (!a) return;
+                const line = typeof a === 'string' ? a : [a.line1 || a.street, a.line2, a.suburb, a.city, a.province, a.postalCode || a.postcode, a.country].filter(Boolean).join(', ');
+                if (!line) return;
+                if (!addresses.has(line)) addresses.set(line, { line, lastUsed: o.orderDate || o.createdAt, raw: a });
+            });
+            const addrEl = document.getElementById('drawer-addresses');
+            addrEl.innerHTML = addresses.size ? [...addresses.values()].map(a => {
+                const dt = a.lastUsed ? (a.lastUsed.toDate ? a.lastUsed.toDate() : new Date(a.lastUsed)) : null;
+                return `<div class="border border-slate-200 rounded-lg p-3">
+                    <p class="text-sm text-slate-800">${escapeHtml(a.line)}</p>
+                    ${dt ? `<p class="text-[11px] text-slate-400 mt-1">Last used ${fmtDate(dt)}</p>` : ''}
+                </div>`;
+            }).join('') : '<p class="text-slate-400">No saved delivery addresses.</p>';
+
+            // Action buttons
+            const emailBtn = document.getElementById('drawer-email-btn');
+            emailBtn.href = r.email ? ('mailto:' + r.email) : '#';
+            emailBtn.classList.toggle('opacity-40', !r.email);
+            emailBtn.classList.toggle('pointer-events-none', !r.email);
+            const copyBtn = document.getElementById('drawer-copy-btn');
+            copyBtn.onclick = async () => {
+                if (!r.email) return;
+                try { await navigator.clipboard.writeText(r.email); copyBtn.innerHTML = '<i class="fas fa-check mr-1.5"></i>Copied'; setTimeout(() => copyBtn.innerHTML = '<i class="fas fa-copy mr-1.5"></i>Copy email', 1500); } catch { }
+            };
+
+            openDrawer();
+        }
+
+        // Auth gate
+        auth.onAuthStateChanged(user => {
+            if (!user) { window.location.replace('login-signup.html?redirect=admin-customers.html'); return; }
+            const email = (user.email || '').toLowerCase();
+            if (!ADMIN_EMAILS.includes(email)) {
+                showAlert('Access denied. Admins only.', 'error');
+                setTimeout(() => window.location.replace('profile.html'), 1500);
+                return;
+            }
+            loadAll();
+        });
+    })();
+    </script>
+    <script src="js/admin-sidebar.js?v=20260601c" defer></script>
+</body>
+</html>

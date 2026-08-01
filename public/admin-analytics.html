@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - Admin</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="js/admin-auth-guard.js?v=20260602a"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" type="image/png" href="Assets/45.png">
+    <style>
+        .tab-btn { padding:.6rem 1.1rem; border-radius:.6rem; font-weight:600; font-size:.9rem; color:#475569; transition:.15s; }
+        .tab-btn:hover { background:#f1f5f9; }
+        .tab-btn.active { background:#0f172a; color:#fff; }
+        .kpi { background:#fff; border-radius:.85rem; padding:1.1rem 1.25rem; box-shadow:0 1px 2px rgba(15,23,42,.05); border:1px solid #e2e8f0; }
+        .kpi-label { font-size:.78rem; color:#64748b; text-transform:uppercase; letter-spacing:.5px; font-weight:600; }
+        .kpi-value { font-size:1.7rem; font-weight:700; color:#0f172a; margin-top:.35rem; }
+        .kpi-sub { font-size:.78rem; color:#94a3b8; margin-top:.25rem; }
+        .card { background:#fff; border-radius:.85rem; padding:1.25rem; box-shadow:0 1px 2px rgba(15,23,42,.05); border:1px solid #e2e8f0; }
+        .card h3 { font-weight:700; color:#0f172a; margin-bottom:.85rem; font-size:1rem; display:flex; align-items:center; gap:.5rem; }
+        .bar-row { display:flex; align-items:center; gap:.7rem; font-size:.85rem; margin:.45rem 0; }
+        .bar-row .lbl { flex:0 0 130px; color:#475569; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .bar-row .bar { flex:1; height:8px; background:#f1f5f9; border-radius:4px; overflow:hidden; }
+        .bar-row .bar > span { display:block; height:100%; background:linear-gradient(90deg,#6366f1,#8b5cf6); border-radius:4px; }
+        .bar-row .val { flex:0 0 80px; text-align:right; font-weight:600; color:#0f172a; }
+        .funnel-step { display:flex; align-items:center; gap:.85rem; padding:.6rem 0; border-bottom:1px solid #f1f5f9; }
+        .funnel-step:last-child { border-bottom:0; }
+        .funnel-step .dot { width:10px; height:10px; border-radius:50%; flex:0 0 10px; }
+        .funnel-step .name { flex:0 0 110px; font-size:.9rem; color:#1e293b; font-weight:500; }
+        .funnel-step .fbar { flex:1; height:8px; background:#f1f5f9; border-radius:4px; overflow:hidden; max-width:200px; }
+        .funnel-step .ct { font-weight:700; color:#0f172a; min-width:30px; text-align:right; }
+        .funnel-step .pct { font-size:.75rem; color:#94a3b8; min-width:42px; text-align:right; }
+        .chip { display:inline-block; padding:.2rem .55rem; border-radius:999px; font-size:.7rem; font-weight:600; }
+        .chip-green { background:#dcfce7; color:#166534; }
+        .chip-amber { background:#fef3c7; color:#92400e; }
+        .chip-red { background:#fee2e2; color:#991b1b; }
+        .skeleton { color:#cbd5e1; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-900">
+    <div class="flex min-h-screen">
+        <aside id="admin-sidebar" class="w-64 bg-white border-r border-gray-200 fixed h-full overflow-y-auto z-30"></aside>
+
+        <main class="flex-1 ml-64 p-8 space-y-6">
+            <header class="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                    <h1 class="text-2xl font-bold">Analytics</h1>
+                    <p class="text-slate-500 text-sm">How the brand, the people, and the mission are moving.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <select id="range-select" class="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white">
+                        <option value="7">Last 7 days</option>
+                        <option value="30" selected>Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                        <option value="365">Last 12 months</option>
+                        <option value="0">All time</option>
+                    </select>
+                    <button id="analytics-refresh" class="px-3 py-2 text-sm font-medium border border-slate-200 rounded-lg bg-white hover:bg-slate-50 transition"><i class="fas fa-rotate-right mr-1"></i>Refresh</button>
+                </div>
+            </header>
+
+            <div id="analytics-alert" class="hidden rounded-lg border px-4 py-3 text-sm"></div>
+
+            <nav class="flex gap-2 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200 w-fit">
+                <button class="tab-btn active" data-tab="sales"><i class="fas fa-bag-shopping mr-2"></i>Sales</button>
+                <button class="tab-btn" data-tab="customers"><i class="fas fa-users mr-2"></i>Customers</button>
+                <button class="tab-btn" data-tab="mission"><i class="fas fa-compass mr-2"></i>Mission</button>
+            </nav>
+
+            <!-- SALES -->
+            <section data-tab-panel="sales" class="space-y-6">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="kpi"><p class="kpi-label">Revenue</p><p id="s-revenue" class="kpi-value skeleton">—</p><p id="s-revenue-sub" class="kpi-sub">Paid orders</p></div>
+                    <div class="kpi"><p class="kpi-label">Orders</p><p id="s-orders" class="kpi-value skeleton">—</p><p id="s-orders-sub" class="kpi-sub">Total placed</p></div>
+                    <div class="kpi"><p class="kpi-label">Avg. order value</p><p id="s-aov" class="kpi-value skeleton">—</p><p class="kpi-sub">Across paid orders</p></div>
+                    <div class="kpi"><p class="kpi-label">Paid conversion</p><p id="s-conv" class="kpi-value skeleton">—</p><p class="kpi-sub">Paid ÷ all orders</p></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="card lg:col-span-2"><h3><i class="fas fa-chart-line text-indigo-500"></i>Revenue trend</h3><div style="height:260px"><canvas id="chart-revenue"></canvas></div></div>
+                    <div class="card"><h3><i class="fas fa-shapes text-violet-500"></i>Payment status</h3><div style="height:220px"><canvas id="chart-status"></canvas></div></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card"><h3><i class="fas fa-crown text-amber-500"></i>Top products by revenue</h3><div id="s-top-products" class="space-y-1"><p class="text-sm text-slate-400">Loading…</p></div></div>
+                    <div class="card"><h3><i class="fas fa-receipt text-emerald-500"></i>Latest paid orders</h3><div id="s-recent-orders" class="space-y-2 text-sm"><p class="text-slate-400">Loading…</p></div></div>
+                </div>
+            </section>
+
+            <!-- CUSTOMERS -->
+            <section data-tab-panel="customers" class="hidden space-y-6">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="kpi"><p class="kpi-label">Total customers</p><p id="c-total" class="kpi-value skeleton">—</p><p class="kpi-sub">All time</p></div>
+                    <div class="kpi"><p class="kpi-label">New this period</p><p id="c-new" class="kpi-value skeleton">—</p><p class="kpi-sub">Signups in range</p></div>
+                    <div class="kpi"><p class="kpi-label">Paying customers</p><p id="c-paying" class="kpi-value skeleton">—</p><p class="kpi-sub">≥1 paid order</p></div>
+                    <div class="kpi"><p class="kpi-label">Repeat rate</p><p id="c-repeat" class="kpi-value skeleton">—</p><p class="kpi-sub">≥2 paid orders</p></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card"><h3><i class="fas fa-user-plus text-indigo-500"></i>Signups over time</h3><div style="height:240px"><canvas id="chart-signups"></canvas></div></div>
+                    <div class="card"><h3><i class="fas fa-trophy text-amber-500"></i>Top customers by spend</h3><div id="c-top" class="space-y-2 text-sm"><p class="text-slate-400">Loading…</p></div></div>
+                </div>
+                <div class="card"><h3><i class="fas fa-clock text-emerald-500"></i>Recent signups</h3><div id="c-recent" class="space-y-2 text-sm"><p class="text-slate-400">Loading…</p></div></div>
+            </section>
+
+            <!-- MISSION -->
+            <section data-tab-panel="mission" class="hidden space-y-6">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="kpi"><p class="kpi-label">Mentorship leads</p><p id="m-leads" class="kpi-value skeleton">—</p><p class="kpi-sub">Applications in range</p></div>
+                    <div class="kpi"><p class="kpi-label">Active mentees</p><p id="m-active" class="kpi-value skeleton">—</p><p class="kpi-sub">Currently engaged</p></div>
+                    <div class="kpi"><p class="kpi-label">Acceptance rate</p><p id="m-accept" class="kpi-value skeleton">—</p><p class="kpi-sub">Accepted ÷ leads</p></div>
+                    <div class="kpi"><p class="kpi-label">Broadcasts sent</p><p id="m-broadcasts" class="kpi-value skeleton">—</p><p class="kpi-sub">In selected range</p></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card"><h3><i class="fas fa-stairs text-indigo-500"></i>Mentorship funnel</h3><div id="m-funnel" class="mt-2"><p class="text-sm text-slate-400">Loading…</p></div></div>
+                    <div class="card"><h3><i class="fas fa-layer-group text-violet-500"></i>Package mix</h3><div id="m-packages" class="mt-2 space-y-1"><p class="text-sm text-slate-400">Loading…</p></div></div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="card"><h3><i class="fas fa-envelope-open-text text-emerald-500"></i>Recent broadcasts</h3><div id="m-broadcast-list" class="space-y-2 text-sm"><p class="text-slate-400">Loading…</p></div></div>
+                    <div class="card"><h3><i class="fas fa-comments text-amber-500"></i>Inbox health</h3><div id="m-inbox" class="space-y-2 text-sm"><p class="text-slate-400">Loading…</p></div></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="firebase-config.js?v=20260601c"></script>
+    <script src="js/admin-sidebar.js?v=20260601c" defer></script>
+    <script>
+    (function(){
+        'use strict';
+        const db = firebase.firestore();
+        const fmtR = n => 'R' + (Number(n)||0).toLocaleString('en-ZA', {minimumFractionDigits:2, maximumFractionDigits:2});
+        const fmtN = n => (Number(n)||0).toLocaleString('en-ZA');
+        const pct  = (a,b) => !b ? '0%' : Math.round((a/b)*100) + '%';
+        const tsToDate = t => { if(!t) return null; if(t.toDate) return t.toDate(); if(t.seconds) return new Date(t.seconds*1000); const d=new Date(t); return isNaN(d)?null:d; };
+        const dayKey = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+        const monthKey = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+        const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+        const isPaid = o => {
+            const ps = String(o.paymentStatus||'').toLowerCase();
+            const st = String(o.status||'').toLowerCase();
+            return ps==='paid' || ps==='completed' || st==='paid' || st==='completed' || st==='delivered' || st==='shipped';
+        };
+
+        const cache = { orders:null, users:null, mentorship:null, broadcasts:null, threads:null };
+        const charts = {};
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const tab = btn.dataset.tab;
+                document.querySelectorAll('[data-tab-panel]').forEach(p => p.classList.toggle('hidden', p.dataset.tabPanel !== tab));
+            });
+        });
+
+        function showAlert(msg, type) {
+            const el = document.getElementById('analytics-alert');
+            el.className = 'rounded-lg border px-4 py-3 text-sm ' + (type==='error' ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-amber-50 border-amber-200 text-amber-800');
+            el.textContent = msg; el.classList.remove('hidden');
+        }
+        function clearAlert(){ document.getElementById('analytics-alert').classList.add('hidden'); }
+
+        async function loadDocsWithFallback(primaryRef, fallbackRef) {
+            try {
+                const snap = await primaryRef.get();
+                return snap.docs.map(d => ({ id:d.id, ...d.data() }));
+            } catch (e) {
+                if (!fallbackRef) return [];
+                try {
+                    const snap = await fallbackRef.get();
+                    return snap.docs.map(d => ({ id:d.id, ...d.data() }));
+                } catch (_) {
+                    return [];
+                }
+            }
+        }
+
+        async function fetchAll() {
+            clearAlert();
+            const baseRef = db.collection('artifacts').doc('default-app-id');
+            const [orders, users, ment, broadcasts, threads] = await Promise.all([
+                loadDocsWithFallback(baseRef.collection('orders'), db.collection('orders')),
+                loadDocsWithFallback(baseRef.collection('users'), db.collection('users')),
+                loadDocsWithFallback(db.collection('mentorshipApplications')),
+                loadDocsWithFallback(db.collection('broadcastJobs')),
+                loadDocsWithFallback(db.collection('inboxThreads'))
+            ]);
+            cache.orders = orders;
+            cache.users = users;
+            cache.mentorship = ment;
+            cache.broadcasts = broadcasts;
+            cache.threads = threads;
+        }
+
+        function inRange(date, days) {
+            if (!date) return false;
+            if (!days || days <= 0) return true;
+            return date.getTime() >= Date.now() - days*86400000;
+        }
+        const getRange = () => Number(document.getElementById('range-select').value)||0;
+
+        function buildBuckets(days, useMonth) {
+            const buckets = new Map();
+            const today = new Date();
+            if (!days) return buckets;
+            const start = new Date(today.getTime() - (days-1)*86400000);
+            if (!useMonth) {
+                for (let i=0;i<days;i++){
+                    buckets.set(dayKey(new Date(start.getTime() + i*86400000)), 0);
+                }
+            } else {
+                const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+                while (cursor <= today) {
+                    buckets.set(monthKey(cursor), 0);
+                    cursor.setMonth(cursor.getMonth()+1);
+                }
+            }
+            return buckets;
+        }
+
+        // ---------- SALES ----------
+        function renderSales() {
+            const days = getRange();
+            const all = cache.orders || [];
+            const orders = all.filter(o => inRange(tsToDate(o.orderDate||o.createdAt||o.placedAt), days));
+            const paid = orders.filter(isPaid);
+            const revenue = paid.reduce((s,o)=> s + Number(o.totalAmount||o.total||0), 0);
+            const aov = paid.length ? revenue/paid.length : 0;
+
+            document.getElementById('s-revenue').textContent = fmtR(revenue);
+            document.getElementById('s-revenue').classList.remove('skeleton');
+            document.getElementById('s-revenue-sub').textContent = `${paid.length} paid · ${days?('last '+days+'d'):'all time'}`;
+            document.getElementById('s-orders').textContent = fmtN(orders.length);
+            document.getElementById('s-orders').classList.remove('skeleton');
+            document.getElementById('s-orders-sub').textContent = `${all.length} all-time`;
+            document.getElementById('s-aov').textContent = fmtR(aov);
+            document.getElementById('s-aov').classList.remove('skeleton');
+            document.getElementById('s-conv').textContent = pct(paid.length, orders.length);
+            document.getElementById('s-conv').classList.remove('skeleton');
+
+            const useMonth = days===0 || days>120;
+            const buckets = buildBuckets(days, useMonth);
+            paid.forEach(o => {
+                const d = tsToDate(o.orderDate||o.createdAt||o.placedAt);
+                if (!d) return;
+                const k = useMonth ? monthKey(d) : dayKey(d);
+                if (!days && !buckets.has(k)) buckets.set(k, 0);
+                buckets.set(k, (buckets.get(k)||0) + Number(o.totalAmount||o.total||0));
+            });
+            // sort for "all time"
+            const entries = [...buckets.entries()].sort((a,b)=> a[0].localeCompare(b[0]));
+
+            if (charts.revenue) charts.revenue.destroy();
+            const ctx = document.getElementById('chart-revenue').getContext('2d');
+            const grad = ctx.createLinearGradient(0,0,0,260);
+            grad.addColorStop(0, 'rgba(99,102,241,0.35)');
+            grad.addColorStop(1, 'rgba(99,102,241,0)');
+            charts.revenue = new Chart(ctx, {
+                type: 'line',
+                data: { labels: entries.map(e=>e[0]), datasets: [{ label:'Revenue (R)', data: entries.map(e=>e[1]), borderColor:'#6366f1', backgroundColor:grad, fill:true, tension:.35, pointRadius:0, borderWidth:2 }] },
+                options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ ticks:{maxTicksLimit:8, color:'#64748b'}, grid:{display:false} }, y:{ ticks:{color:'#64748b', callback:v=>'R'+v}, grid:{color:'#f1f5f9'} } } }
+            });
+
+            const statusCounts = { Paid:0, Pending:0, Cancelled:0, Other:0 };
+            orders.forEach(o => {
+                const ps = String(o.paymentStatus||'').toLowerCase();
+                const st = String(o.status||'').toLowerCase();
+                if (isPaid(o)) statusCounts.Paid++;
+                else if (st==='cancelled' || ps==='cancelled' || st==='refunded') statusCounts.Cancelled++;
+                else if (ps==='pending' || st==='order placed' || st==='pending') statusCounts.Pending++;
+                else statusCounts.Other++;
+            });
+            if (charts.status) charts.status.destroy();
+            charts.status = new Chart(document.getElementById('chart-status'), {
+                type: 'doughnut',
+                data: { labels: Object.keys(statusCounts), datasets:[{ data: Object.values(statusCounts), backgroundColor:['#10b981','#f59e0b','#ef4444','#94a3b8'], borderWidth:0 }] },
+                options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{font:{size:11}, color:'#475569'}}}, cutout:'62%' }
+            });
+
+            const prodMap = new Map();
+            paid.forEach(o => (o.items||[]).forEach(it => {
+                const name = it.name || it.title || it.productName || 'Unknown';
+                const rev = Number(it.price||0) * Number(it.quantity||1);
+                const cur = prodMap.get(name) || { revenue:0, qty:0 };
+                cur.revenue += rev; cur.qty += Number(it.quantity||1);
+                prodMap.set(name, cur);
+            }));
+            const top = [...prodMap.entries()].sort((a,b)=> b[1].revenue - a[1].revenue).slice(0,8);
+            const maxRev = top[0]?.[1].revenue || 1;
+            document.getElementById('s-top-products').innerHTML = top.length ? top.map(([n,v]) =>
+                `<div class="bar-row"><div class="lbl" title="${esc(n)}">${esc(n)}</div><div class="bar"><span style="width:${(v.revenue/maxRev)*100}%"></span></div><div class="val">${fmtR(v.revenue)}</div></div>`
+            ).join('') : '<p class="text-sm text-slate-400">No product sales in range.</p>';
+
+            const recent = [...paid].sort((a,b) => (tsToDate(b.orderDate||b.createdAt)?.getTime()||0) - (tsToDate(a.orderDate||a.createdAt)?.getTime()||0)).slice(0,6);
+            document.getElementById('s-recent-orders').innerHTML = recent.length ? recent.map(o => {
+                const d = tsToDate(o.orderDate||o.createdAt);
+                const dateStr = d ? d.toLocaleDateString('en-ZA',{day:'numeric',month:'short'}) : '—';
+                return `<div class="flex items-center justify-between gap-3 py-1.5 border-b border-slate-100 last:border-0"><div class="min-w-0"><p class="font-medium text-slate-800 truncate">${esc(o.customerName||o.customerEmail||'Guest')}</p><p class="text-xs text-slate-400">${esc(o.orderId||o.id)} · ${dateStr}</p></div><span class="font-semibold text-emerald-600">${fmtR(o.totalAmount||0)}</span></div>`;
+            }).join('') : '<p class="text-slate-400">No paid orders yet.</p>';
+        }
+
+        // ---------- CUSTOMERS ----------
+        function renderCustomers() {
+            const days = getRange();
+            const users = cache.users || [];
+            const orders = cache.orders || [];
+
+            const newInRange = users.filter(u => inRange(tsToDate(u.createdAt||u.signupDate), days));
+            const spendByKey = new Map();
+            const paidCountByKey = new Map();
+            orders.filter(isPaid).forEach(o => {
+                const key = o.userId || String(o.customerEmail||'').toLowerCase();
+                if (!key) return;
+                spendByKey.set(key, (spendByKey.get(key)||0) + Number(o.totalAmount||0));
+                paidCountByKey.set(key, (paidCountByKey.get(key)||0) + 1);
+            });
+            const paying = [...spendByKey.values()].filter(v => v>0).length;
+            const repeat = [...paidCountByKey.values()].filter(c => c>=2).length;
+
+            document.getElementById('c-total').textContent = fmtN(users.length);
+            document.getElementById('c-total').classList.remove('skeleton');
+            document.getElementById('c-new').textContent = fmtN(newInRange.length);
+            document.getElementById('c-new').classList.remove('skeleton');
+            document.getElementById('c-paying').textContent = fmtN(paying);
+            document.getElementById('c-paying').classList.remove('skeleton');
+            document.getElementById('c-repeat').textContent = paying ? Math.round((repeat/paying)*100)+'%' : '0%';
+            document.getElementById('c-repeat').classList.remove('skeleton');
+
+            const useMonth = days===0 || days>120;
+            const buckets = buildBuckets(days, useMonth);
+            users.forEach(u => {
+                const d = tsToDate(u.createdAt||u.signupDate);
+                if (!d) return;
+                if (days && !inRange(d, days)) return;
+                const k = useMonth ? monthKey(d) : dayKey(d);
+                if (!days && !buckets.has(k)) buckets.set(k, 0);
+                buckets.set(k, (buckets.get(k)||0) + 1);
+            });
+            const entries = [...buckets.entries()].sort((a,b)=> a[0].localeCompare(b[0]));
+            if (charts.signups) charts.signups.destroy();
+            charts.signups = new Chart(document.getElementById('chart-signups'), {
+                type:'bar',
+                data:{ labels: entries.map(e=>e[0]), datasets:[{ label:'Signups', data: entries.map(e=>e[1]), backgroundColor:'#8b5cf6', borderRadius:6 }] },
+                options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{maxTicksLimit:8, color:'#64748b'}, grid:{display:false}}, y:{ticks:{color:'#64748b', stepSize:1, precision:0}, grid:{color:'#f1f5f9'}} } }
+            });
+
+            const userByKey = new Map();
+            users.forEach(u => {
+                userByKey.set(u.id, u);
+                if (u.email) userByKey.set(String(u.email).toLowerCase(), u);
+            });
+            const top = [...spendByKey.entries()].sort((a,b)=> b[1]-a[1]).slice(0,8);
+            document.getElementById('c-top').innerHTML = top.length ? top.map(([k,spend]) => {
+                const u = userByKey.get(k);
+                const name = u ? (u.displayName||u.name||((u.firstName||'')+' '+(u.lastName||'')).trim()||u.email) : k;
+                const orderCount = paidCountByKey.get(k)||0;
+                return `<div class="flex items-center justify-between gap-3 py-1.5 border-b border-slate-100 last:border-0"><div class="min-w-0"><p class="font-medium text-slate-800 truncate">${esc(name||'Guest')}</p><p class="text-xs text-slate-400">${orderCount} order${orderCount===1?'':'s'}</p></div><span class="font-semibold text-emerald-600">${fmtR(spend)}</span></div>`;
+            }).join('') : '<p class="text-slate-400">No paid customers yet.</p>';
+
+            const recent = [...users].filter(u => tsToDate(u.createdAt||u.signupDate)).sort((a,b) => tsToDate(b.createdAt||b.signupDate).getTime() - tsToDate(a.createdAt||a.signupDate).getTime()).slice(0,8);
+            document.getElementById('c-recent').innerHTML = recent.length ? recent.map(u => {
+                const d = tsToDate(u.createdAt||u.signupDate);
+                const dateStr = d ? d.toLocaleDateString('en-ZA',{day:'numeric',month:'short',year:'numeric'}) : '—';
+                const name = u.displayName||u.name||((u.firstName||'')+' '+(u.lastName||'')).trim()||u.email||'Unknown';
+                return `<div class="flex items-center justify-between gap-3 py-1.5 border-b border-slate-100 last:border-0"><div class="min-w-0"><p class="font-medium text-slate-800 truncate">${esc(name)}</p><p class="text-xs text-slate-400">${esc(u.email||'no email')}</p></div><span class="text-xs text-slate-500">${dateStr}</span></div>`;
+            }).join('') : '<p class="text-slate-400">No signups yet.</p>';
+        }
+
+        // ---------- MISSION ----------
+        function renderMission() {
+            const days = getRange();
+            const mentAll = cache.mentorship || [];
+            const ment = mentAll.filter(m => inRange(tsToDate(m.createdAt||m.submittedAt), days));
+            const bc = (cache.broadcasts||[]).filter(b => inRange(tsToDate(b.createdAt), days));
+            const threads = cache.threads || [];
+
+            const statusGroups = { new:0, contacted:0, accepted:0, active:0, completed:0 };
+            ment.forEach(m => {
+                const s = String(m.status||'new').toLowerCase();
+                if (statusGroups[s] !== undefined) statusGroups[s]++;
+                else statusGroups.new++;
+            });
+            const totalLeads = ment.length;
+            const accepted = statusGroups.accepted + statusGroups.active + statusGroups.completed;
+            const active = statusGroups.active;
+
+            document.getElementById('m-leads').textContent = fmtN(totalLeads);
+            document.getElementById('m-leads').classList.remove('skeleton');
+            document.getElementById('m-active').textContent = fmtN(active);
+            document.getElementById('m-active').classList.remove('skeleton');
+            document.getElementById('m-accept').textContent = pct(accepted, totalLeads);
+            document.getElementById('m-accept').classList.remove('skeleton');
+            document.getElementById('m-broadcasts').textContent = fmtN(bc.length);
+            document.getElementById('m-broadcasts').classList.remove('skeleton');
+
+            const steps = [
+                { key:'new',       label:'New',         color:'#3b82f6' },
+                { key:'contacted', label:'Contacted',   color:'#f59e0b' },
+                { key:'accepted',  label:'Accepted',    color:'#8b5cf6' },
+                { key:'active',    label:'Active',      color:'#6366f1' },
+                { key:'completed', label:'Completed',   color:'#10b981' }
+            ];
+            const maxCt = Math.max(1, ...Object.values(statusGroups));
+            document.getElementById('m-funnel').innerHTML = totalLeads ? steps.map(s => {
+                const c = statusGroups[s.key]||0;
+                const w = Math.round((c/maxCt)*100);
+                return `<div class="funnel-step"><span class="dot" style="background:${s.color}"></span><span class="name">${s.label}</span><div class="fbar"><span style="display:block;height:100%;width:${w}%;background:${s.color};border-radius:4px;"></span></div><span class="ct">${c}</span><span class="pct">${pct(c,totalLeads)}</span></div>`;
+            }).join('') : '<p class="text-sm text-slate-400">No mentorship applications in range.</p>';
+
+            const PKG_LABELS = { discovery:'Discovery', single:'Single', focus:'Focus', transformation:'Transformation', unspecified:'Unspecified' };
+            const pkgMap = new Map();
+            ment.forEach(m => {
+                const p = String(m.packageKey||m.package||'unspecified').toLowerCase();
+                pkgMap.set(p, (pkgMap.get(p)||0)+1);
+            });
+            const pkgArr = [...pkgMap.entries()].sort((a,b)=>b[1]-a[1]);
+            const maxPkg = pkgArr[0]?.[1] || 1;
+            document.getElementById('m-packages').innerHTML = pkgArr.length ? pkgArr.map(([k,v]) =>
+                `<div class="bar-row"><div class="lbl">${esc(PKG_LABELS[k]||k)}</div><div class="bar"><span style="width:${(v/maxPkg)*100}%"></span></div><div class="val">${v}</div></div>`
+            ).join('') : '<p class="text-sm text-slate-400">No packages selected yet.</p>';
+
+            const bcRecent = [...bc].sort((a,b) => (tsToDate(b.createdAt)?.getTime()||0) - (tsToDate(a.createdAt)?.getTime()||0)).slice(0,6);
+            document.getElementById('m-broadcast-list').innerHTML = bcRecent.length ? bcRecent.map(b => {
+                const d = tsToDate(b.createdAt);
+                const dateStr = d ? d.toLocaleDateString('en-ZA',{day:'numeric',month:'short'}) : '—';
+                const status = String(b.status||'pending').toLowerCase();
+                const chip = status==='sent'||status==='completed' ? 'chip-green' : (status==='failed'||status==='error' ? 'chip-red' : 'chip-amber');
+                return `<div class="flex items-start justify-between gap-3 py-1.5 border-b border-slate-100 last:border-0"><div class="min-w-0"><p class="font-medium text-slate-800 truncate">${esc(b.subject||'(no subject)')}</p><p class="text-xs text-slate-400">${dateStr} · ${b.totalRecipients||0} recipients</p></div><span class="chip ${chip}">${esc(status)}</span></div>`;
+            }).join('') : '<p class="text-slate-400">No broadcasts in range.</p>';
+
+            const open = threads.filter(t => String(t.status||'open').toLowerCase()==='open').length;
+            const closed = threads.filter(t => String(t.status||'').toLowerCase()==='closed').length;
+            const unread = threads.filter(t => t.unreadByAdmin).length;
+            document.getElementById('m-inbox').innerHTML = `
+                <div class="flex items-center justify-between py-1.5 border-b border-slate-100"><span>Open threads</span><span class="font-semibold text-slate-800">${open}</span></div>
+                <div class="flex items-center justify-between py-1.5 border-b border-slate-100"><span>Unread by admin</span><span class="font-semibold ${unread?'text-rose-600':'text-slate-800'}">${unread}</span></div>
+                <div class="flex items-center justify-between py-1.5 border-b border-slate-100"><span>Closed threads</span><span class="font-semibold text-slate-800">${closed}</span></div>
+                <div class="flex items-center justify-between py-1.5"><span>Total</span><span class="font-semibold text-slate-800">${threads.length}</span></div>
+            `;
+        }
+
+        async function refresh() {
+            try {
+                document.querySelectorAll('.kpi-value').forEach(el => { el.textContent='—'; el.classList.add('skeleton'); });
+                await fetchAll();
+                renderSales(); renderCustomers(); renderMission();
+            } catch (err) {
+                console.error(err);
+                showAlert('Failed to load analytics: ' + (err.message||err), 'error');
+            }
+        }
+
+        document.getElementById('analytics-refresh').addEventListener('click', refresh);
+        document.getElementById('range-select').addEventListener('change', () => {
+            if (cache.orders) { renderSales(); renderCustomers(); renderMission(); }
+            else refresh();
+        });
+
+        document.addEventListener('DOMContentLoaded', refresh);
+        if (document.readyState !== 'loading') refresh();
+    })();
+    </script>
+</body>
+</html>

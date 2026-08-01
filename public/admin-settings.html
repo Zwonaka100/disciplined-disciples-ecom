@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Admin</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" type="image/png" href="Assets/45.png">
+    <script>
+        // Access is validated with Firebase auth in page init.
+        // Keep this empty pre-check to avoid false redirects when sessionStorage expires.
+    </script>
+    <style>
+        .tab-btn { display:flex; align-items:center; gap:.7rem; padding:.7rem 1rem; border-radius:.55rem; font-weight:600; font-size:.9rem; color:#475569; text-align:left; width:100%; transition:.15s; }
+        .tab-btn:hover { background:#f1f5f9; color:#0f172a; }
+        .tab-btn.active { background:#0f172a; color:#fff; }
+        .tab-btn.active i { color:#fff !important; }
+        .tab-btn i { width:18px; text-align:center; color:#94a3b8; }
+        .card { background:#fff; border-radius:.85rem; padding:1.6rem; box-shadow:0 1px 2px rgba(15,23,42,.05); border:1px solid #e2e8f0; }
+        .field-label { display:block; font-size:.85rem; font-weight:600; color:#0f172a; margin-bottom:.35rem; }
+        .field-hint { font-size:.78rem; color:#64748b; margin-top:.3rem; }
+        .field-input, .field-textarea, .field-select { width:100%; border:1px solid #e2e8f0; border-radius:.55rem; padding:.6rem .8rem; font-size:.9rem; background:#fff; transition:.15s; }
+        .field-input:focus, .field-textarea:focus, .field-select:focus { outline:none; border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.1); }
+        .toggle-row { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:1rem; border:1px solid #e2e8f0; border-radius:.6rem; }
+        .toggle-row > div:first-child { flex:1; }
+        .toggle-row p.t { font-weight:600; color:#0f172a; font-size:.9rem; }
+        .toggle-row p.d { font-size:.78rem; color:#64748b; margin-top:.15rem; }
+        .switch { position:relative; width:42px; height:24px; flex:0 0 42px; }
+        .switch input { opacity:0; width:0; height:0; }
+        .switch .slider { position:absolute; cursor:pointer; inset:0; background:#cbd5e1; border-radius:24px; transition:.2s; }
+        .switch .slider:before { position:absolute; content:""; height:18px; width:18px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s; }
+        .switch input:checked + .slider { background:#10b981; }
+        .switch input:checked + .slider:before { transform:translateX(18px); }
+        .btn-primary { background:#0f172a; color:#fff; padding:.65rem 1.3rem; border-radius:.55rem; font-weight:600; font-size:.88rem; transition:.15s; }
+        .btn-primary:hover { background:#1e293b; }
+        .btn-secondary { background:#fff; color:#0f172a; padding:.6rem 1.1rem; border-radius:.55rem; font-weight:600; font-size:.85rem; border:1px solid #e2e8f0; transition:.15s; }
+        .btn-secondary:hover { background:#f8fafc; }
+        .btn-danger { background:#dc2626; color:#fff; padding:.6rem 1.1rem; border-radius:.55rem; font-weight:600; font-size:.85rem; transition:.15s; }
+        .btn-danger:hover { background:#b91c1c; }
+        .danger-card { background:#fef2f2; border:1px solid #fecaca; border-radius:.7rem; padding:1.2rem; }
+        .danger-card h4 { font-weight:700; color:#991b1b; font-size:.95rem; }
+        .danger-card p { font-size:.8rem; color:#7f1d1d; margin:.3rem 0 .7rem; }
+        .chip { display:inline-flex; align-items:center; gap:.35rem; padding:.25rem .65rem; border-radius:999px; font-size:.75rem; font-weight:600; }
+        .chip-admin { background:#ddd6fe; color:#5b21b6; }
+        .chip-user { background:#e0f2fe; color:#075985; }
+        .toast { position:fixed; bottom:24px; right:24px; padding:.85rem 1.3rem; border-radius:.6rem; font-size:.88rem; font-weight:600; box-shadow:0 10px 25px rgba(0,0,0,.15); z-index:50; transition:.25s; opacity:0; transform:translateY(8px); }
+        .toast.show { opacity:1; transform:translateY(0); }
+        .toast.success { background:#10b981; color:#fff; }
+        .toast.error { background:#dc2626; color:#fff; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-900">
+    <div class="flex min-h-screen">
+        <aside id="admin-sidebar" class="w-64 bg-white border-r border-gray-200 fixed h-full overflow-y-auto z-30"></aside>
+
+        <main class="flex-1 ml-64 p-8 space-y-6">
+            <header class="flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                    <h1 class="text-2xl font-bold">Settings</h1>
+                    <p class="text-slate-500 text-sm">Manage homepage, about, book, mentorship, team access and store operations.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="settings-save" class="btn-primary"><i class="fas fa-floppy-disk mr-2"></i>Save changes</button>
+                </div>
+            </header>
+
+            <div class="grid grid-cols-12 gap-6">
+                <!-- Tab nav -->
+                <nav class="col-span-12 lg:col-span-3">
+                    <div class="card !p-2 space-y-1">
+                        <button class="tab-btn active" data-tab="homepage"><i class="fas fa-house"></i>Homepage</button>
+                        <button class="tab-btn" data-tab="about"><i class="fas fa-circle-info"></i>About</button>
+                        <button class="tab-btn" data-tab="book"><i class="fas fa-book"></i>Book</button>
+                        <button class="tab-btn" data-tab="mentorship"><i class="fas fa-compass"></i>Mentorship</button>
+                        <button class="tab-btn" data-tab="shipping"><i class="fas fa-truck"></i>Shipping</button>
+                        <button class="tab-btn" data-tab="notifications"><i class="fas fa-bell"></i>Notifications</button>
+                        <button class="tab-btn" data-tab="team"><i class="fas fa-user-shield"></i>Team</button>
+                        <button class="tab-btn" data-tab="legal"><i class="fas fa-file-shield"></i>Legal</button>
+                        <button class="tab-btn" data-tab="data"><i class="fas fa-download"></i>Data export</button>
+                        <button class="tab-btn" data-tab="danger"><i class="fas fa-triangle-exclamation"></i>Danger zone</button>
+                    </div>
+                </nav>
+
+                <!-- Tab panels -->
+                <div class="col-span-12 lg:col-span-9 space-y-6">
+
+                    <!-- HOMEPAGE -->
+                    <section data-tab-panel="homepage" class="card space-y-5">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Homepage controls</h2>
+                            <p class="text-sm text-slate-500">Edit the words and toggle blocks customers see on the homepage.</p>
+                        </div>
+                        <div>
+                            <label class="field-label">Hero headline</label>
+                            <input id="hp-headline" class="field-input">
+                        </div>
+                        <div>
+                            <label class="field-label">Hero subheadline</label>
+                            <textarea id="hp-subheadline" rows="3" class="field-textarea"></textarea>
+                        </div>
+                        <div>
+                            <label class="field-label">Primary call-to-action label</label>
+                            <input id="hp-cta-label" class="field-input" placeholder="Shop the collection">
+                        </div>
+                        <div>
+                            <label class="field-label">Primary call-to-action link</label>
+                            <input id="hp-cta-link" class="field-input" placeholder="/shop.html">
+                        </div>
+                        <div class="space-y-2">
+                            <p class="field-label !mb-0">Visible blocks</p>
+                            <p class="field-hint !mt-0 mb-2">Show or hide entire sections of the homepage.</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <label class="toggle-row"><div><p class="t">Mentorship block</p><p class="d">Promote 1-on-1 mentorship.</p></div><span class="switch"><input id="hp-show-mentorship" type="checkbox"><span class="slider"></span></span></label>
+                                <label class="toggle-row"><div><p class="t">Book spotlight</p><p class="d">Feature Relentlessly Disciplined.</p></div><span class="switch"><input id="hp-show-book" type="checkbox"><span class="slider"></span></span></label>
+                                <label class="toggle-row"><div><p class="t">Testimonials</p><p class="d">Show customer stories carousel.</p></div><span class="switch"><input id="hp-show-testimonials" type="checkbox"><span class="slider"></span></span></label>
+                                <label class="toggle-row"><div><p class="t">Newsletter signup</p><p class="d">Show the email capture.</p></div><span class="switch"><input id="hp-show-newsletter" type="checkbox"><span class="slider"></span></span></label>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ABOUT -->
+                    <section data-tab-panel="about" class="card space-y-5 hidden">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">About page content</h2>
+                            <p class="text-sm text-slate-500">Control key story sections shown on the About page.</p>
+                        </div>
+                        <div>
+                            <label class="field-label">Hero title</label>
+                            <input id="about-hero-title" class="field-input" placeholder="Our Story">
+                        </div>
+                        <div>
+                            <label class="field-label">Hero subtitle</label>
+                            <textarea id="about-hero-subtitle" rows="3" class="field-textarea" placeholder="Not a brand. A movement..."></textarea>
+                        </div>
+                        <div>
+                            <label class="field-label">Founder quote</label>
+                            <textarea id="about-founder-quote" rows="2" class="field-textarea" placeholder="&quot;This is not about fashion...&quot; - Zolile Nomaqhiza"></textarea>
+                        </div>
+                        <div>
+                            <label class="field-label">Journey banner quote</label>
+                            <input id="about-journey-quote" class="field-input" placeholder="What could not happen without Discipline...">
+                        </div>
+                    </section>
+
+                    <!-- BOOK -->
+                    <section data-tab-panel="book" class="card space-y-5 hidden">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Book page content</h2>
+                            <p class="text-sm text-slate-500">Control title, tagline, release status and synopsis for the Book page.</p>
+                        </div>
+                        <div>
+                            <label class="field-label">Book title</label>
+                            <input id="book-title" class="field-input" placeholder="Relentlessly Disciplined: Fall Down Seven Times, Get Up Eight">
+                        </div>
+                        <div>
+                            <label class="field-label">Book tagline</label>
+                            <textarea id="book-tagline" rows="2" class="field-textarea"></textarea>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="field-label">Status</label>
+                                <select id="book-status" class="field-select">
+                                    <option value="available">Available</option>
+                                    <option value="pre-order">Pre-Order</option>
+                                    <option value="coming-soon">Coming Soon</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="field-label">Print book link</label>
+                                <input id="book-print-link" class="field-input" placeholder="checkout.html?book=physical">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="field-label">eBook link</label>
+                            <input id="book-ebook-link" class="field-input" placeholder="checkout.html?book=ebook">
+                        </div>
+                        <div>
+                            <label class="field-label">Synopsis (blank line = paragraph break)</label>
+                            <textarea id="book-synopsis" rows="6" class="field-textarea"></textarea>
+                        </div>
+                    </section>
+
+                    <!-- MENTORSHIP -->
+                    <section data-tab-panel="mentorship" class="card space-y-5 hidden">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Mentorship page content</h2>
+                            <p class="text-sm text-slate-500">Control the hero and section messaging for mentorship.</p>
+                        </div>
+                        <div>
+                            <label class="field-label">Hero kicker</label>
+                            <input id="mentorship-kicker" class="field-input" placeholder="Mentorship by Zolile Nomaqhiza CA(SA)">
+                        </div>
+                        <div>
+                            <label class="field-label">Hero title</label>
+                            <input id="mentorship-hero-title" class="field-input" placeholder="Discipline is the DNA of every breakthrough.">
+                        </div>
+                        <div>
+                            <label class="field-label">Hero intro</label>
+                            <textarea id="mentorship-hero-lede" rows="3" class="field-textarea"></textarea>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="field-label">Packages section title</label>
+                                <input id="mentorship-packages-title" class="field-input" placeholder="Pick your path">
+                            </div>
+                            <div>
+                                <label class="field-label">Form section title</label>
+                                <input id="mentorship-form-title" class="field-input" placeholder="Tell us about you">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="field-label">Packages section subtitle</label>
+                            <textarea id="mentorship-packages-subtitle" rows="2" class="field-textarea"></textarea>
+                        </div>
+                        <div>
+                            <label class="field-label">Form section subtitle</label>
+                            <textarea id="mentorship-form-subtitle" rows="2" class="field-textarea"></textarea>
+                        </div>
+                    </section>
+
+                    <!-- SHIPPING -->
+                    <section data-tab-panel="shipping" class="card space-y-5 hidden">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Shipping & delivery</h2>
+                            <p class="text-sm text-slate-500">What customers pay and see at checkout.</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="field-label">Flat shipping rate (R)</label>
+                                <input id="ship-flat" type="number" min="0" step="0.01" class="field-input" placeholder="80">
+                                <p class="field-hint">Applied to every order under the free-shipping threshold.</p>
+                            </div>
+                            <div>
+                                <label class="field-label">Free shipping over (R)</label>
+                                <input id="ship-free-over" type="number" min="0" step="1" class="field-input" placeholder="1500">
+                                <p class="field-hint">Set 0 to disable free shipping.</p>
+                            </div>
+                            <div>
+                                <label class="field-label">Estimated delivery time</label>
+                                <input id="ship-eta" class="field-input" placeholder="3–5 business days">
+                            </div>
+                            <div>
+                                <label class="field-label">Origin / dispatch city</label>
+                                <input id="ship-origin" class="field-input" placeholder="Johannesburg, South Africa">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="field-label">Checkout note</label>
+                            <textarea id="ship-note" rows="2" class="field-textarea" placeholder="Free shipping on orders over R1,500. We dispatch Mon–Fri."></textarea>
+                        </div>
+                    </section>
+
+                    <!-- NOTIFICATIONS -->
+                    <section data-tab-panel="notifications" class="card space-y-5 hidden">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Notifications</h2>
+                            <p class="text-sm text-slate-500">Who gets pinged when things happen on the site.</p>
+                        </div>
+                        <div>
+                            <label class="field-label">Admin recipients</label>
+                            <textarea id="notif-admins" rows="3" class="field-textarea" placeholder="zmabege@gmail.com, nomaqhizazolile@gmail.com"></textarea>
+                            <p class="field-hint">Comma-separated list of emails. They receive new order, mentorship and support alerts.</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <label class="toggle-row"><div><p class="t">New order alerts</p><p class="d">Email admins when a paid order arrives.</p></div><span class="switch"><input id="notif-orders" type="checkbox" checked><span class="slider"></span></span></label>
+                            <label class="toggle-row"><div><p class="t">Mentorship applications</p><p class="d">Email admins for every new lead.</p></div><span class="switch"><input id="notif-mentorship" type="checkbox" checked><span class="slider"></span></span></label>
+                            <label class="toggle-row"><div><p class="t">Support requests</p><p class="d">Email admins for every contact-form message.</p></div><span class="switch"><input id="notif-support" type="checkbox" checked><span class="slider"></span></span></label>
+                            <label class="toggle-row"><div><p class="t">Welcome email to new users</p><p class="d">Send a welcome message on signup.</p></div><span class="switch"><input id="notif-welcome" type="checkbox" checked><span class="slider"></span></span></label>
+                        </div>
+                    </section>
+
+                    <!-- TEAM -->
+                    <section data-tab-panel="team" class="card space-y-5 hidden">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Admin team</h2>
+                            <p class="text-sm text-slate-500">People with full access to this admin panel.</p>
+                        </div>
+                        <div>
+                            <label class="field-label">Admin emails (one per line)</label>
+                            <textarea id="team-admins" rows="5" class="field-textarea" placeholder="zmabege@gmail.com&#10;nomaqhizazolile@gmail.com"></textarea>
+                            <p class="field-hint">Lock this list down. Anyone listed here can access every admin page.</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-sm text-slate-700 mb-2">Currently signed-up users</h3>
+                            <div id="team-user-list" class="space-y-2 text-sm border border-slate-200 rounded-lg p-3 max-h-72 overflow-y-auto"><p class="text-slate-400">Loading…</p></div>
+                        </div>
+                    </section>
+
+                    <!-- LEGAL -->
+                    <section data-tab-panel="legal" class="card space-y-5 hidden">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Legal & policies</h2>
+                            <p class="text-sm text-slate-500">Quick-edit links and contact info shown on legal pages.</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="field-label">Privacy policy URL</label>
+                                <input id="legal-privacy" class="field-input" value="/privacy-policy.html">
+                            </div>
+                            <div>
+                                <label class="field-label">Terms of service URL</label>
+                                <input id="legal-terms" class="field-input" value="/terms-of-service.html">
+                            </div>
+                            <div>
+                                <label class="field-label">Shipping & returns URL</label>
+                                <input id="legal-shipping" class="field-input" value="/shipping-returns.html">
+                            </div>
+                            <div>
+                                <label class="field-label">POPIA / Data controller email</label>
+                                <input id="legal-popia" type="email" class="field-input" placeholder="privacy@disciplineddisciples.co.za">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="field-label">Registered business name</label>
+                                <input id="legal-business" class="field-input" placeholder="Disciplined Disciples (Pty) Ltd">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="field-label">Registered address</label>
+                                <textarea id="legal-address" rows="2" class="field-textarea" placeholder="Johannesburg, South Africa"></textarea>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- DATA EXPORT -->
+                    <section data-tab-panel="data" class="card space-y-5 hidden">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Data export</h2>
+                            <p class="text-sm text-slate-500">Download everything as CSV any time. Great for backups, bookkeeping or POPIA requests.</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button class="btn-secondary text-left flex items-center justify-between gap-3" data-export="orders"><span><i class="fas fa-bag-shopping mr-2 text-emerald-500"></i>Export orders</span><i class="fas fa-download text-slate-400"></i></button>
+                            <button class="btn-secondary text-left flex items-center justify-between gap-3" data-export="users"><span><i class="fas fa-users mr-2 text-indigo-500"></i>Export customers</span><i class="fas fa-download text-slate-400"></i></button>
+                            <button class="btn-secondary text-left flex items-center justify-between gap-3" data-export="mentorshipApplications"><span><i class="fas fa-compass mr-2 text-violet-500"></i>Export mentorship leads</span><i class="fas fa-download text-slate-400"></i></button>
+                            <button class="btn-secondary text-left flex items-center justify-between gap-3" data-export="broadcastJobs"><span><i class="fas fa-envelope mr-2 text-amber-500"></i>Export broadcasts</span><i class="fas fa-download text-slate-400"></i></button>
+                            <button class="btn-secondary text-left flex items-center justify-between gap-3" data-export="inboxThreads"><span><i class="fas fa-comments mr-2 text-pink-500"></i>Export inbox threads</span><i class="fas fa-download text-slate-400"></i></button>
+                            <button class="btn-secondary text-left flex items-center justify-between gap-3" data-export="products"><span><i class="fas fa-shirt mr-2 text-cyan-500"></i>Export products</span><i class="fas fa-download text-slate-400"></i></button>
+                        </div>
+                    </section>
+
+                    <!-- DANGER ZONE -->
+                    <section data-tab-panel="danger" class="card space-y-5 hidden">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Danger zone</h2>
+                            <p class="text-sm text-slate-500">Irreversible actions. Use with care.</p>
+                        </div>
+                        <div class="danger-card">
+                            <h4><i class="fas fa-broom mr-2"></i>Clear test broadcasts</h4>
+                            <p>Removes broadcasts where status is 'pending' or that were sent only to your own admin email as a test.</p>
+                            <button class="btn-danger" data-danger="clear-test-broadcasts">Clear test broadcasts</button>
+                        </div>
+                        <div class="danger-card">
+                            <h4><i class="fas fa-rotate-left mr-2"></i>Reset homepage to defaults</h4>
+                            <p>Restores the original hero headline, subheadline and section toggles.</p>
+                            <button class="btn-danger" data-danger="reset-homepage">Reset homepage</button>
+                        </div>
+                        <div class="danger-card">
+                            <h4><i class="fas fa-user-slash mr-2"></i>Sign out everywhere</h4>
+                            <p>Forces every browser using this account to sign in again.</p>
+                            <button class="btn-danger" data-danger="signout-all">Sign out everywhere</button>
+                        </div>
+                    </section>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="firebase-config.js?v=20260601d"></script>
+    <script src="js/admin-sidebar.js?v=20260601c" defer></script>
+    <script>
+    (function(){
+        'use strict';
+        const db = firebase.firestore();
+        const appDataRef = db.collection('artifacts').doc('default-app-id');
+        const settingsRef = db.collection('siteSettings').doc('main');
+        const ABOUT_CONTENT_REF = db.collection('siteContent').doc('about');
+        const BOOK_CONTENT_REF = db.collection('siteContent').doc('book');
+        const MENTORSHIP_CONTENT_REF = db.collection('siteContent').doc('mentorship');
+        const CORE_ADMIN_EMAILS = ['zmabege@gmail.com', 'nomaqhizazolile@gmail.com'];
+
+        function isAdminEmail(email) {
+            const normalized = String(email || '').trim().toLowerCase();
+            return CORE_ADMIN_EMAILS.includes(normalized);
+        }
+
+        function normalizeEmailList(rawText) {
+            return [...new Set(String(rawText || '')
+                .toLowerCase()
+                .split(/[\s,;]+/)
+                .map(v => v.trim())
+                .filter(Boolean))];
+        }
+
+        function parseAdminEmailsFromSettings(settingsData) {
+            const team = (settingsData && settingsData.team) || {};
+            const list = Array.isArray(team.adminsList) ? team.adminsList : [];
+            const fromArray = list.map(v => String(v || '').trim().toLowerCase()).filter(Boolean);
+            const fromText = normalizeEmailList(team.admins || '');
+            return [...new Set([...CORE_ADMIN_EMAILS, ...fromArray, ...fromText])];
+        }
+
+        async function ensureAdminAccess() {
+            return new Promise(resolve => {
+                try {
+                    firebase.auth().onAuthStateChanged(async user => {
+                        if (!user) {
+                            window.location.replace('login-signup.html?redirect=admin-settings.html');
+                            resolve(false);
+                            return;
+                        }
+
+                        let allowedEmails = CORE_ADMIN_EMAILS.slice();
+                        try {
+                            const settingsSnap = await settingsRef.get();
+                            if (settingsSnap.exists) {
+                                allowedEmails = parseAdminEmailsFromSettings(settingsSnap.data() || {});
+                            }
+                        } catch (err) {
+                            console.warn('Could not load dynamic admin list; falling back to core admins.', err);
+                        }
+
+                        if (!allowedEmails.includes(String(user.email || '').toLowerCase()) && !isAdminEmail(user.email)) {
+                            window.location.replace('index.html');
+                            resolve(false);
+                            return;
+                        }
+
+                        sessionStorage.setItem('userLoggedIn', 'true');
+                        sessionStorage.setItem('userEmail', String(user.email || '').toLowerCase());
+                        resolve(true);
+                    });
+                } catch (err) {
+                    console.error('Admin auth check failed:', err);
+                    window.location.replace('login-signup.html?redirect=admin-settings.html');
+                    resolve(false);
+                }
+            });
+        }
+
+        const DEFAULTS = {
+            homepage: {
+                headline: 'We exist for everyone the valley has not finished yet.',
+                subheadline: 'Built by a CA(SA) who failed six times. For everyone still counting.',
+                ctaLabel: 'Shop the collection',
+                ctaLink: '/shop.html',
+                showMentorship: true, showBook: true, showTestimonials: true, showNewsletter: true
+            },
+            shipping: {
+                flat: 80, freeOver: 1500,
+                eta: '3–5 business days',
+                origin: 'Johannesburg, South Africa',
+                note: 'Free shipping on orders over R1,500. We dispatch Mon–Fri.'
+            },
+            notifications: {
+                admins: 'zmabege@gmail.com, nomaqhizazolile@gmail.com',
+                orders: true, mentorship: true, support: true, welcome: true
+            },
+            team: {
+                admins: 'zmabege@gmail.com\nnomaqhizazolile@gmail.com',
+                adminsList: ['zmabege@gmail.com', 'nomaqhizazolile@gmail.com']
+            },
+            legal: {
+                privacy: '/privacy-policy.html', terms: '/terms-of-service.html',
+                shipping: '/shipping-returns.html', popia: '',
+                business: 'Disciplined Disciples', address: 'Johannesburg, South Africa'
+            },
+            about: {
+                heroTitle: 'Our Story',
+                heroSubtitle: 'Not a brand. A movement.  Born from 16 years of struggle, faith, and the unrelenting belief that discipline is the DNA of success.',
+                founderQuote: '"This is not about fashion. This is about identity. This is about who you choose to become." - Zolile Nomaqhiza',
+                journeyQuote: 'What could not happen without Discipline in 14 years, happened with Discipline in 2 years.'
+            },
+            book: {
+                title: 'Relentlessly Disciplined: Fall Down Seven Times, Get Up Eight',
+                tagline: 'Two points short in 2009. CA(SA) in 2026. Everything in between is this book.',
+                status: 'available',
+                printLink: 'checkout.html?book=physical',
+                ebookLink: 'checkout.html?book=ebook',
+                synopsis: ''
+            },
+            mentorship: {
+                kicker: 'Mentorship by Zolile Nomaqhiza CA(SA)',
+                heroTitle: 'Discipline is the DNA of every breakthrough.',
+                heroLede: 'Whether you\'re a CA student staring down board exams, a young professional rebuilding from a valley season, or an entrepreneur scaling with intention — pick the level of support that fits your moment.',
+                packagesTitle: 'Pick your path',
+                packagesSubtitle: 'Every package starts with a real conversation. No fluff, no recycled scripts — you bring the goal, we build the discipline.',
+                formTitle: 'Tell us about you',
+                formSubtitle: 'Pick a package above, then fill this in. We respond within 5–7 business days for free Discovery calls; paid packages are confirmed immediately after checkout.'
+            }
+        };
+
+        // ---------- Tab switching ----------
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const tab = btn.dataset.tab;
+                document.querySelectorAll('[data-tab-panel]').forEach(p => p.classList.toggle('hidden', p.dataset.tabPanel !== tab));
+                if (tab === 'team') loadUserList();
+            });
+        });
+
+        // ---------- Toast ----------
+        const toast = document.getElementById('toast');
+        function showToast(msg, type='success') {
+            toast.textContent = msg;
+            toast.className = 'toast ' + type + ' show';
+            setTimeout(() => toast.classList.remove('show'), 2800);
+        }
+
+        const $ = id => document.getElementById(id);
+        function setVal(id, v) { const el = $(id); if (!el) return; if (el.type === 'checkbox') el.checked = !!v; else el.value = v == null ? '' : v; }
+        function getVal(id) { const el = $(id); if (!el) return ''; return el.type === 'checkbox' ? el.checked : el.value; }
+
+        function dataCollection(name) {
+            if (name === 'orders' || name === 'users') {
+                return appDataRef.collection(name);
+            }
+            return db.collection(name);
+        }
+
+        // ---------- Load ----------
+        async function load() {
+            let settingsData = {};
+            let aboutData = {};
+            let bookData = {};
+            let mentorshipData = {};
+            try {
+                const [settingsSnap, aboutSnap, bookSnap, mentorshipSnap] = await Promise.all([
+                    settingsRef.get(),
+                    ABOUT_CONTENT_REF.get(),
+                    BOOK_CONTENT_REF.get(),
+                    MENTORSHIP_CONTENT_REF.get()
+                ]);
+                if (settingsSnap.exists) settingsData = settingsSnap.data() || {};
+                if (aboutSnap.exists) aboutData = aboutSnap.data() || {};
+                if (bookSnap.exists) bookData = bookSnap.data() || {};
+                if (mentorshipSnap.exists) mentorshipData = mentorshipSnap.data() || {};
+            } catch (err) {
+                console.warn('settings load failed', err);
+                showToast('Could not load saved settings — showing defaults', 'error');
+            }
+
+            const mergedTeam = { ...DEFAULTS.team, ...(settingsData.team || {}) };
+            const adminsList = Array.isArray(mergedTeam.adminsList)
+                ? mergedTeam.adminsList
+                : normalizeEmailList(mergedTeam.admins);
+
+            const merged = {
+                homepage: { ...DEFAULTS.homepage, ...(settingsData.homepage||{}) },
+                shipping: { ...DEFAULTS.shipping, ...(settingsData.shipping||{}) },
+                notifications: { ...DEFAULTS.notifications, ...(settingsData.notifications||{}) },
+                team: {
+                    ...mergedTeam,
+                    adminsList,
+                    admins: adminsList.join('\n') || mergedTeam.admins || DEFAULTS.team.admins
+                },
+                legal: { ...DEFAULTS.legal, ...(settingsData.legal||{}) },
+                about: { ...DEFAULTS.about, ...aboutData },
+                book: { ...DEFAULTS.book, ...bookData },
+                mentorship: { ...DEFAULTS.mentorship, ...mentorshipData }
+            };
+            populate(merged);
+        }
+
+        function populate(s) {
+            setVal('hp-headline', s.homepage.headline);
+            setVal('hp-subheadline', s.homepage.subheadline);
+            setVal('hp-cta-label', s.homepage.ctaLabel);
+            setVal('hp-cta-link', s.homepage.ctaLink);
+            setVal('hp-show-mentorship', s.homepage.showMentorship);
+            setVal('hp-show-book', s.homepage.showBook);
+            setVal('hp-show-testimonials', s.homepage.showTestimonials);
+            setVal('hp-show-newsletter', s.homepage.showNewsletter);
+
+            setVal('ship-flat', s.shipping.flat);
+            setVal('ship-free-over', s.shipping.freeOver);
+            setVal('ship-eta', s.shipping.eta);
+            setVal('ship-origin', s.shipping.origin);
+            setVal('ship-note', s.shipping.note);
+
+            setVal('notif-admins', s.notifications.admins);
+            setVal('notif-orders', s.notifications.orders);
+            setVal('notif-mentorship', s.notifications.mentorship);
+            setVal('notif-support', s.notifications.support);
+            setVal('notif-welcome', s.notifications.welcome);
+
+            setVal('team-admins', s.team.admins);
+
+            setVal('legal-privacy', s.legal.privacy);
+            setVal('legal-terms', s.legal.terms);
+            setVal('legal-shipping', s.legal.shipping);
+            setVal('legal-popia', s.legal.popia);
+            setVal('legal-business', s.legal.business);
+            setVal('legal-address', s.legal.address);
+
+            setVal('about-hero-title', s.about.heroTitle);
+            setVal('about-hero-subtitle', s.about.heroSubtitle);
+            setVal('about-founder-quote', s.about.founderQuote);
+            setVal('about-journey-quote', s.about.journeyQuote);
+
+            setVal('book-title', s.book.title);
+            setVal('book-tagline', s.book.tagline);
+            setVal('book-status', s.book.status);
+            setVal('book-print-link', s.book.printLink);
+            setVal('book-ebook-link', s.book.ebookLink);
+            setVal('book-synopsis', s.book.synopsis);
+
+            setVal('mentorship-kicker', s.mentorship.kicker);
+            setVal('mentorship-hero-title', s.mentorship.heroTitle);
+            setVal('mentorship-hero-lede', s.mentorship.heroLede);
+            setVal('mentorship-packages-title', s.mentorship.packagesTitle);
+            setVal('mentorship-packages-subtitle', s.mentorship.packagesSubtitle);
+            setVal('mentorship-form-title', s.mentorship.formTitle);
+            setVal('mentorship-form-subtitle', s.mentorship.formSubtitle);
+        }
+
+        // ---------- Save ----------
+        async function save() {
+            const authUser = firebase.auth && firebase.auth().currentUser ? firebase.auth().currentUser : null;
+            const adminsList = normalizeEmailList(getVal('team-admins'));
+            const payload = {
+                homepage: {
+                    headline: getVal('hp-headline'), subheadline: getVal('hp-subheadline'),
+                    ctaLabel: getVal('hp-cta-label'), ctaLink: getVal('hp-cta-link'),
+                    showMentorship: getVal('hp-show-mentorship'), showBook: getVal('hp-show-book'),
+                    showTestimonials: getVal('hp-show-testimonials'), showNewsletter: getVal('hp-show-newsletter')
+                },
+                shipping: {
+                    flat: Number(getVal('ship-flat'))||0, freeOver: Number(getVal('ship-free-over'))||0,
+                    eta: getVal('ship-eta'), origin: getVal('ship-origin'), note: getVal('ship-note')
+                },
+                notifications: {
+                    admins: getVal('notif-admins'),
+                    orders: getVal('notif-orders'), mentorship: getVal('notif-mentorship'),
+                    support: getVal('notif-support'), welcome: getVal('notif-welcome')
+                },
+                team: {
+                    admins: adminsList.join('\n'),
+                    adminsList
+                },
+                legal: {
+                    privacy: getVal('legal-privacy'), terms: getVal('legal-terms'),
+                    shipping: getVal('legal-shipping'), popia: getVal('legal-popia'),
+                    business: getVal('legal-business'), address: getVal('legal-address')
+                },
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedBy: (authUser && authUser.email) || sessionStorage.getItem('userEmail') || 'admin'
+            };
+
+            const btn = $('settings-save');
+            const original = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving…';
+            try {
+                await Promise.all([
+                    settingsRef.set(payload, { merge: true }),
+                    ABOUT_CONTENT_REF.set({
+                        heroTitle: getVal('about-hero-title'),
+                        heroSubtitle: getVal('about-hero-subtitle'),
+                        founderQuote: getVal('about-founder-quote'),
+                        journeyQuote: getVal('about-journey-quote'),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedBy: (authUser && authUser.email) || sessionStorage.getItem('userEmail') || 'admin'
+                    }, { merge: true }),
+                    BOOK_CONTENT_REF.set({
+                        title: getVal('book-title'),
+                        tagline: getVal('book-tagline'),
+                        status: getVal('book-status'),
+                        printLink: getVal('book-print-link'),
+                        ebookLink: getVal('book-ebook-link'),
+                        synopsis: getVal('book-synopsis'),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedBy: (authUser && authUser.email) || sessionStorage.getItem('userEmail') || 'admin'
+                    }, { merge: true }),
+                    MENTORSHIP_CONTENT_REF.set({
+                        kicker: getVal('mentorship-kicker'),
+                        heroTitle: getVal('mentorship-hero-title'),
+                        heroLede: getVal('mentorship-hero-lede'),
+                        packagesTitle: getVal('mentorship-packages-title'),
+                        packagesSubtitle: getVal('mentorship-packages-subtitle'),
+                        formTitle: getVal('mentorship-form-title'),
+                        formSubtitle: getVal('mentorship-form-subtitle'),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedBy: (authUser && authUser.email) || sessionStorage.getItem('userEmail') || 'admin'
+                    }, { merge: true })
+                ]);
+                showToast('Settings saved');
+            } catch (err) {
+                console.error(err);
+                showToast('Save failed: ' + (err.message||err), 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = original;
+            }
+        }
+
+        $('settings-save').addEventListener('click', save);
+
+        // ---------- Team user list ----------
+        let userListLoaded = false;
+        async function loadUserList() {
+            if (userListLoaded) return;
+            userListLoaded = true;
+            const wrap = $('team-user-list');
+            try {
+                const adminEmails = normalizeEmailList(getVal('team-admins'));
+                let snap;
+                try {
+                    snap = await appDataRef.collection('users').limit(200).get();
+                } catch (err) {
+                    snap = await db.collection('users').limit(200).get();
+                }
+                if (snap.empty) { wrap.innerHTML = '<p class="text-slate-400">No users yet.</p>'; return; }
+                const rows = snap.docs.map(d => {
+                    const u = d.data();
+                    const email = String(u.email||'').toLowerCase();
+                    const isAdmin = adminEmails.includes(email);
+                    const name = u.displayName || u.name || ((u.firstName||'')+' '+(u.lastName||'')).trim() || u.email || 'Unknown';
+                    return `<div class="flex items-center justify-between gap-3 py-1.5 border-b border-slate-100 last:border-0">
+                        <div class="min-w-0"><p class="font-medium text-slate-800 truncate">${escapeHtml(name)}</p><p class="text-xs text-slate-400">${escapeHtml(u.email||'')}</p></div>
+                        <span class="chip ${isAdmin?'chip-admin':'chip-user'}">${isAdmin?'Admin':'User'}</span>
+                    </div>`;
+                });
+                wrap.innerHTML = rows.join('');
+            } catch (err) {
+                console.warn(err);
+                wrap.innerHTML = '<p class="text-rose-500 text-xs">Could not load users.</p>';
+            }
+        }
+
+        function escapeHtml(s) {
+            return String(s==null?'':s).replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+        }
+
+        // ---------- Data export ----------
+        document.querySelectorAll('[data-export]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const coll = btn.dataset.export;
+                const original = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Exporting…';
+                try {
+                    let snap;
+                    try {
+                        snap = await dataCollection(coll).get();
+                    } catch (err) {
+                        // fallback for legacy roots
+                        snap = await db.collection(coll).get();
+                    }
+                    if (snap.empty) { showToast('Nothing to export', 'error'); return; }
+                    const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    const csv = toCSV(rows);
+                    download(`${coll}-${new Date().toISOString().slice(0,10)}.csv`, csv);
+                    showToast(`Exported ${rows.length} ${coll}`);
+                } catch (err) {
+                    console.error(err);
+                    showToast('Export failed: ' + (err.message||err), 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = original;
+                }
+            });
+        });
+
+        function toCSV(rows) {
+            const headers = [...new Set(rows.flatMap(r => Object.keys(r)))];
+            const esc = v => {
+                if (v == null) return '';
+                if (typeof v === 'object') {
+                    if (v.toDate) return v.toDate().toISOString();
+                    if (v.seconds) return new Date(v.seconds*1000).toISOString();
+                    try { v = JSON.stringify(v); } catch { v = String(v); }
+                }
+                const s = String(v).replace(/"/g, '""');
+                return /[",\n]/.test(s) ? `"${s}"` : s;
+            };
+            return [headers.join(','), ...rows.map(r => headers.map(h => esc(r[h])).join(','))].join('\n');
+        }
+
+        function download(filename, content) {
+            const blob = new Blob([content], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = filename;
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        // ---------- Danger zone ----------
+        document.querySelectorAll('[data-danger]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const action = btn.dataset.danger;
+                if (action === 'clear-test-broadcasts') {
+                    if (!confirm('Delete all pending broadcasts and broadcasts sent only as a test?')) return;
+                    try {
+                        const snap = await db.collection('broadcastJobs').get();
+                        const batch = db.batch();
+                        let count = 0;
+                        snap.docs.forEach(d => {
+                            const v = d.data();
+                            if (v.isTest || String(v.status||'').toLowerCase()==='pending') {
+                                batch.delete(d.ref); count++;
+                            }
+                        });
+                        await batch.commit();
+                        showToast(`Removed ${count} test/pending broadcast${count===1?'':'s'}`);
+                    } catch (err) { showToast('Failed: '+err.message, 'error'); }
+                }
+                else if (action === 'reset-homepage') {
+                    if (!confirm('Reset homepage hero and toggles to defaults?')) return;
+                    try {
+                        await settingsRef.set({ homepage: DEFAULTS.homepage }, { merge: true });
+                        populate({ ...DEFAULTS, homepage: DEFAULTS.homepage });
+                        await load();
+                        showToast('Homepage reset to defaults');
+                    } catch (err) { showToast('Failed: '+err.message, 'error'); }
+                }
+                else if (action === 'signout-all') {
+                    if (!confirm('Sign out of every browser? You will need to log in again.')) return;
+                    try {
+                        sessionStorage.clear();
+                        if (firebase.auth) await firebase.auth().signOut().catch(()=>{});
+                        window.location.href = 'login-signup.html';
+                    } catch (err) { showToast('Failed: '+err.message, 'error'); }
+                }
+            });
+        });
+
+        async function init() {
+            const allowed = await ensureAdminAccess();
+            if (!allowed) return;
+            await load();
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+        if (document.readyState !== 'loading') init();
+    })();
+    </script>
+</body>
+</html>

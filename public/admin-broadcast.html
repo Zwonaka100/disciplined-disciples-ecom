@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Broadcast &middot; Admin &middot; Disciplined Disciples</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="js/admin-auth-guard.js?v=20260602a"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" type="image/png" href="Assets/45.png">
+    <script src="firebase-config.js"></script>
+    <script>
+        // Guard handled by shared admin-auth-guard.js
+    </script>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-900">
+    <div class="flex min-h-screen">
+        <aside id="admin-sidebar" class="w-64 bg-white border-r border-gray-200 fixed h-full overflow-y-auto z-30"></aside>
+
+        <main class="flex-1 ml-64 p-8 space-y-6">
+            <header class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold">Send a Broadcast</h1>
+                    <p class="text-slate-500 text-sm mt-1">Write a message, pick who gets it, and we'll send a beautifully branded email on your behalf.</p>
+                </div>
+                <div class="hidden md:flex items-center gap-2 text-xs text-slate-500">
+                    <i class="fas fa-shield-halved text-emerald-600"></i>
+                    <span>Sends in the background &middot; auto-unsubscribe footer included</span>
+                </div>
+            </header>
+
+            <div id="bc-alert" class="hidden rounded-lg border px-4 py-3 text-sm"></div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
+                <!-- LEFT: form -->
+                <section class="lg:col-span-3 space-y-6">
+
+                    <!-- STEP 1: WHO -->
+                    <div class="bg-white rounded-xl shadow p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold text-sm flex items-center justify-center">1</span>
+                            <h2 class="text-lg font-semibold">Who should get this email?</h2>
+                        </div>
+
+                        <div id="bc-segment-cards" class="grid grid-cols-1 sm:grid-cols-2 gap-3" role="radiogroup" aria-label="Audience">
+                            <!-- cards injected by JS -->
+                        </div>
+
+                        <div id="bc-custom-wrap" class="hidden mt-5 border-t border-slate-100 pt-5">
+                            <label class="block text-sm font-semibold text-slate-800 mb-2">Pick specific people</label>
+                            <p class="text-xs text-slate-500 mb-3">Search your customer list, tick the people you want, or add an email that isn't on the list yet.</p>
+
+                            <div class="flex gap-2 mb-3">
+                                <div class="relative flex-1">
+                                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                                    <input id="bc-people-search" type="text" placeholder="Search by name or email" class="w-full pl-9 pr-3 py-2 border border-slate-200 rounded text-sm">
+                                </div>
+                                <button id="bc-people-selectall" type="button" class="px-3 py-2 text-xs font-medium border border-slate-200 rounded hover:bg-slate-50">Select all shown</button>
+                                <button id="bc-people-clear" type="button" class="px-3 py-2 text-xs font-medium border border-slate-200 rounded hover:bg-slate-50">Clear</button>
+                            </div>
+
+                            <div id="bc-people-list" class="max-h-64 overflow-y-auto border border-slate-200 rounded divide-y divide-slate-100">
+                                <div class="px-3 py-6 text-center text-xs text-slate-400">Loading customers&hellip;</div>
+                            </div>
+
+                            <div class="flex items-end gap-2 mt-4">
+                                <div class="flex-1">
+                                    <label class="block text-xs text-slate-500 mb-1">Or add an email that isn't a customer yet</label>
+                                    <input id="bc-add-email" type="email" placeholder="name@example.com" class="w-full px-3 py-2 border border-slate-200 rounded text-sm">
+                                </div>
+                                <button id="bc-add-email-btn" type="button" class="px-3 py-2 text-sm font-medium border border-slate-200 rounded hover:bg-slate-50"><i class="fas fa-plus mr-1"></i>Add</button>
+                            </div>
+
+                            <!-- legacy hidden textarea so the existing JS pipeline keeps working -->
+                            <textarea id="bc-custom" class="hidden"></textarea>
+                        </div>
+
+                        <!-- hidden legacy select holds the current segment id -->
+                        <select id="bc-segment" class="hidden">
+                            <option value="all" selected>Everyone</option>
+                            <option value="paying">Paying customers</option>
+                            <option value="ebookOwners">eBook owners</option>
+                            <option value="physicalBuyers">Physical buyers</option>
+                            <option value="nopurchase">Never purchased</option>
+                            <option value="custom">Specific people</option>
+                        </select>
+                    </div>
+
+                    <!-- STEP 2: WHAT -->
+                    <div class="bg-white rounded-xl shadow p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold text-sm flex items-center justify-center">2</span>
+                            <h2 class="text-lg font-semibold">Choose a style</h2>
+                        </div>
+
+                        <div id="bc-template-cards" class="grid grid-cols-1 sm:grid-cols-3 gap-3" role="radiogroup" aria-label="Email style">
+                            <!-- cards injected by JS -->
+                        </div>
+
+                        <!-- hidden legacy select -->
+                        <select id="bc-template" class="hidden">
+                            <option value="announcement">Announcement</option>
+                            <option value="promotion">Promotion</option>
+                            <option value="newsletter">Newsletter</option>
+                            <option value="plain">Plain</option>
+                        </select>
+                    </div>
+
+                    <!-- STEP 3: WRITE -->
+                    <div class="bg-white rounded-xl shadow p-6 space-y-5">
+                        <div class="flex items-center gap-3 mb-1">
+                            <span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold text-sm flex items-center justify-center">3</span>
+                            <h2 class="text-lg font-semibold">Write your message</h2>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Subject line <span class="text-red-500">*</span></label>
+                            <input id="bc-subject" type="text" maxlength="160" class="w-full px-3 py-2 border border-slate-200 rounded text-sm" placeholder="e.g. New drop &mdash; the Relentless tee is back">
+                            <p class="text-xs text-slate-400 mt-1">This is what people see in their inbox first.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Short preview line</label>
+                            <input id="bc-preheader" type="text" maxlength="180" class="w-full px-3 py-2 border border-slate-200 rounded text-sm" placeholder="The small grey text shown next to the subject in their inbox.">
+                            <p class="text-xs text-slate-400 mt-1">Optional. Helps people decide to open your email.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Your message <span class="text-red-500">*</span></label>
+                            <div class="flex flex-wrap gap-1 mb-2">
+                                <button type="button" data-md="bold" class="bc-fmt px-2 py-1 text-xs font-medium border border-slate-200 rounded hover:bg-slate-50" title="Bold (wrap selection)"><b>B</b></button>
+                                <button type="button" data-md="italic" class="bc-fmt px-2 py-1 text-xs font-medium border border-slate-200 rounded hover:bg-slate-50" title="Italic"><i>I</i></button>
+                                <button type="button" data-md="bullet" class="bc-fmt px-2 py-1 text-xs font-medium border border-slate-200 rounded hover:bg-slate-50" title="Bullet list"><i class="fas fa-list-ul"></i></button>
+                                <button type="button" data-md="link" class="bc-fmt px-2 py-1 text-xs font-medium border border-slate-200 rounded hover:bg-slate-50" title="Insert link"><i class="fas fa-link"></i></button>
+                                <span class="flex-1"></span>
+                                <button type="button" data-md="firstname" class="bc-fmt px-2 py-1 text-xs font-medium border border-slate-200 rounded hover:bg-slate-50" title="Insert first name">Insert {{firstName}}</button>
+                            </div>
+                            <textarea id="bc-body" rows="10" class="w-full px-3 py-2 border border-slate-200 rounded text-sm" placeholder="Hi {{firstName}},&#10;&#10;Just landed the new Relentless tee &mdash; built for the days you don't want to show up but do anyway.&#10;&#10;See you on the other side,&#10;Zolile"></textarea>
+                            <p class="text-xs text-slate-400 mt-1">Just type normally &mdash; paragraphs and line breaks are kept. Use the buttons above for bold, italic, bullets, or links. No HTML required.</p>
+                        </div>
+
+                        <div id="bc-cta-wrap" class="hidden grid grid-cols-1 md:grid-cols-2 gap-5 border-t border-slate-100 pt-5">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Button label <span class="text-red-500">*</span></label>
+                                <input id="bc-cta-label" type="text" maxlength="60" class="w-full px-3 py-2 border border-slate-200 rounded text-sm" placeholder="e.g. Shop the drop">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Button link <span class="text-red-500">*</span></label>
+                                <input id="bc-cta-url" type="url" class="w-full px-3 py-2 border border-slate-200 rounded text-sm" placeholder="https://disciplined-disciples-1.web.app/shop.html">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Send bar -->
+                    <div class="bg-white rounded-xl shadow p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3 sticky bottom-4 border border-indigo-100">
+                        <div class="text-sm text-slate-700">
+                            <i class="fas fa-users text-indigo-600 mr-1"></i>
+                            <span id="bc-estimate" class="font-semibold">Recipients: estimating&hellip;</span>
+                            <button id="bc-recount" type="button" class="ml-2 text-indigo-600 hover:underline text-xs">Recount</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <button id="bc-test" class="px-4 py-2 text-sm font-medium border border-slate-200 rounded hover:bg-slate-50 transition"><i class="fas fa-paper-plane mr-2"></i>Send test to me</button>
+                            <button id="bc-send" class="px-5 py-2 text-sm font-semibold text-white rounded shadow-sm hover:opacity-90 transition" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);"><i class="fas fa-bullhorn mr-2"></i>Send broadcast</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- RIGHT: live preview -->
+                <aside class="lg:col-span-2 lg:sticky lg:top-6">
+                    <div class="bg-white rounded-xl shadow overflow-hidden">
+                        <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+                            <h3 class="text-sm font-semibold text-slate-700"><i class="fas fa-eye text-slate-400 mr-1"></i>Live preview</h3>
+                            <span class="text-xs text-slate-400">how it'll land in their inbox</span>
+                        </div>
+                        <div class="bg-slate-100 p-4">
+                            <!-- inbox-style preview -->
+                            <div class="bg-white rounded shadow-sm p-3 mb-3 text-xs">
+                                <div class="font-semibold text-slate-800">Disciplined Disciples</div>
+                                <div class="text-slate-600 truncate" id="bc-prev-subject">Subject will appear here</div>
+                                <div class="text-slate-400 truncate" id="bc-prev-preheader">Preview line will appear here&hellip;</div>
+                            </div>
+                            <!-- full email mockup -->
+                            <div id="bc-prev-email" class="bg-white rounded shadow-sm overflow-hidden text-[13px]" style="font-family:Arial,Helvetica,sans-serif;color:#1f2937;">
+                                <!-- rendered by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+            <section class="bg-white rounded-xl shadow p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold">Recent broadcasts</h2>
+                    <button id="bc-refresh-jobs" class="text-sm text-indigo-600 hover:underline"><i class="fas fa-rotate-right mr-1"></i>Refresh</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wide">
+                            <tr>
+                                <th class="text-left px-4 py-2">Created</th>
+                                <th class="text-left px-4 py-2">Subject</th>
+                                <th class="text-left px-4 py-2">Audience</th>
+                                <th class="text-right px-4 py-2">Recipients</th>
+                                <th class="text-right px-4 py-2">Sent / Failed</th>
+                                <th class="text-left px-4 py-2">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bc-jobs-tbody" class="divide-y divide-slate-100">
+                            <tr><td colspan="6" class="px-4 py-6 text-center text-slate-400">Loading recent jobs&hellip;</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+    (function() {
+        const ADMIN_EMAILS = ['zmabege@gmail.com', 'nomaqhizazolile@gmail.com'];
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(getFirebaseConfig());
+        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        const els = {
+            alert: document.getElementById('bc-alert'),
+            template: document.getElementById('bc-template'),
+            templateCards: document.getElementById('bc-template-cards'),
+            segment: document.getElementById('bc-segment'),
+            segmentCards: document.getElementById('bc-segment-cards'),
+            customWrap: document.getElementById('bc-custom-wrap'),
+            custom: document.getElementById('bc-custom'),
+            peopleList: document.getElementById('bc-people-list'),
+            peopleSearch: document.getElementById('bc-people-search'),
+            peopleSelectAll: document.getElementById('bc-people-selectall'),
+            peopleClear: document.getElementById('bc-people-clear'),
+            addEmail: document.getElementById('bc-add-email'),
+            addEmailBtn: document.getElementById('bc-add-email-btn'),
+            subject: document.getElementById('bc-subject'),
+            preheader: document.getElementById('bc-preheader'),
+            body: document.getElementById('bc-body'),
+            ctaWrap: document.getElementById('bc-cta-wrap'),
+            ctaLabel: document.getElementById('bc-cta-label'),
+            ctaUrl: document.getElementById('bc-cta-url'),
+            estimate: document.getElementById('bc-estimate'),
+            recount: document.getElementById('bc-recount'),
+            send: document.getElementById('bc-send'),
+            test: document.getElementById('bc-test'),
+            jobsTbody: document.getElementById('bc-jobs-tbody'),
+            refreshJobs: document.getElementById('bc-refresh-jobs'),
+            prevSubject: document.getElementById('bc-prev-subject'),
+            prevPreheader: document.getElementById('bc-prev-preheader'),
+            prevEmail: document.getElementById('bc-prev-email'),
+            fmtBtns: document.querySelectorAll('.bc-fmt'),
+        };
+
+        let currentUser = null;
+        let cachedAudience = null; // { all, paying, ebookOwners, physicalBuyers, nopurchase }
+        const selectedEmails = new Set(); // for "specific people"
+
+        const SEGMENTS = [
+            { id: 'all',            icon: 'fa-globe',         title: 'Everyone',              desc: 'All customers with an account' },
+            { id: 'paying',         icon: 'fa-credit-card',   title: 'Paying customers',      desc: 'Anyone who has paid for an order' },
+            { id: 'ebookOwners',    icon: 'fa-book-open',     title: 'eBook owners',          desc: 'People who bought a digital book' },
+            { id: 'physicalBuyers', icon: 'fa-shirt',         title: 'Physical buyers',       desc: 'Bought a tee, hoodie or cap' },
+            { id: 'nopurchase',     icon: 'fa-user-clock',    title: 'Never purchased',       desc: 'Signed up but never bought' },
+            { id: 'custom',         icon: 'fa-user-check',    title: 'Specific people',       desc: 'Pick names from a list or add emails' },
+        ];
+
+        const TEMPLATES = [
+            { id: 'announcement', icon: 'fa-bullhorn',       title: 'Announcement', desc: 'A friendly note from you, signed off at the bottom.' },
+            { id: 'promotion',    icon: 'fa-tag',            title: 'Promotion',    desc: 'Same look + a big call-to-action button.' },
+            { id: 'newsletter',   icon: 'fa-newspaper',      title: 'Newsletter',   desc: 'Greets the reader by first name, then your update.' },
+        ];
+
+        function showAlert(msg, kind) {
+            els.alert.classList.remove('hidden', 'bg-red-50', 'border-red-200', 'text-red-700', 'bg-emerald-50', 'border-emerald-200', 'text-emerald-700', 'bg-indigo-50', 'border-indigo-200', 'text-indigo-700');
+            if (kind === 'error') els.alert.classList.add('bg-red-50', 'border-red-200', 'text-red-700');
+            else if (kind === 'success') els.alert.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-700');
+            else els.alert.classList.add('bg-indigo-50', 'border-indigo-200', 'text-indigo-700');
+            els.alert.textContent = msg;
+            els.alert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        function escapeHtml(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+        function isEmail(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s||'').trim()); }
+
+        const PAID_STATUSES = ['paid', 'complete', 'completed', 'success'];
+        function isPaid(o) {
+            const s = String(o.status || '').toLowerCase();
+            const p = String(o.paymentStatus || '').toLowerCase();
+            return PAID_STATUSES.includes(p) || PAID_STATUSES.includes(s);
+        }
+        function orderHasEbook(o) {
+            if (o.hasEbookItem === true) return true;
+            if (o.orderType === 'digital' || o.orderType === 'mixed') return true;
+            return Array.isArray(o.items) && o.items.some(i => {
+                const pid = String(i?.productId || i?.id || '').toLowerCase();
+                const name = String(i?.name || '').toLowerCase();
+                const ful = String(i?.fulfillmentType || '').toLowerCase();
+                return pid === 'ebook' || name.includes('ebook') || ful === 'digital';
+            });
+        }
+        function orderHasPhysical(o) {
+            if (o.orderType === 'physical' || o.orderType === 'mixed') return true;
+            return Array.isArray(o.items) && o.items.some(i => {
+                const pid = String(i?.productId || i?.id || '').toLowerCase();
+                const name = String(i?.name || '').toLowerCase();
+                const ful = String(i?.fulfillmentType || '').toLowerCase();
+                return !(pid === 'ebook' || name.includes('ebook') || ful === 'digital');
+            });
+        }
+
+        async function loadAudience() {
+            const [usersSnap, ordersSnap] = await Promise.all([
+                db.collection('artifacts').doc('default-app-id').collection('users').get(),
+                db.collection('artifacts').doc('default-app-id').collection('orders').get()
+            ]);
+            const byUser = new Map();
+            const guestByEmail = new Map();
+            ordersSnap.forEach(d => {
+                const o = d.data() || {};
+                const uid = o.userId || o.uid;
+                const email = (o.customerEmail || (o.customer && o.customer.email) || '').toString().trim().toLowerCase();
+                if (uid) {
+                    if (!byUser.has(uid)) byUser.set(uid, { hasPaid: false, hasEbook: false, hasPhysical: false });
+                    const agg = byUser.get(uid);
+                    if (isPaid(o)) {
+                        agg.hasPaid = true;
+                        if (orderHasEbook(o)) agg.hasEbook = true;
+                        if (orderHasPhysical(o)) agg.hasPhysical = true;
+                    }
+                } else if (email && isPaid(o)) {
+                    if (!guestByEmail.has(email)) guestByEmail.set(email, { email, firstName: (o.customerName || '').split(' ')[0] || '', hasPaid: true, hasEbook: orderHasEbook(o), hasPhysical: orderHasPhysical(o), isGuest: true });
+                    const g = guestByEmail.get(email);
+                    if (orderHasEbook(o)) g.hasEbook = true;
+                    if (orderHasPhysical(o)) g.hasPhysical = true;
+                }
+            });
+            const seenEmails = new Set();
+            const all = [];
+            usersSnap.forEach(d => {
+                const u = d.data() || {};
+                const email = (u.email || u.contactEmail || '').toString().trim().toLowerCase();
+                if (!email || !isEmail(email)) return;
+                seenEmails.add(email);
+                const agg = byUser.get(d.id) || { hasPaid: false, hasEbook: false, hasPhysical: false };
+                all.push({
+                    uid: d.id, email,
+                    firstName: (u.firstName || (u.displayName || u.name || '').split(' ')[0] || ''),
+                    name: u.displayName || u.name || [u.firstName, u.lastName].filter(Boolean).join(' ') || email,
+                    hasPaid: agg.hasPaid, hasEbook: agg.hasEbook, hasPhysical: agg.hasPhysical, isGuest: false
+                });
+            });
+            guestByEmail.forEach(g => {
+                if (seenEmails.has(g.email)) return;
+                all.push({ uid: null, email: g.email, firstName: g.firstName, name: g.firstName || g.email, hasPaid: true, hasEbook: g.hasEbook, hasPhysical: g.hasPhysical, isGuest: true });
+            });
+            cachedAudience = {
+                all,
+                paying: all.filter(u => u.hasPaid),
+                ebookOwners: all.filter(u => u.hasEbook),
+                physicalBuyers: all.filter(u => u.hasPhysical && !u.hasEbook),
+                nopurchase: all.filter(u => !u.hasPaid),
+            };
+        }
+
+        // ---------- Segment cards ----------
+        function renderSegmentCards() {
+            const current = els.segment.value || 'all';
+            els.segmentCards.innerHTML = SEGMENTS.map(s => {
+                const active = s.id === current;
+                return `<button type="button" role="radio" aria-checked="${active}" data-seg="${s.id}"
+                    class="text-left p-4 border rounded-lg transition ${active ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'}">
+                    <div class="flex items-start gap-3">
+                        <span class="w-9 h-9 rounded-lg flex items-center justify-center ${active ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'}"><i class="fas ${s.icon}"></i></span>
+                        <div class="flex-1">
+                            <div class="font-semibold text-sm text-slate-900">${s.title}</div>
+                            <div class="text-xs text-slate-500 mt-0.5">${s.desc}</div>
+                        </div>
+                    </div>
+                </button>`;
+            }).join('');
+            els.segmentCards.querySelectorAll('[data-seg]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    els.segment.value = btn.getAttribute('data-seg');
+                    renderSegmentCards();
+                    els.customWrap.classList.toggle('hidden', els.segment.value !== 'custom');
+                    if (els.segment.value === 'custom') renderPeopleList();
+                    updateEstimate();
+                });
+            });
+        }
+
+        // ---------- Template cards ----------
+        function renderTemplateCards() {
+            const current = els.template.value || 'announcement';
+            els.templateCards.innerHTML = TEMPLATES.map(t => {
+                const active = t.id === current;
+                return `<button type="button" role="radio" aria-checked="${active}" data-tpl="${t.id}"
+                    class="text-left p-4 border rounded-lg transition ${active ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'}">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-2 ${active ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'}"><i class="fas ${t.icon}"></i></div>
+                    <div class="font-semibold text-sm text-slate-900">${t.title}</div>
+                    <div class="text-xs text-slate-500 mt-0.5">${t.desc}</div>
+                </button>`;
+            }).join('');
+            els.templateCards.querySelectorAll('[data-tpl]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    els.template.value = btn.getAttribute('data-tpl');
+                    renderTemplateCards();
+                    els.ctaWrap.classList.toggle('hidden', els.template.value !== 'promotion');
+                    renderPreview();
+                });
+            });
+        }
+
+        // ---------- People picker ----------
+        function syncCustomTextarea() {
+            els.custom.value = Array.from(selectedEmails).join(', ');
+        }
+        function renderPeopleList() {
+            const term = (els.peopleSearch.value || '').toLowerCase().trim();
+            const audience = (cachedAudience && cachedAudience.all) || [];
+            const filtered = !term ? audience : audience.filter(u => (u.email && u.email.includes(term)) || (u.name && u.name.toLowerCase().includes(term)));
+            const extras = Array.from(selectedEmails).filter(e => !audience.some(u => u.email === e));
+            if (!filtered.length && !extras.length) {
+                els.peopleList.innerHTML = `<div class="px-3 py-6 text-center text-xs text-slate-400">No customers match "${escapeHtml(term)}". Use the field below to add their email.</div>`;
+                return;
+            }
+            const rowHtml = (email, name, badge) => {
+                const checked = selectedEmails.has(email);
+                return `<label class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-slate-50">
+                    <input type="checkbox" class="bc-person-cb h-4 w-4 text-indigo-600 rounded" data-email="${escapeHtml(email)}" ${checked ? 'checked' : ''}>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm text-slate-800 truncate">${escapeHtml(name || email)}</div>
+                        <div class="text-xs text-slate-400 truncate">${escapeHtml(email)}</div>
+                    </div>
+                    ${badge || ''}
+                </label>`;
+            };
+            const badge = (u) => {
+                if (u.isGuest) return '<span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">guest</span>';
+                if (u.hasPaid) return '<span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700">paying</span>';
+                return '<span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">signed up</span>';
+            };
+            els.peopleList.innerHTML = filtered.map(u => rowHtml(u.email, u.name, badge(u))).join('')
+                + extras.map(e => rowHtml(e, e, '<span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700">added</span>')).join('');
+            els.peopleList.querySelectorAll('.bc-person-cb').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    const email = cb.getAttribute('data-email');
+                    if (cb.checked) selectedEmails.add(email); else selectedEmails.delete(email);
+                    syncCustomTextarea();
+                    updateEstimate();
+                });
+            });
+        }
+
+        function parseCustomEmails() {
+            return (els.custom.value || '').split(/[,\s\n]+/).map(s => s.trim().toLowerCase()).filter(isEmail).filter((v, i, a) => a.indexOf(v) === i);
+        }
+
+        async function updateEstimate() {
+            const seg = els.segment.value;
+            if (seg === 'custom') {
+                const n = parseCustomEmails().length;
+                els.estimate.textContent = `Recipients: ${n} ${n === 1 ? 'person' : 'people'} (picked list)`;
+                return;
+            }
+            if (!cachedAudience) {
+                els.estimate.textContent = 'Recipients: loading…';
+                try { await loadAudience(); }
+                catch (e) { els.estimate.textContent = 'Recipients: error loading audience'; return; }
+            }
+            const list = cachedAudience[seg] || cachedAudience.all;
+            els.estimate.textContent = `Recipients: ${list.length} ${list.length === 1 ? 'person' : 'people'}`;
+        }
+
+        // ---------- Plain text → HTML ----------
+        function plainToHtml(text) {
+            const raw = String(text || '').replace(/\r\n/g, '\n').trim();
+            if (!raw) return '';
+            // Split into blocks separated by blank lines
+            const blocks = raw.split(/\n{2,}/);
+            return blocks.map(block => {
+                const lines = block.split('\n');
+                // Bullet list block? Every non-empty line starts with "- " or "* "
+                if (lines.every(l => /^\s*[-*]\s+/.test(l))) {
+                    return '<ul style="margin:0 0 14px 18px;padding:0;">' + lines.map(l => '<li style="margin:0 0 4px;">' + inlineFmt(l.replace(/^\s*[-*]\s+/, '')) + '</li>').join('') + '</ul>';
+                }
+                // Paragraph — preserve single line breaks as <br>
+                const joined = lines.map(inlineFmt).join('<br>');
+                return `<p style="margin:0 0 14px;">${joined}</p>`;
+            }).join('');
+        }
+        function inlineFmt(s) {
+            // Escape first, then re-introduce safe inline markup
+            let h = escapeHtml(s);
+            // Markdown link [text](url)
+            h = h.replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" style="color:#667eea;text-decoration:underline;">$1</a>');
+            // Auto-link bare urls
+            h = h.replace(/(^|[\s(])((?:https?:\/\/)[^\s<)]+)/g, (m, pre, url) => `${pre}<a href="${url}" style="color:#667eea;text-decoration:underline;">${url}</a>`);
+            // **bold**
+            h = h.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+            // *italic*
+            h = h.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+            return h;
+        }
+
+        // ---------- Live preview ----------
+        function renderPreview() {
+            const subject = (els.subject.value || '').trim() || '(no subject yet)';
+            const preheader = (els.preheader.value || '').trim() || 'Preview line will appear here…';
+            els.prevSubject.textContent = subject;
+            els.prevPreheader.textContent = preheader;
+
+            const template = els.template.value || 'announcement';
+            const bodyHtml = plainToHtml(els.body.value).replace(/\{\{firstName\}\}/g, '<span style="color:#667eea;">friend</span>').replace(/\{\{email\}\}/g, '<span style="color:#667eea;">customer@example.com</span>');
+
+            const header = `
+                <div style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:24px;text-align:center;color:#fff;">
+                    <div style="display:inline-flex;align-items:center;gap:10px;">
+                        <div style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.18);display:inline-flex;align-items:center;justify-content:center;font-weight:700;">DD</div>
+                        <div style="text-align:left;">
+                            <div style="font-size:15px;font-weight:700;line-height:1.1;">Disciplined Disciples</div>
+                            <div style="font-size:11px;opacity:0.9;">Discipline &middot; Loyalty &middot; Relentless</div>
+                        </div>
+                    </div>
+                </div>`;
+
+            const signature = `
+                <div style="margin-top:24px;padding-top:18px;border-top:1px solid #e5e7eb;color:#4b5563;font-size:13px;">
+                    <div>Warm regards,</div>
+                    <div style="font-weight:700;color:#1f2937;margin-top:2px;">Zolile Nomaqhiza</div>
+                    <div style="font-size:12px;color:#6b7280;">Founder, Disciplined Disciples</div>
+                </div>`;
+
+            const ctaLabel = (els.ctaLabel.value || '').trim() || 'Click here';
+            const ctaUrl = (els.ctaUrl.value || '').trim() || '#';
+            const ctaBlock = `<div style="text-align:center;margin:24px 0 4px;"><a href="${escapeHtml(ctaUrl)}" style="display:inline-block;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;text-decoration:none;padding:12px 28px;border-radius:6px;font-weight:600;font-size:14px;">${escapeHtml(ctaLabel)}</a></div>`;
+
+            let inner = '';
+            if (template === 'announcement') {
+                inner = `<div style="padding:24px;background:#f8f9fa;"><div style="color:#1f2937;font-size:14px;line-height:1.7;">${bodyHtml || '<em style="color:#94a3b8;">Start typing your message…</em>'}</div>${signature}</div>`;
+            } else if (template === 'promotion') {
+                inner = `<div style="padding:24px;background:#fff;"><div style="color:#1f2937;font-size:14px;line-height:1.7;">${bodyHtml || '<em style="color:#94a3b8;">Start typing your message…</em>'}</div>${ctaBlock}</div>`;
+            } else if (template === 'newsletter') {
+                inner = `<div style="padding:24px;background:#fff;"><div style="color:#1f2937;font-size:14px;line-height:1.7;">${bodyHtml || '<em style="color:#94a3b8;">Start typing your message…</em>'}</div>${signature}</div>`;
+            } else {
+                inner = `<div style="padding:20px;background:#fff;color:#1f2937;font-size:14px;line-height:1.7;">${bodyHtml}</div>`;
+            }
+
+            const footer = `
+                <div style="background:#faf7f2;padding:24px 20px 20px;text-align:center;color:#374151;font-family:Arial,Helvetica,sans-serif;border-top:1px solid #e5e0d6;">
+                    <div style="display:inline-flex;align-items:center;gap:12px;color:#0f172a;text-decoration:none;">
+                        <img src="Assets/45.png" alt="Disciplined Disciples" style="width:42px;height:42px;display:block;">
+                        <div style="text-align:left;">
+                            <div style="font-size:15px;font-weight:700;color:#0f172a;">Disciplined Disciples</div>
+                            <div style="font-size:10px;color:#6b7280;letter-spacing:1.5px;text-transform:uppercase;">Discipline &middot; Loyalty &middot; Relentless</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:14px;font-size:11px;color:#374151;font-weight:600;">
+                        Shop &middot; Mentorship &middot; Blog &middot; Contact
+                    </div>
+                    <div style="margin-top:8px;font-size:10px;color:#9ca3af;">&copy; ${new Date().getFullYear()} Disciplined Disciples &middot; Johannesburg, South Africa</div>
+                </div>`;
+
+            els.prevEmail.innerHTML = header + inner + footer;
+        }
+
+        // ---------- Formatting toolbar ----------
+        function applyFormat(action) {
+            const ta = els.body;
+            const start = ta.selectionStart;
+            const end = ta.selectionEnd;
+            const before = ta.value.substring(0, start);
+            const sel = ta.value.substring(start, end);
+            const after = ta.value.substring(end);
+            let insertion = sel;
+            let caretOffset = 0;
+            if (action === 'bold')      { insertion = `**${sel || 'bold text'}**`; }
+            else if (action === 'italic'){ insertion = `*${sel || 'italic text'}*`; }
+            else if (action === 'bullet'){ insertion = (sel || 'first item\nsecond item').split('\n').map(l => '- ' + l).join('\n'); }
+            else if (action === 'link')  { const url = prompt('Link URL:', 'https://'); if (!url) return; insertion = `[${sel || 'click here'}](${url})`; }
+            else if (action === 'firstname') { insertion = '{{firstName}}'; caretOffset = insertion.length; }
+            ta.value = before + insertion + after;
+            const newPos = start + (caretOffset || insertion.length);
+            ta.focus();
+            ta.setSelectionRange(newPos, newPos);
+            renderPreview();
+        }
+
+        async function queueBroadcast(testOnly) {
+            const seg = els.segment.value;
+            const template = els.template.value;
+            const subject = (els.subject.value || '').trim();
+            const preheader = (els.preheader.value || '').trim();
+            const bodyPlain = (els.body.value || '').trim();
+            const bodyHtml = plainToHtml(bodyPlain);
+            const ctaLabel = (els.ctaLabel.value || '').trim();
+            const ctaUrl = (els.ctaUrl.value || '').trim();
+            if (!subject) return showAlert('Please add a subject line — this is what people see in their inbox.', 'error');
+            if (!bodyPlain) return showAlert('Please write a message in step 3.', 'error');
+            if (template === 'promotion' && (!ctaLabel || !ctaUrl)) return showAlert('Promotion style needs both a button label and a link.', 'error');
+
+            let recipients = [];
+            if (testOnly) {
+                recipients = [{ uid: currentUser.uid, email: currentUser.email, firstName: (currentUser.displayName || '').split(' ')[0] || 'friend' }];
+            } else if (seg === 'custom') {
+                const emails = parseCustomEmails();
+                if (!emails.length) return showAlert('You haven\'t picked anyone yet. Tick at least one person or add an email.', 'error');
+                // Map back to firstName if we know it
+                const byEmail = new Map(((cachedAudience && cachedAudience.all) || []).map(u => [u.email, u]));
+                recipients = emails.map(email => {
+                    const u = byEmail.get(email);
+                    return { uid: u ? u.uid : null, email, firstName: u ? u.firstName : '' };
+                });
+            } else {
+                if (!cachedAudience) await loadAudience();
+                recipients = cachedAudience[seg] || cachedAudience.all;
+                if (!recipients.length) return showAlert('No one is in this audience yet.', 'error');
+            }
+
+            const isTestConfirm = testOnly || confirm(`Send this broadcast to ${recipients.length} ${recipients.length === 1 ? 'person' : 'people'}?\n\nSubject: ${subject}`);
+            if (!isTestConfirm) return;
+
+            els.send.disabled = true;
+            els.test.disabled = true;
+            try {
+                const docRef = await db.collection('broadcastJobs').add({
+                    segment: testOnly ? 'test' : seg,
+                    templateKey: template,
+                    subject,
+                    preheader,
+                    bodyHtml,
+                    bodyPlain,
+                    cta: (template === 'promotion') ? { label: ctaLabel, url: ctaUrl } : null,
+                    recipients: recipients.map(r => ({ email: r.email, firstName: r.firstName || '', uid: r.uid || null })),
+                    totalRecipients: recipients.length,
+                    sent: 0,
+                    failed: 0,
+                    failedEmails: [],
+                    status: 'pending',
+                    isTest: !!testOnly,
+                    createdBy: { uid: currentUser.uid, email: currentUser.email },
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                });
+                showAlert(testOnly
+                    ? `Test email sent to ${currentUser.email} — check your inbox in a minute.`
+                    : `Broadcast queued for ${recipients.length} ${recipients.length === 1 ? 'person' : 'people'}. We'll send them in the background.`,
+                    'success');
+                loadJobs();
+            } catch (err) {
+                console.error('Queue broadcast failed:', err);
+                showAlert('Could not send: ' + (err.message || err), 'error');
+            } finally {
+                els.send.disabled = false;
+                els.test.disabled = false;
+            }
+        }
+
+        function fmtDate(ts) {
+            if (!ts) return '—';
+            const d = ts.toDate ? ts.toDate() : new Date(ts);
+            return d.toLocaleString('en-ZA', { dateStyle: 'medium', timeStyle: 'short' });
+        }
+        const SEG_LABELS = { all: 'Everyone', paying: 'Paying customers', ebookOwners: 'eBook owners', physicalBuyers: 'Physical buyers', nopurchase: 'Never purchased', custom: 'Specific people', test: 'Test' };
+        function statusBadge(s) {
+            const map = {
+                pending: 'bg-slate-100 text-slate-700',
+                processing: 'bg-amber-100 text-amber-700',
+                completed: 'bg-emerald-100 text-emerald-700',
+                failed: 'bg-red-100 text-red-700',
+            };
+            return `<span class="inline-block px-2 py-0.5 rounded text-xs font-medium ${map[s] || 'bg-slate-100 text-slate-700'}">${s || '—'}</span>`;
+        }
+
+        async function loadJobs() {
+            try {
+                const snap = await db.collection('broadcastJobs').orderBy('createdAt', 'desc').limit(20).get();
+                if (snap.empty) {
+                    els.jobsTbody.innerHTML = `<tr><td colspan="6" class="px-4 py-6 text-center text-slate-400">No broadcasts yet — your first one is just three steps away.</td></tr>`;
+                    return;
+                }
+                const rows = [];
+                snap.forEach(doc => {
+                    const j = doc.data();
+                    rows.push(`<tr>
+                        <td class="px-4 py-2 text-slate-600">${fmtDate(j.createdAt)}</td>
+                        <td class="px-4 py-2"><div class="font-medium text-slate-900">${escapeHtml(j.subject || '')}</div><div class="text-xs text-slate-400 font-mono">${doc.id}</div></td>
+                        <td class="px-4 py-2 text-slate-600">${SEG_LABELS[j.segment] || j.segment || '—'}${j.isTest ? ' <span class="text-xs text-amber-600">(test)</span>' : ''}</td>
+                        <td class="px-4 py-2 text-right">${j.totalRecipients ?? '—'}</td>
+                        <td class="px-4 py-2 text-right">${j.sent ?? 0} / <span class="text-red-600">${j.failed ?? 0}</span></td>
+                        <td class="px-4 py-2">${statusBadge(j.status)}</td>
+                    </tr>`);
+                });
+                els.jobsTbody.innerHTML = rows.join('');
+            } catch (err) {
+                console.error('Load jobs failed:', err);
+                els.jobsTbody.innerHTML = `<tr><td colspan="6" class="px-4 py-6 text-center text-red-500">Failed to load jobs.</td></tr>`;
+            }
+        }
+
+        // ---------- Wire events ----------
+        els.peopleSearch.addEventListener('input', renderPeopleList);
+        els.peopleSelectAll.addEventListener('click', () => {
+            els.peopleList.querySelectorAll('.bc-person-cb').forEach(cb => {
+                if (!cb.checked) { cb.checked = true; selectedEmails.add(cb.getAttribute('data-email')); }
+            });
+            syncCustomTextarea();
+            updateEstimate();
+        });
+        els.peopleClear.addEventListener('click', () => {
+            selectedEmails.clear();
+            syncCustomTextarea();
+            renderPeopleList();
+            updateEstimate();
+        });
+        els.addEmailBtn.addEventListener('click', () => {
+            const v = (els.addEmail.value || '').trim().toLowerCase();
+            if (!isEmail(v)) return showAlert('That doesn\'t look like a valid email address.', 'error');
+            selectedEmails.add(v);
+            els.addEmail.value = '';
+            syncCustomTextarea();
+            renderPeopleList();
+            updateEstimate();
+        });
+        els.addEmail.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); els.addEmailBtn.click(); } });
+
+        els.recount.addEventListener('click', updateEstimate);
+        els.refreshJobs.addEventListener('click', loadJobs);
+        els.send.addEventListener('click', () => queueBroadcast(false));
+        els.test.addEventListener('click', () => queueBroadcast(true));
+
+        ['input', 'change'].forEach(evt => {
+            els.subject.addEventListener(evt, renderPreview);
+            els.preheader.addEventListener(evt, renderPreview);
+            els.body.addEventListener(evt, renderPreview);
+            els.ctaLabel.addEventListener(evt, renderPreview);
+            els.ctaUrl.addEventListener(evt, renderPreview);
+        });
+        els.fmtBtns.forEach(btn => btn.addEventListener('click', () => applyFormat(btn.getAttribute('data-md'))));
+
+        // Initial render
+        renderSegmentCards();
+        renderTemplateCards();
+        renderPreview();
+
+        auth.onAuthStateChanged(user => {
+            if (!user) { window.location.replace('login-signup.html?redirect=admin-broadcast.html'); return; }
+            const email = (user.email || '').toLowerCase();
+            if (!ADMIN_EMAILS.includes(email)) {
+                showAlert('Access denied. Admins only.', 'error');
+                setTimeout(() => window.location.replace('profile.html'), 1500);
+                return;
+            }
+            currentUser = user;
+            loadAudience().then(() => {
+                updateEstimate();
+                if (els.segment.value === 'custom') renderPeopleList();
+            }).catch(err => {
+                console.error('Audience load failed:', err);
+                els.estimate.textContent = 'Recipients: failed to load audience (' + (err.message || err) + ')';
+            });
+            loadJobs();
+        });
+    })();
+    </script>
+    <script src="js/admin-sidebar.js?v=20260601c" defer></script>
+</body>
+</html>

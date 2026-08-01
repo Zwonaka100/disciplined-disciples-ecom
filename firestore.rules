@@ -6,9 +6,12 @@ service cloud.firestore {
     }
 
     function isAdmin() {
+      let email = request.auth.token.email;
+      let dynamicAdmins = get(/databases/$(database)/documents/siteSettings/main).data.team.adminsList;
       return isSignedIn() && (
-        request.auth.token.email == 'zmabege@gmail.com' ||
-  request.auth.token.email == 'nomaqhizazolile@gmail.com'
+        email == 'zmabege@gmail.com' ||
+        email == 'nomaqhizazolile@gmail.com' ||
+        (dynamicAdmins is list && email in dynamicAdmins)
       );
     }
 
@@ -76,6 +79,104 @@ service cloud.firestore {
         && request.resource.data.message.size() > 0
         && request.resource.data.message.size() <= 2000;
       allow read, update, delete: if isAdmin();
+    }
+
+    // Site content controls (book/settings) - public read for selected docs, admin write
+    match /siteContent/{docId} {
+      allow read: if docId == 'book' || docId == 'homepageControls' || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Site settings (D7 admin settings page) - publicly readable so frontend can
+    // pick up brand/homepage/shipping/legal values; only admins can write.
+    match /siteSettings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Mentorship applications - public submit, admin manages pipeline
+    match /mentorshipApplications/{applicationId} {
+      allow create: if request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.email is string
+        && request.resource.data.email.size() > 0
+        && request.resource.data.goal is string
+        && request.resource.data.goal.size() > 0
+        && request.resource.data.goal.size() <= 3000;
+      allow read: if isAdmin()
+        || (isSignedIn() && resource.data.userId == request.auth.uid)
+        || (isSignedIn() && resource.data.email == request.auth.token.email);
+      allow update, delete: if isAdmin();
+    }
+
+    // Mentorship programs - admin only
+    match /mentorshipPrograms/{programId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Collaboration leads - admin only
+    match /collaborationLeads/{leadId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Community stories - public can read approved items; admin manages all
+    match /communityStories/{storyId} {
+      allow read: if isAdmin() || (resource.data.approved == true);
+      allow write: if isAdmin();
+    }
+
+    // Admin activity log - admin only
+    match /adminActivity/{activityId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Ebook entitlements - each user can read their own; only admins write (server uses Admin SDK)
+    match /ebookEntitlements/{userId} {
+      allow read: if isUserSelf(userId) || isAdmin();
+      allow write: if isAdmin();
+      match /items/{itemId} {
+        allow read: if isUserSelf(userId) || isAdmin();
+        allow write: if isAdmin();
+      }
+    }
+
+    // Email logs - admin only (server writes via Admin SDK)
+    match /emailLogs/{logId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Recovery requests - admin only; processed by a Cloud Function trigger
+    match /recoveryRequests/{requestId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Broadcast jobs - admins create + read; only Cloud Function (Admin SDK) updates status/counters
+    match /broadcastJobs/{jobId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin()
+        && request.resource.data.subject is string
+        && request.resource.data.subject.size() > 0
+        && request.resource.data.subject.size() <= 200
+        && request.resource.data.bodyHtml is string
+        && request.resource.data.bodyHtml.size() > 0
+        && request.resource.data.totalRecipients is int
+        && request.resource.data.totalRecipients >= 0
+        && request.resource.data.totalRecipients <= 5000
+        && request.resource.data.status == 'pending';
+      allow update, delete: if isAdmin();
+    }
+
+    // Inbox threads (D3) - admin-only read/update/delete; writes happen via
+    // Cloud Function triggers (Admin SDK bypasses these rules). Admin can
+    // toggle status/unread directly from the UI.
+    match /inboxThreads/{threadId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if isAdmin();
+      match /messages/{messageId} {
+        allow read: if isAdmin();
+        allow create, update, delete: if isAdmin();
+      }
     }
 
     // Default rule - deny all other access

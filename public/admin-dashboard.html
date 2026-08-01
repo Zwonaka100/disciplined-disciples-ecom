@@ -7,39 +7,13 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="js/admin-auth-guard.js?v=20260602a"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" type="image/png" href="Assets/45.png">
     <script>
-        (function () {
-            const redirectToLogin = () => {
-                window.location.replace('login-signup.html?redirect=admin-dashboard.html');
-            };
-
-            const hasSession = sessionStorage.getItem('userLoggedIn') && sessionStorage.getItem('userId');
-            if (hasSession) {
-                return;
-            }
-
-            window.addEventListener('DOMContentLoaded', () => {
-                try {
-                    const auth = window.firebase?.auth?.() || window.auth;
-                    if (auth && typeof auth.onAuthStateChanged === 'function') {
-                        auth.onAuthStateChanged((user) => {
-                            if (!user) {
-                                redirectToLogin();
-                            }
-                        });
-                    } else {
-                        redirectToLogin();
-                    }
-                } catch (error) {
-                    console.error('Admin guard error:', error);
-                    redirectToLogin();
-                }
-            });
-        })();
+        // Guard handled by shared admin-auth-guard.js
     </script>
     <!-- Google Analytics 4 -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-2J1GWH59V4"></script>
@@ -61,54 +35,7 @@
     <!-- Main Layout with Sidebar -->
     <div class="flex min-h-screen">
         <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r border-gray-200 fixed h-full overflow-y-auto z-30">
-            <div class="p-6 border-b border-gray-200">
-                <a href="index.html" class="flex items-center gap-3">
-                    <img src="Assets/45.png" alt="Logo" class="h-10 w-10 rounded-lg object-cover">
-                    <div>
-                        <h1 class="font-bold text-gray-900">Disciplined</h1>
-                        <p class="text-xs text-gray-500">Admin Panel</p>
-                    </div>
-                </a>
-            </div>
-            <nav class="p-4 space-y-2">
-                <a href="admin-dashboard.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-lg text-white transition" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                    <i class="fas fa-chart-line w-5"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="#orders-section" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition">
-                    <i class="fas fa-shopping-bag w-5"></i>
-                    <span>Orders</span>
-                </a>
-                <a href="admin-products.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition">
-                    <i class="fas fa-box w-5"></i>
-                    <span>Products</span>
-                </a>
-                <a href="admin-blogs.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition">
-                    <i class="fas fa-newspaper w-5"></i>
-                    <span>Blogs</span>
-                </a>
-                <a href="#messages-section" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition">
-                    <i class="fas fa-envelope w-5"></i>
-                    <span>Messages</span>
-                    <span id="msg-sidebar-badge" style="display:none;" class="ml-auto inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-blue-600 rounded-full">0</span>
-                </a>
-                <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 cursor-not-allowed">
-                    <i class="fas fa-users w-5"></i>
-                    <span>The Tribe</span>
-                    <span class="ml-auto text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">Soon</span>
-                </a>
-                <div class="border-t border-gray-200 my-4"></div>
-                <a href="index.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition">
-                    <i class="fas fa-store w-5"></i>
-                    <span>View Store</span>
-                </a>
-                <button id="admin-logout" type="button" class="w-full sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition">
-                    <i class="fas fa-sign-out-alt w-5"></i>
-                    <span>Logout</span>
-                </button>
-            </nav>
-        </aside>
+        <aside id="admin-sidebar" class="w-64 bg-white border-r border-gray-200 fixed h-full overflow-y-auto z-30"></aside>
 
         <!-- Main Content -->
         <main class="flex-1 ml-64 p-8 space-y-8">
@@ -140,312 +67,376 @@
             </article>
         </section>
 
-        <section id="orders-section" class="bg-white rounded-xl shadow">
-            <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 px-6 py-5 border-b border-slate-200">
-                <div>
-                    <h2 class="text-lg font-semibold text-slate-900">Orders</h2>
-                    <p class="text-sm text-slate-500">Track, update, and export the latest purchases</p>
-                    <p id="admin-orders-summary" class="mt-1 text-xs text-slate-400">Showing 0 orders (All statuses � All customers � All dates)</p>
-                    <div id="admin-stale-banner" class="mt-3 hidden rounded-lg border border-sky-300 bg-sky-50 px-4 py-3 text-xs text-sky-900">
-                        <div class="flex flex-col gap-2">
-                            <div class="flex items-start gap-2">
-                                <span class="text-lg leading-none" aria-hidden="true">??</span>
-                                <div>
-                                    <p id="admin-stale-banner-title" class="font-semibold">Awaiting-payment orders auto-hidden</p>
-                                    <p id="admin-stale-banner-detail" class="mt-1 text-sky-700"></p>
-                                </div>
-                            </div>
-                            <div class="flex flex-wrap items-center gap-3">
-                                <button id="admin-toggle-stale-orders" type="button" class="inline-flex items-center gap-2 rounded border border-sky-400 px-3 py-1.5 text-[11px] font-semibold text-sky-800 hover:bg-sky-100 transition">
-                                    Show hidden orders
-                                </button>
-                                <span id="admin-stale-banner-tip" class="text-[11px] text-sky-600"></span>
-                            </div>
-                        </div>
+        <!-- D4: Action Queue + Pulse =================================== -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Action Queue (2 cols) -->
+            <div class="lg:col-span-2 bg-white rounded-xl shadow border border-slate-100">
+                <header class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-base font-semibold text-slate-900"><i class="fas fa-bolt text-amber-500 mr-2"></i>Action Queue</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">What needs your attention right now.</p>
                     </div>
+                    <button id="aq-refresh" class="text-xs font-medium text-blue-600 hover:text-blue-800"><i class="fas fa-rotate-right mr-1"></i>Refresh</button>
+                </header>
+                <div id="action-queue" class="divide-y divide-slate-100">
+                    <div class="px-6 py-8 text-center text-sm text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading&hellip;</div>
                 </div>
-                <div class="flex flex-wrap items-center gap-3">
-                    <input type="search" id="admin-customer-filter" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48" placeholder="Search customer, email, order" aria-label="Filter by customer" />
-                    <select id="admin-date-range" aria-label="Filter by date range" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="ltd">Lifetime (All)</option>
-                        <option value="today">Today</option>
-                        <option value="this-week">This week</option>
-                        <option value="month-to-date">Month to date</option>
-                        <option value="year-to-date">Year to date</option>
-                        <option value="manual">Custom range</option>
-                    </select>
-                    <input type="date" id="admin-date-from" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-36" aria-label="Filter from date" />
-                    <input type="date" id="admin-date-to" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-36" aria-label="Filter to date" />
-                    <select id="admin-status-filter" aria-label="Filter by order status" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="all">All statuses</option>
-                        <option value="awaiting payment">Awaiting payment</option>
-                        <option value="order placed">Order placed</option>
-                        <option value="out for delivery">Out for delivery</option>
-                        <option value="arriving soon">Estimated arrival</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
-                    <select id="admin-payment-filter" aria-label="Filter by payment status" class="border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="all">All payments</option>
-                        <option value="pending">Pending</option>
-                        <option value="paid">Paid</option>
-                        <option value="refunded">Refunded</option>
-                        <option value="failed">Failed</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
-                    <button id="admin-refresh" class="px-4 py-2 text-sm font-medium border border-slate-200 rounded hover:bg-slate-50 transition">
-                        <i class="fas fa-rotate-right mr-2"></i>Refresh
-                    </button>
-                    <button id="admin-export" class="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-                        <i class="fas fa-file-export mr-2"></i>Export CSV
-                    </button>
-                    <button id="admin-export-pdf" class="px-4 py-2 text-sm font-medium bg-emerald-600 text-white rounded hover:bg-emerald-700 transition">
-                        <i class="fas fa-file-pdf mr-2"></i>Export PDF
-                    </button>
-                    <button id="admin-revenue-export" class="px-4 py-2 text-sm font-medium bg-slate-800 text-white rounded hover:bg-slate-900 transition">
-                        <i class="fas fa-chart-line mr-2"></i>Revenue CSV
-                    </button>
-                    <button id="admin-revenue-export-pdf" class="px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded hover:bg-indigo-700 transition">
-                        <i class="fas fa-file-invoice-dollar mr-2"></i>Revenue PDF
-                    </button>
-                </div>
-            </header>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-slate-50 text-left uppercase text-xs text-slate-500">
-                        <tr>
-                            <th class="px-4 py-3">Order</th>
-                            <th class="px-4 py-3">Date</th>
-                            <th class="px-4 py-3">Customer</th>
-                            <th class="px-4 py-3">Total</th>
-                            <th class="px-4 py-3">Status</th>
-                            <th class="px-4 py-3">Payment</th>
-                            <th class="px-4 py-3">Items</th>
-                            <th class="px-4 py-3">Customer updates</th>
-                        </tr>
-                    </thead>
-                    <tbody id="admin-orders-body">
-                        <tr>
-                            <td colspan="8" class="px-4 py-6 text-center text-slate-500">Loading orders...</td>
-                        </tr>
-                    </tbody>
-                </table>
+            </div>
+
+            <!-- Pulse (1 col) -->
+            <div class="bg-white rounded-xl shadow border border-slate-100">
+                <header class="px-6 py-4 border-b border-slate-100">
+                    <h2 class="text-base font-semibold text-slate-900"><i class="fas fa-heart-pulse text-rose-500 mr-2"></i>Pulse &middot; 7 days</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Trailing 7-day activity.</p>
+                </header>
+                <dl id="pulse-stats" class="divide-y divide-slate-100">
+                    <div class="px-6 py-4 flex items-center justify-between">
+                        <dt class="text-sm text-slate-500">Paid revenue</dt>
+                        <dd id="pulse-revenue" class="text-base font-semibold text-slate-900">&mdash;</dd>
+                    </div>
+                    <div class="px-6 py-4 flex items-center justify-between">
+                        <dt class="text-sm text-slate-500">New orders</dt>
+                        <dd id="pulse-orders" class="text-base font-semibold text-slate-900">&mdash;</dd>
+                    </div>
+                    <div class="px-6 py-4 flex items-center justify-between">
+                        <dt class="text-sm text-slate-500">New conversations</dt>
+                        <dd id="pulse-threads" class="text-base font-semibold text-slate-900">&mdash;</dd>
+                    </div>
+                    <div class="px-6 py-4 flex items-center justify-between">
+                        <dt class="text-sm text-slate-500">New customers</dt>
+                        <dd id="pulse-customers" class="text-base font-semibold text-slate-900">&mdash;</dd>
+                    </div>
+                </dl>
             </div>
         </section>
 
-        <section class="bg-white rounded-xl shadow">
-            <header class="px-6 py-5 border-b border-slate-200">
-                <h2 class="text-lg font-semibold text-slate-900">Top Customers</h2>
-                <p class="text-sm text-slate-500">Highest value shoppers across the storefront</p>
-            </header>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-slate-50 text-left uppercase text-xs text-slate-500">
-                        <tr>
-                            <th class="px-4 py-3">Customer</th>
-                            <th class="px-4 py-3">Email</th>
-                            <th class="px-4 py-3">Orders</th>
-                            <th class="px-4 py-3">Revenue</th>
-                            <th class="px-4 py-3">Last Order</th>
-                        </tr>
-                    </thead>
-                    <tbody id="admin-customers-body">
-                        <tr>
-                            <td colspan="5" class="px-4 py-6 text-center text-slate-500">Loading customers...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- Messages Inbox -->
-        <section id="messages-section" class="bg-white rounded-xl shadow">
-            <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-6 py-5 border-b border-slate-200">
-                <div>
-                    <h2 class="text-lg font-semibold text-slate-900">Messages <span id="msg-unread-label" class="ml-2 text-sm font-medium text-blue-600"></span></h2>
-                    <p class="text-sm text-slate-500">Contact form submissions from your website</p>
+        <!-- Workspace shortcuts (smaller, sit below Action Queue + Pulse) -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <a href="admin-orders.html" class="group block bg-white rounded-xl shadow p-6 hover:shadow-md hover:border-blue-200 border border-transparent transition">
+                <div class="flex items-center gap-3">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-100 transition">
+                        <i class="fas fa-shopping-bag"></i>
+                    </span>
+                    <h2 class="font-semibold text-slate-900">Orders</h2>
                 </div>
-                <button onclick="loadMessages()" class="px-4 py-2 text-sm font-medium border border-slate-200 rounded hover:bg-slate-50 transition self-start">
-                    <i class="fas fa-rotate-right mr-2"></i>Refresh
-                </button>
-            </header>
-            <div id="messages-list-container">
-                <div class="px-6 py-8 text-center text-slate-500 text-sm"><i class="fas fa-spinner fa-spin mr-2"></i>Loading messages...</div>
-            </div>
+                <p class="mt-3 text-sm text-slate-500">Track, update, and export every purchase. Filter by status, payment, type, or date.</p>
+                <span class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-blue-600 group-hover:text-blue-700">Open orders <i class="fas fa-arrow-right text-xs"></i></span>
+            </a>
+
+            <a href="admin-customers.html" class="group block bg-white rounded-xl shadow p-6 hover:shadow-md hover:border-blue-200 border border-transparent transition">
+                <div class="flex items-center gap-3">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50 text-purple-600 group-hover:bg-purple-100 transition">
+                        <i class="fas fa-users"></i>
+                    </span>
+                    <h2 class="font-semibold text-slate-900">Customers</h2>
+                </div>
+                <p class="mt-3 text-sm text-slate-500">Lifetime value, segments, and the full customer list with CSV export.</p>
+                <span class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-purple-600 group-hover:text-purple-700">Open customers <i class="fas fa-arrow-right text-xs"></i></span>
+            </a>
+
+            <a href="admin-communications.html" class="group block bg-white rounded-xl shadow p-6 hover:shadow-md hover:border-blue-200 border border-transparent transition">
+                <div class="flex items-center gap-3">
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 transition">
+                        <i class="fas fa-comments"></i>
+                    </span>
+                    <h2 class="font-semibold text-slate-900">Communications</h2>
+                </div>
+                <p class="mt-3 text-sm text-slate-500">Contact messages, broadcasts, community stories, and partner CRM in one place.</p>
+                <span class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-emerald-600 group-hover:text-emerald-700">Open communications <i class="fas fa-arrow-right text-xs"></i></span>
+            </a>
         </section>
     </main>
     </div><!-- End of flex container -->
 
-<!-- Footer Section -->
-    <footer class="footer bg-gray-800 text-white py-8 mt-12 ml-64">
-        <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div class="footer-col">
-                <h3 class="footer-heading">Disciplined Disciples</h3>
-                <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
-                <div class="social-links">
-                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a>
-                    <a href="#" class="social-link" aria-label="Follow us on Facebook"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" class="social-link" aria-label="Follow us on Twitter"><i class="fab fa-twitter"></i></a>
-                </div>
-            </div>
-            <div class="footer-col">
-                <h3 class="footer-heading">Quick Links</h3>
-                <ul>
-                    <li><a href="index.html" class="footer-link">Home</a></li>
-                    <li><a href="shop.html" class="footer-link">Shop</a></li>
-                    <li><a href="blog.html" class="footer-link">Blog</a></li>
-                    <li><a href="contact.html" class="footer-link">Contact</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h3 class="footer-heading">Support</h3>
-                <ul>
-                    <li><a href="faq.html" class="footer-link">FAQs</a></li>
-                    <li><a href="shipping-returns.html" class="footer-link">Shipping & Returns</a></li>
-                    <li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li>
-                    <li><a href="terms-of-service.html" class="footer-link">Terms of Service</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <h3 class="footer-heading text-lg font-semibold mb-4">Contact Us</h3>
-                <p class="footer-text text-gray-300 text-sm mb-2">Email: nomaqhizazolile@gmail.com</p>
-                <p class="footer-text text-gray-300 text-sm mb-2">Phone: +27 69 206 0618</p>
-                <p class="footer-text text-gray-300 text-sm">Johannesburg, South Africa</p>
-            </div>
-        </div>
-        <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
-            <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
-            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> ??</p>
-        </div>
-    </footer>
-
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-    <script src="script.js?v=20260416b"></script>
+    <script src="script.js?v=20260531a"></script>
+    <script src="js/admin-sidebar.js?v=20260601c" defer></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            if (window.AdminApp) {
-                window.AdminApp.init();
-            }
-            setTimeout(loadMessages, 800);
-        });
+    (function () {
+        'use strict';
 
-        var _msgDb = null;
-        function getMsgDb(){
-            if(_msgDb) return _msgDb;
-            var cfg={apiKey:"AIzaSyBVpuDI_YJI7mxtT6-igSL7ZX3s-cqMRnc",authDomain:"disciplined-disciples-1.firebaseapp.com",projectId:"disciplined-disciples-1",storageBucket:"disciplined-disciples-1.firebasestorage.app",messagingSenderId:"565996965931",appId:"1:565996965931:web:b9d18489caa790e7afda6e"};
-            if(!firebase.apps.length) firebase.initializeApp(cfg);
-            _msgDb = firebase.firestore();
-            return _msgDb;
+        function $(id) { return document.getElementById(id); }
+        function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+        function fmtR(n) { return 'R' + (Number(n) || 0).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+        function ensureFirebase() {
+            if (firebase.apps && firebase.apps.length) return firebase.firestore();
+            if (typeof getFirebaseConfig === 'function') {
+                firebase.initializeApp(getFirebaseConfig());
+                return firebase.firestore();
+            }
+            return null;
         }
 
-        function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+        function relativeTime(ts) {
+            if (!ts) return '';
+            var d;
+            try { d = ts.toDate ? ts.toDate() : new Date(ts); } catch (e) { return ''; }
+            if (!d || isNaN(d.getTime())) return '';
+            var m = Math.floor((Date.now() - d.getTime()) / 60000);
+            if (m < 1) return 'just now';
+            if (m < 60) return m + 'm ago';
+            var h = Math.floor(m / 60);
+            if (h < 24) return h + 'h ago';
+            var dd = Math.floor(h / 24);
+            if (dd < 7) return dd + 'd ago';
+            return d.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' });
+        }
 
-        async function loadMessages(){
-            var container=document.getElementById('messages-list-container');
-            var badge=document.getElementById('msg-sidebar-badge');
-            var label=document.getElementById('msg-unread-label');
-            if(!container) return;
-            container.innerHTML='<div class="px-6 py-8 text-center text-slate-500 text-sm"><i class="fas fa-spinner fa-spin mr-2"></i>Loading...</div>';
-            try{
-                var db=getMsgDb();
-                var snap=await db.collection('contactMessages').orderBy('createdAt','desc').get();
-                var msgs=[];
-                snap.forEach(function(doc){msgs.push(Object.assign({id:doc.id},doc.data()));});
-                var unread=msgs.filter(function(m){return m.status==='unread';}).length;
-                if(badge){badge.textContent=unread;badge.style.display=unread?'inline-flex':'none';}
-                if(label) label.textContent=unread?unread+' unread':'';
-                if(!msgs.length){container.innerHTML='<div class="px-6 py-8 text-center text-slate-500 text-sm"><i class="fas fa-inbox mr-2"></i>No messages yet.</div>';return;}
-                var html='<div class="divide-y divide-slate-100">';
-                msgs.forEach(function(m){
-                    var date=m.createdAt&&m.createdAt.toDate?m.createdAt.toDate().toLocaleString('en-ZA',''):'Unknown';
-                    var rowBg=m.status==='unread'?'background:#eff6ff;':'';
-                    var statusBadge=m.status==='replied'?'<span class="text-xs px-2 py-0.5 rounded-full font-medium" style="background:#dcfce7;color:#166534;">Replied</span>'
-                        :m.status==='unread'?'<span class="text-xs px-2 py-0.5 rounded-full font-medium" style="background:#dbeafe;color:#1d4ed8;">Unread</span>'
-                        :'<span class="text-xs px-2 py-0.5 rounded-full font-medium" style="background:#f1f5f9;color:#64748b;">Read</span>';
-                    var replyHtml=m.reply?('<div style="margin-top:12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;"><p style="font-size:0.75rem;font-weight:600;color:#166534;margin:0 0 6px;"><i class="fas fa-reply mr-1"></i>Reply sent:</p><p style="font-size:0.88rem;color:#166534;margin:0;white-space:pre-wrap;">'+escH(m.reply)+'</p></div>'):\';
-                    html+='<div class="px-6 py-4 cursor-pointer hover:bg-slate-50 transition" id="msg-row-'+m.id+'" onclick="toggleMsg(\''+m.id+'\',this)" style="'+rowBg+'">';
-                    html+='<div class="flex items-center justify-between gap-4"><div class="flex items-center gap-3 min-w-0"><div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;font-size:0.75rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+escH((m.name||'?')[0].toUpperCase())+'</div><div class="min-w-0"><p style="font-weight:600;font-size:0.88rem;color:#1e293b;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escH(m.name||'Unknown')+'</p><p style="font-size:0.75rem;color:#94a3b8;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escH(m.email||'')+'</p></div></div><div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">'+statusBadge+'<span style="font-size:0.75rem;color:#94a3b8;">'+date+'</span></div></div>';
-                    html+='<p style="margin:6px 0 0;font-size:0.88rem;color:#475569;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escH(m.subject||'(no subject)')+'</p>';
-                    html+='<div id="msg-detail-'+m.id+'" style="display:none;margin-top:14px;">';
-                    html+='<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;font-size:0.9rem;color:#334155;line-height:1.7;white-space:pre-wrap;">'+escH(m.message||'')+'</div>';
-                    html+=replyHtml;
-                    html+='<div style="margin-top:14px;"><label style="display:block;font-size:0.75rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Your Reply</label>';
-                    html+='<textarea id="reply-'+m.id+'" rows="4" placeholder="Type your reply here..." style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;padding:10px 12px;font-size:0.88rem;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>';
-                    html+='<div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">';
-                    html+='<button onclick="sendReply(\''+m.id+'\',\''+escH(m.email||'')+'\',\''+escH(m.subject||'Your enquiry')+'\',event)" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;background:#007bff;color:#fff;border:none;border-radius:7px;font-size:0.85rem;font-weight:600;cursor:pointer;"><i class="fas fa-reply"></i> Reply via Email</button>';
-                    html+='<button onclick="markMsgRead(\''+m.id+'\',event)" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:1.5px solid #e2e8f0;background:#fff;color:#475569;border-radius:7px;font-size:0.85rem;font-weight:600;cursor:pointer;"><i class="fas fa-check"></i> Mark Read</button>';
-                    html+='<button onclick="deleteMsg(\''+m.id+'\',event)" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;color:#dc2626;background:none;border:none;border-radius:7px;font-size:0.85rem;font-weight:600;cursor:pointer;"><i class="fas fa-trash-alt"></i> Delete</button>';
-                    html+='</div></div></div></div>';
+        var SRC_META = {
+            contact: { label: 'Contact', icon: 'fa-envelope', cls: 'bg-blue-50 text-blue-700' },
+            mentorship: { label: 'Mentorship', icon: 'fa-user-graduate', cls: 'bg-violet-50 text-violet-700' },
+            collaboration: { label: 'Collaboration', icon: 'fa-handshake', cls: 'bg-rose-50 text-rose-700' },
+            community: { label: 'Community', icon: 'fa-heart', cls: 'bg-amber-50 text-amber-700' }
+        };
+
+        function renderActionQueue(items) {
+            var host = $('action-queue');
+            if (!items.length) {
+                host.innerHTML = '<div class="px-6 py-10 text-center text-sm text-slate-400"><i class="fas fa-check-circle text-2xl text-emerald-500 mb-2 block"></i>You\'re all caught up.</div>';
+                return;
+            }
+            host.innerHTML = items.map(function (it) {
+                return '<a href="' + esc(it.href) + '" class="block px-6 py-4 hover:bg-slate-50 transition">'
+                    + '<div class="flex items-start justify-between gap-3">'
+                    + '<div class="flex items-start gap-3 min-w-0">'
+                    + '<span class="inline-flex h-9 w-9 items-center justify-center rounded-lg ' + it.badgeCls + ' flex-shrink-0"><i class="fas ' + it.icon + '"></i></span>'
+                    + '<div class="min-w-0">'
+                    + '<p class="text-sm font-semibold text-slate-900 truncate">' + esc(it.title) + '</p>'
+                    + '<p class="text-xs text-slate-500 truncate">' + esc(it.subtitle) + '</p>'
+                    + '</div>'
+                    + '</div>'
+                    + '<div class="text-right flex-shrink-0">'
+                    + '<span class="text-[11px] text-slate-400">' + esc(it.meta) + '</span>'
+                    + (it.cta ? '<p class="text-xs font-semibold text-blue-600 mt-1">' + esc(it.cta) + ' &rarr;</p>' : '')
+                    + '</div>'
+                    + '</div>'
+                    + '</a>';
+            }).join('');
+        }
+
+        function loadActionQueue() {
+            var host = $('action-queue');
+            host.innerHTML = '<div class="px-6 py-8 text-center text-sm text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading&hellip;</div>';
+            var db = ensureFirebase();
+            if (!db) { host.innerHTML = '<div class="px-6 py-8 text-center text-sm text-red-600">Firebase not initialised.</div>'; return; }
+
+            var threadsP = db.collection('inboxThreads').where('status', '==', 'open').orderBy('lastActivityAt', 'desc').limit(8).get().catch(function () { return { docs: [] }; });
+            // Orders pending fulfillment (paid but not shipped/delivered). Fall back to status=='pending' as well.
+            var ordersP = db.collection('artifacts').doc('default-app-id').collection('orders').orderBy('orderDate', 'desc').limit(50).get().catch(function () {
+                // Fall back to unsorted fetch if missing index
+                return db.collection('artifacts').doc('default-app-id').collection('orders').limit(50).get().catch(function () { return { docs: [] }; });
+            });
+
+            Promise.all([threadsP, ordersP]).then(function (results) {
+                var items = [];
+
+                results[0].docs.forEach(function (d) {
+                    var t = d.data();
+                    var meta = SRC_META[t.source] || { label: t.source || 'Thread', icon: 'fa-message', cls: 'bg-slate-100 text-slate-700' };
+                    items.push({
+                        href: 'admin-communications.html',
+                        icon: meta.icon,
+                        badgeCls: meta.cls,
+                        title: (t.participantName || 'Unknown') + ' \u00b7 ' + meta.label,
+                        subtitle: t.subject || '(no subject)',
+                        meta: relativeTime(t.lastActivityAt || t.createdAt),
+                        cta: 'Reply',
+                        sortKey: (t.lastActivityAt && t.lastActivityAt.toMillis ? t.lastActivityAt.toMillis() : 0)
+                    });
                 });
-                html+='</div>';
-                container.innerHTML=html;
-            }catch(e){
-                container.innerHTML='<div class="px-6 py-8 text-center text-red-500 text-sm"><i class="fas fa-exclamation-circle mr-2"></i>Could not load messages. Make sure you are signed in as admin.</div>';
-            }
+
+                results[1].docs.forEach(function (d) {
+                    var o = d.data();
+                    var status = (o.status || '').toLowerCase();
+                    var payment = (o.paymentStatus || '').toLowerCase();
+                    var paid = payment === 'paid' || payment === 'complete' || payment === 'completed';
+                    var needsAction = false;
+                    var label = '';
+                    if (paid && (status === 'pending' || status === 'processing' || status === 'order placed' || !status)) {
+                        needsAction = true; label = 'Paid \u00b7 needs fulfillment';
+                    } else if (status === 'pending' && !paid && payment !== 'failed' && payment !== 'cancelled') {
+                        needsAction = true; label = 'Pending order';
+                    }
+                    if (!needsAction) return;
+                    var customer = o.customerName || (o.customer && o.customer.name) || o.customerEmail || 'Customer';
+                    var orderRef = o.orderId || d.id.slice(0, 8);
+                    items.push({
+                        href: 'admin-orders.html',
+                        icon: 'fa-box',
+                        badgeCls: paid ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700',
+                        title: customer + ' \u00b7 ' + orderRef,
+                        subtitle: label + ' \u00b7 ' + fmtR(o.totalAmount || o.total || 0),
+                        meta: relativeTime(o.orderDate || o.createdAt),
+                        cta: 'Open',
+                        sortKey: (function () {
+                            var d = o.orderDate || o.createdAt;
+                            return (d && d.toMillis) ? d.toMillis() : 0;
+                        })()
+                    });
+                });
+
+                items.sort(function (a, b) { return (b.sortKey || 0) - (a.sortKey || 0); });
+                renderActionQueue(items.slice(0, 12));
+            }).catch(function (err) {
+                console.error('[action-queue]', err);
+                host.innerHTML = '<div class="px-6 py-8 text-center text-sm text-red-600">Could not load: ' + esc(err.message || err) + '</div>';
+            });
         }
 
-        function toggleMsg(id, row){
-            var detail=document.getElementById('msg-detail-'+id);
-            if(!detail) return;
-            var isOpen=detail.style.display!=='none';
-            document.querySelectorAll('[id^="msg-detail-"]').forEach(function(d){d.style.display='none';});
-            if(!isOpen){
-                detail.style.display='block';
-                row.style.background='';
-                getMsgDb().collection('contactMessages').doc(id).update({status:'read'}).catch(function(){});
-                var badge=document.getElementById('msg-sidebar-badge');
-                if(badge&&parseInt(badge.textContent)>0){badge.textContent=parseInt(badge.textContent)-1;if(parseInt(badge.textContent)===0)badge.style.display='none';}
-            }
+        function loadKpis() {
+            var db = ensureFirebase();
+            if (!db) return;
+
+            var ordersP = db.collection('artifacts').doc('default-app-id').collection('orders').get();
+            var mentorshipP = db.collection('mentorshipApplications').get().catch(function () { return { docs: [] }; });
+
+            Promise.all([ordersP, mentorshipP]).then(function (results) {
+                var snap = results[0];
+                var mentorshipSnap = results[1];
+
+                var total = 0, pending = 0, paid = 0, revenue = 0, awaiting = 0, awaitingRev = 0, cancelledPaid = 0;
+                var mentorshipTotal = 0, mentorshipPending = 0, mentorshipPaid = 0, mentorshipRevenue = 0;
+                var customerSet = {};
+
+                snap.docs.forEach(function (d) {
+                    var o = d.data();
+                    total += 1;
+                    var status = (o.status || '').toLowerCase();
+                    var payment = (o.paymentStatus || '').toLowerCase();
+                    var amt = Number(o.totalAmount || o.total || 0);
+                    var isPaid = payment === 'paid' || payment === 'complete' || payment === 'completed';
+                    var isCancel = status === 'cancelled' || status === 'canceled';
+                    if (isPaid && !isCancel) { paid += 1; revenue += amt; }
+                    else if (isCancel && isPaid) { cancelledPaid += 1; }
+                    else if (status === 'pending' || status === 'awaiting payment' || payment === 'pending' || payment === 'pending payment' || payment === '') {
+                        if (!isCancel) { pending += 1; if (status === 'awaiting payment' || payment === 'pending payment') { awaiting += 1; awaitingRev += amt; } }
+                    }
+                    var key = o.userId || o.customerEmail || o.customerName || d.id;
+                    if (key) customerSet[key] = true;
+                });
+
+                (mentorshipSnap.docs || []).forEach(function (d) {
+                    var m = d.data() || {};
+                    var amount = Number(m.amountPaid || m.amount || 0) || 0;
+                    if (amount <= 0) return; // Skip free Discovery records.
+
+                    mentorshipTotal += 1;
+
+                    var payment = (m.paymentStatus || '').toLowerCase();
+                    var isPaid = payment === 'paid' || payment === 'complete' || payment === 'completed' || payment === 'success';
+                    var isPending = payment === 'pending' || payment === 'pending payment' || payment === '';
+
+                    if (isPaid) {
+                        mentorshipPaid += 1;
+                        mentorshipRevenue += amount;
+                    } else if (isPending) {
+                        mentorshipPending += 1;
+                    }
+
+                    var customerKey = m.userId || m.email || m.name || d.id;
+                    if (customerKey) customerSet[customerKey] = true;
+                });
+
+                var totalCombined = total + mentorshipTotal;
+                var pendingCombined = pending + mentorshipPending;
+                var paidCombined = paid + mentorshipPaid;
+                var paidRevenueCombined = revenue + mentorshipRevenue;
+
+                $('admin-total-orders').textContent = String(totalCombined);
+                $('admin-pending-orders').textContent = String(pendingCombined);
+                $('admin-paid-orders').textContent = String(paidCombined);
+                $('admin-total-revenue').textContent = fmtR(paidRevenueCombined);
+                var bd = $('admin-revenue-breakdown');
+                if (bd) bd.textContent = 'Paid (shop): ' + fmtR(revenue) + ' \u00b7 Paid (mentorship): ' + fmtR(mentorshipRevenue) + ' \u00b7 Awaiting: ' + fmtR(awaitingRev) + ' \u00b7 Cancelled (paid): ' + String(cancelledPaid);
+                $('admin-total-customers').textContent = String(Object.keys(customerSet).length);
+            }).catch(function (err) {
+                console.error('[kpis]', err);
+                ['admin-total-orders','admin-pending-orders','admin-paid-orders','admin-total-customers'].forEach(function (id) { var e = $(id); if (e) e.textContent = '\u2014'; });
+                var r = $('admin-total-revenue'); if (r) r.textContent = '\u2014';
+            });
         }
 
-        async function sendReply(msgId, email, subject, e){
-            e.stopPropagation();
-            var ta=document.getElementById('reply-'+msgId);
-            var replyText=ta?(ta.value||'').trim():'';
-            if(!replyText){alert('Please type a reply first.');return;}
-            try{
-                await getMsgDb().collection('contactMessages').doc(msgId).update({reply:replyText,repliedAt:firebase.firestore.FieldValue.serverTimestamp(),status:'replied'});
-            }catch(err){}
-            var mailto='mailto:'+email+'?subject=Re: '+encodeURIComponent(subject)+'&body='+encodeURIComponent(replyText);
-            window.open(mailto);
-            loadMessages();
+        function loadPulse() {
+            var db = ensureFirebase();
+            if (!db) return;
+            var since = new Date(Date.now() - 7 * 24 * 3600 * 1000);
+
+            var ordersPulseP = db.collection('artifacts').doc('default-app-id').collection('orders').orderBy('orderDate', 'desc').limit(200).get().catch(function () {
+                return db.collection('artifacts').doc('default-app-id').collection('orders').limit(200).get();
+            });
+            var mentorshipPulseP = db.collection('mentorshipApplications').orderBy('createdAt', 'desc').limit(200).get().catch(function () {
+                return db.collection('mentorshipApplications').limit(200).get().catch(function () { return { docs: [] }; });
+            });
+
+            Promise.all([ordersPulseP, mentorshipPulseP]).then(function (results) {
+                var snap = results[0];
+                var mentorshipSnap = results[1];
+                var revenue = 0, count = 0;
+
+                snap.docs.forEach(function (d) {
+                    var o = d.data();
+                    var stamp = o.orderDate || o.createdAt;
+                    var created = stamp && stamp.toDate ? stamp.toDate() : (stamp instanceof Date ? stamp : null);
+                    if (!created || created < since) return;
+                    count += 1;
+                    var payment = (o.paymentStatus || '').toLowerCase();
+                    if (payment === 'paid' || payment === 'complete' || payment === 'completed') revenue += Number(o.totalAmount || o.total) || 0;
+                });
+
+                (mentorshipSnap.docs || []).forEach(function (d) {
+                    var m = d.data() || {};
+                    var amount = Number(m.amountPaid || m.amount || 0) || 0;
+                    if (amount <= 0) return;
+
+                    var stamp = m.createdAt || m.paymentCompletedAt;
+                    var created = stamp && stamp.toDate ? stamp.toDate() : (stamp instanceof Date ? stamp : null);
+                    if (!created || created < since) return;
+
+                    count += 1;
+                    var payment = (m.paymentStatus || '').toLowerCase();
+                    if (payment === 'paid' || payment === 'complete' || payment === 'completed' || payment === 'success') {
+                        revenue += amount;
+                    }
+                });
+
+                $('pulse-revenue').textContent = fmtR(revenue);
+                $('pulse-orders').textContent = String(count);
+            }).catch(function () { $('pulse-revenue').textContent = '\u2014'; $('pulse-orders').textContent = '\u2014'; });
+
+            // New threads in last 7 days
+            db.collection('inboxThreads').orderBy('createdAt', 'desc').limit(200).get().then(function (snap) {
+                var n = 0;
+                snap.docs.forEach(function (d) {
+                    var t = d.data();
+                    var c = t.createdAt && t.createdAt.toDate ? t.createdAt.toDate() : null;
+                    if (c && c >= since) n += 1;
+                });
+                $('pulse-threads').textContent = String(n);
+            }).catch(function () { $('pulse-threads').textContent = '\u2014'; });
+
+            // New customers
+            db.collection('artifacts').doc('default-app-id').collection('users').orderBy('createdAt', 'desc').limit(200).get().then(function (snap) {
+                var n = 0;
+                snap.docs.forEach(function (d) {
+                    var u = d.data();
+                    var c = u.createdAt && u.createdAt.toDate ? u.createdAt.toDate() : null;
+                    if (c && c >= since) n += 1;
+                });
+                $('pulse-customers').textContent = String(n);
+            }).catch(function () { $('pulse-customers').textContent = '\u2014'; });
         }
 
-        async function markMsgRead(id, e){
-            e.stopPropagation();
-            try{await getMsgDb().collection('contactMessages').doc(id).update({status:'read'});}catch(err){}
-            loadMessages();
-        }
-
-        async function deleteMsg(id, e){
-            e.stopPropagation();
-            if(!confirm('Delete this message?')) return;
-            try{await getMsgDb().collection('contactMessages').doc(id).delete();}catch(err){}
-            loadMessages();
-        }
+        document.addEventListener('DOMContentLoaded', function () {
+            try {
+                loadKpis();
+                loadActionQueue();
+                loadPulse();
+                var rb = $('aq-refresh');
+                if (rb) rb.addEventListener('click', function () { loadKpis(); loadActionQueue(); loadPulse(); });
+            } catch (e) { console.error(e); }
+        });
+    })();
     </script>
-
-    <!-- WhatsApp Floating Button -->
-    <a href="https://wa.me/27692060618?text=Hi%20Disciplined%20Disciples!%20I%20have%20a%20question%20about%20your%20products." 
-       class="whatsapp-float" 
-       target="_blank" 
-       rel="noopener noreferrer"
-       aria-label="Chat on WhatsApp">
-        <i class="fab fa-whatsapp"></i>
-    </a>
-
-    <!-- Cookie Consent Banner (POPIA Compliance) -->
-    <div id="cookie-consent-banner" class="cookie-consent-banner">
-        <div class="cookie-consent-content">
-            <div class="cookie-consent-text">
-                <h3>?? We Value Your Privacy</h3>
-                <p>We use cookies to improve your experience and analyze site traffic. By clicking "Accept", you consent to our use of cookies. <a href="privacy-policy.html">Learn more</a></p>
-            </div>
-            <div class="cookie-consent-actions">
-                <button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept">Accept</button>
-                <button id="cookie-decline-btn" class="cookie-btn cookie-btn-decline">Decline</button>
-            </div>
-        </div>
-    </div>
 </body>
 </html>

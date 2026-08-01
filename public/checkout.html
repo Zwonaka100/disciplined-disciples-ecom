@@ -27,54 +27,56 @@
     <header class="header bg-white shadow">
         <div class="container flex justify-between items-center py-4">
             <a href="index.html" class="logo flex items-center">
-                <img src="Assets/45.png" alt="Disciplined Disciples Logo" class="logo-img">
+                <img src="Assets/45.png" alt="Disciplined Disciples Logo" style="height:48px; width:auto; margin-right:10px;">
                 <span class="font-bold text-xl">Disciplined Disciples</span>
             </a>
-            <nav class="nav-menu">
-                <ul class="flex space-x-6">
-                    <li><a href="index.html" class="nav-link">Home</a></li>
+    <nav class="nav-menu">
+    <ul class="flex space-x-6">
+                    <li><a href="index.html" class="nav-link active">Home</a></li>
                     <li><a href="about.html" class="nav-link">About</a></li>
                     <li><a href="shop.html" class="nav-link">Shop</a></li>
-                    <li><a href="blog.html" class="nav-link">Blog</a></li>
-                    <li><a href="contact.html" class="nav-link">Contact</a></li>
-                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener" class="nav-link" aria-label="Visit our Instagram page"><i class="fab fa-instagram"></i></a></li>
-                    <li><a href="cart.html" class="nav-link" aria-label="View shopping cart"><i class="fas fa-shopping-cart"></i></a></li>
+                    <li><a href="book.html" class="nav-link">Book</a></li>
+                    <li><a href="mentorship.html" class="nav-link">Mentorship</a></li>
+                    <li><a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a></li>
+                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a></li>
+                    <li><a href="cart.html" class="nav-link" aria-label="Cart"><i class="fas fa-shopping-cart"></i></a></li>
                 </ul>
-                <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
-                <!-- Standardized Profile Dropdown -->
-                <div id="profile-ribbon" class="hidden" style="display: none; position: relative;">
-                    <button id="profile-btn" style="
-                        width: 42px;
-                        height: 42px;
-                        border-radius: 50%;
-                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                        color: white;
-                        font-weight: 600;
-                        font-size: 14px;
-                        border: none;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-                        transition: all 0.3s ease;
-                    " onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.5)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)';">
-                        <span id="profile-ribbon-initials" style="letter-spacing: 1px;">U</span>
-                    </button>
-                </div>
-            </nav>
+    <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
+    <!-- Modern Profile Button -->
+    <div id="profile-ribbon" style="display: none; position: relative;">
+        <button id="profile-btn" style="
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+        " onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.5)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)';">
+            <span id="profile-ribbon-initials" style="letter-spacing: 1px;">U</span>
+        </button>
+    </div>
+</nav>
             <button class="menu-toggle" aria-label="Toggle navigation">
                 <i class="fas fa-bars"></i>
             </button>
         </div>
         <nav class="mobile-menu">
             <ul class="py-4">
-                <li><a href="index.html" class="nav-link-mobile">Home</a></li>
+                <li><a href="index.html" class="nav-link-mobile active">Home</a></li>
                 <li><a href="about.html" class="nav-link-mobile">About</a></li>
                 <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
-                <li><a href="blog.html" class="nav-link-mobile">Blog</a></li>
-                <li><a href="contact.html" class="nav-link-mobile">Contact</a></li>
-                <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
+                <li><a href="book.html" class="nav-link-mobile">Book</a></li>
+                <li><a href="mentorship.html" class="nav-link-mobile">Mentorship</a></li>
+                <li><a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-linkedin"></i> LinkedIn</a></li>
+                <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
                 <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
             </ul>
             <a href="login-signup.html" id="login-signup-link-mobile" class="nav-link-mobile"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
@@ -124,7 +126,7 @@
         <img src="Assets/Other/IMG-20250928-WA0012.jpg" alt="Checkout Banner" class="hero-bg-image">
         <div class="container text-center py-10 hero-content">
             <h1 class="shop-title hero-title">Secure Checkout</h1>
-            <p class="shop-subtitle hero-subtitle">Complete your order and get ready for delivery!</p>
+            <p class="shop-subtitle hero-subtitle" style="color:#ffffff; text-shadow:0 1px 3px rgba(0,0,0,0.45);">Complete your order and get ready for delivery!</p>
         </div>
     </section>
 
@@ -133,6 +135,7 @@
             <!-- Cart Summary -->
             <section class="bg-white p-6 rounded-lg shadow-md">
                 <h2 class="text-xl font-semibold mb-4">Order Summary</h2>
+                <div id="checkout-fulfillment-banner" class="hidden mb-4"></div>
                 <div id="checkout-cart-items"></div>
                 <div class="mt-6 border-t pt-4">
                     <div class="flex justify-between mb-2">
@@ -167,7 +170,7 @@
                     </div>
                     
                     <!-- Delivery Method Selection -->
-                    <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                    <div id="delivery-method-section" class="mb-6 p-4 bg-gray-50 rounded-lg">
                         <label class="block text-gray-700 font-semibold mb-3">Delivery Method</label>
                         
                         <!-- PAXI Delivery -->
@@ -176,7 +179,7 @@
                                 <input type="radio" name="delivery_method" value="paxi_standard" class="mt-1" required onchange="updateDeliveryMethod()">
                                 <div class="flex-1">
                                     <div class="flex justify-between">
-                                        <span class="font-medium">?? PAXI Standard</span>
+                                        <span class="font-medium">PAXI Standard</span>
                                         <span class="text-purple-600 font-bold">R59.95</span>
                                     </div>
                                     <p class="text-sm text-gray-500">Delivered to your nearest PEP store (7-9 business days)</p>
@@ -189,7 +192,7 @@
                                 <input type="radio" name="delivery_method" value="paxi_express" class="mt-1" onchange="updateDeliveryMethod()">
                                 <div class="flex-1">
                                     <div class="flex justify-between">
-                                        <span class="font-medium">?? PAXI Express</span>
+                                        <span class="font-medium">PAXI Express</span>
                                         <span class="text-purple-600 font-bold">R109.95</span>
                                     </div>
                                     <p class="text-sm text-gray-500">Delivered to your nearest PEP store (3-5 business days)</p>
@@ -197,16 +200,30 @@
                             </label>
                         </div>
                         
-                        <!-- Collection -->
+                        <!-- Collection: Sandton -->
                         <div class="mb-3">
-                            <label class="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:border-purple-400 transition" id="collection-label">
-                                <input type="radio" name="delivery_method" value="collection" class="mt-1" onchange="updateDeliveryMethod()">
+                            <label class="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:border-purple-400 transition" id="collection-sandton-label">
+                                <input type="radio" name="delivery_method" value="collection_sandton" class="mt-1" onchange="updateDeliveryMethod()">
                                 <div class="flex-1">
                                     <div class="flex justify-between">
-                                        <span class="font-medium">?? Collect in Person</span>
+                                        <span class="font-medium">Collect in Person - Sandton</span>
                                         <span class="text-green-600 font-bold">FREE</span>
                                     </div>
-                                    <p class="text-sm text-gray-500">SASOL Place: 50 Katherine St, Wierda Valley, Sandton, 2196</p>
+                                    <p class="text-sm text-gray-500">SASOL Place, 50 Katherine St, Wierda Valley, Sandton, 2196</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Collection: Benoni -->
+                        <div class="mb-3">
+                            <label class="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:border-purple-400 transition" id="collection-benoni-label">
+                                <input type="radio" name="delivery_method" value="collection_benoni" class="mt-1" onchange="updateDeliveryMethod()">
+                                <div class="flex-1">
+                                    <div class="flex justify-between">
+                                        <span class="font-medium">Collect in Person - Benoni</span>
+                                        <span class="text-green-600 font-bold">FREE</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500">150 Warbler Street, Crystal Palace, Benoni, 1501</p>
                                 </div>
                             </label>
                         </div>
@@ -226,7 +243,8 @@
                     <!-- Collection Details (shown when collection selected) -->
                     <div id="collection-details" class="hidden mb-4 p-4 bg-green-50 rounded-lg border border-green-200">
                         <p class="font-medium text-green-800 mb-2"><i class="fas fa-info-circle mr-2"></i>Collection Information</p>
-                        <p class="text-sm text-gray-700 mb-2"><strong>Address:</strong> SASOL Place, 50 Katherine St, Wierda Valley, Sandton, 2196</p>
+                        <p class="text-sm text-gray-700 mb-2"><strong>Collection Point 1:</strong> SASOL Place, 50 Katherine St, Wierda Valley, Sandton, 2196</p>
+                        <p class="text-sm text-gray-700 mb-2"><strong>Collection Point 2:</strong> 150 Warbler Street, Crystal Palace, Benoni, 1501</p>
                         <p class="text-sm text-gray-700 mb-2"><strong>Hours:</strong> Monday - Friday, 9:00 AM - 5:00 PM</p>
                         <p class="text-sm text-gray-600">You'll receive an SMS/Email when your order is ready for collection.</p>
                     </div>
@@ -255,13 +273,14 @@
     </main>
 
     <!-- Footer Section -->
-    <footer class="footer bg-gray-800 text-white py-8 mt-12">
+    <footer class="footer">
         <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
             <div class="footer-col">
                 <h3 class="footer-heading">Disciplined Disciples</h3>
                 <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
                 <div class="social-links">
-                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener" class="social-link" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Follow Zolile on LinkedIn"><i class="fab fa-linkedin"></i></a>
+                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a>
                     <a href="#" class="social-link" aria-label="Follow us on Facebook"><i class="fab fa-facebook-f"></i></a>
                     <a href="#" class="social-link" aria-label="Follow us on Twitter"><i class="fab fa-twitter"></i></a>
                 </div>
@@ -271,7 +290,6 @@
                 <ul>
                     <li><a href="index.html" class="footer-link">Home</a></li>
                     <li><a href="shop.html" class="footer-link">Shop</a></li>
-                    <li><a href="about.html" class="footer-link">About</a></li>
                     <li><a href="blog.html" class="footer-link">Blog</a></li>
                     <li><a href="contact.html" class="footer-link">Contact</a></li>
                 </ul>
@@ -286,15 +304,15 @@
                 </ul>
             </div>
             <div class="footer-col">
-                <h3 class="footer-heading">Contact Us</h3>
-                <p class="footer-text">Email: info@disciplineddisciples.co.za</p>
-                <p class="footer-text">Phone: +27 69 206 0618</p>
-                <p class="footer-text">Johannesburg, South Africa</p>
+                <h3 class="footer-heading text-lg font-semibold mb-4">Contact Us</h3>
+                <p class="footer-text text-gray-300 text-sm mb-2">Email: nomaqhizazolile@gmail.com</p>
+                <p class="footer-text text-gray-300 text-sm mb-2">Phone: +27 69 206 0618</p>
+                <p class="footer-text text-gray-300 text-sm">Johannesburg, South Africa</p>
             </div>
         </div>
         <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
-            <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
-            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> ??</p>
+            <p>&copy; 2026 Disciplined Disciples. All rights reserved.</p>
+            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> 💜</p>
         </div>
     </footer>
 
@@ -304,14 +322,77 @@
     const DELIVERY_PRICES = {
         paxi_standard: 59.95,
         paxi_express: 109.95,
-        collection: 0
+        collection_sandton: 0,
+        collection_benoni: 0
     };
     
     let selectedDeliveryMethod = 'paxi_standard';
     let currentShippingCost = DELIVERY_PRICES.paxi_standard;
+    let isDigitalEbookCheckout = false;
+
+    function prefillBookCheckoutFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        const bookType = (params.get('book') || '').toLowerCase();
+        if (!bookType) return;
+
+        if (bookType === 'ebook') {
+            isDigitalEbookCheckout = true;
+            window.cart = [{
+                productId: 'ebook',
+                name: 'Relentlessly Disciplined eBook',
+                price: 89.00,
+                quantity: 1,
+                size: 'Digital',
+                fulfillmentType: 'digital',
+                imageUrl: 'Assets/book.png'
+            }];
+            localStorage.setItem('disciplinedDisciplesCart', JSON.stringify(window.cart));
+            const deliverySection = document.getElementById('delivery-method-section');
+            if (deliverySection) {
+                deliverySection.classList.add('hidden');
+            }
+            const paxiDetails = document.getElementById('paxi-details');
+            if (paxiDetails) {
+                paxiDetails.classList.add('hidden');
+            }
+            const collectionDetails = document.getElementById('collection-details');
+            if (collectionDetails) {
+                collectionDetails.classList.add('hidden');
+            }
+            const collectionRadio = document.querySelector('input[name="delivery_method"][value="collection_sandton"]');
+            if (collectionRadio) {
+                collectionRadio.checked = true;
+            }
+            selectedDeliveryMethod = 'collection_sandton';
+            currentShippingCost = 0;
+            document.querySelectorAll('input[name="delivery_method"]').forEach(function(input) {
+                if (input.value !== 'collection_sandton') {
+                    input.disabled = true;
+                }
+            });
+        } else if (bookType === 'physical') {
+            window.cart = [{
+                productId: 'book-physical',
+                name: 'Relentlessly Disciplined Physical Book',
+                price: 249.00,
+                quantity: 1,
+                size: 'N/A',
+                fulfillmentType: 'physical',
+                imageUrl: 'Assets/book.png'
+            }];
+            localStorage.setItem('disciplinedDisciplesCart', JSON.stringify(window.cart));
+        }
+    }
     
     // Update delivery method and recalculate totals
     function updateDeliveryMethod() {
+        if (isDigitalEbookCheckout) {
+            selectedDeliveryMethod = 'collection_sandton';
+            currentShippingCost = 0;
+            updateTotalsDisplay();
+            return;
+        }
+
         const selected = document.querySelector('input[name="delivery_method"]:checked');
         if (!selected) return;
         
@@ -323,7 +404,7 @@
         const collectionDetails = document.getElementById('collection-details');
         const pepStoreInput = document.getElementById('pep-store');
         
-        if (selectedDeliveryMethod === 'collection') {
+        if (selectedDeliveryMethod.startsWith('collection_')) {
             paxiDetails.classList.add('hidden');
             collectionDetails.classList.remove('hidden');
             pepStoreInput.removeAttribute('required');
@@ -359,9 +440,82 @@
         document.getElementById('checkout-shipping').textContent = shipping === 0 ? 'FREE' : `R${shipping.toFixed(2)}`;
         document.getElementById('checkout-total').textContent = `R${total.toFixed(2)}`;
     }
+
+    // Render the fulfillment banner (digital / physical / mixed) above the cart items
+    // and reconcile the delivery section visibility for digital-only carts that arrived
+    // via the normal /shop flow (not just the /book?ebook query path).
+    function renderFulfillmentBanner() {
+        const banner = document.getElementById('checkout-fulfillment-banner');
+        if (!banner) return;
+        const items = window.cart || [];
+        if (!items.length) {
+            banner.classList.add('hidden');
+            banner.innerHTML = '';
+            return;
+        }
+
+        const fulfillmentType = (window.getOrderFulfillmentType
+            ? window.getOrderFulfillmentType({ items })
+            : 'physical');
+
+        if (fulfillmentType === 'digital') {
+            banner.className = 'mb-4 rounded-lg border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-900';
+            banner.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <span class="text-2xl leading-none">📖</span>
+                    <div>
+                        <p class="font-semibold">Digital order — no shipping needed</p>
+                        <p class="mt-1 text-indigo-800/90">Your eBook will be delivered instantly to <strong>My Library</strong> on your profile as soon as payment is confirmed. You can download it any time, on any device.</p>
+                    </div>
+                </div>`;
+            banner.classList.remove('hidden');
+            // Force-collapse the delivery method UI for digital-only checkouts.
+            isDigitalEbookCheckout = true;
+            const deliverySection = document.getElementById('delivery-method-section');
+            if (deliverySection) deliverySection.classList.add('hidden');
+            const paxiDetails = document.getElementById('paxi-details');
+            if (paxiDetails) paxiDetails.classList.add('hidden');
+            const collectionDetails = document.getElementById('collection-details');
+            if (collectionDetails) collectionDetails.classList.add('hidden');
+            const collectionRadio = document.querySelector('input[name="delivery_method"][value="collection_sandton"]');
+            if (collectionRadio) collectionRadio.checked = true;
+            selectedDeliveryMethod = 'collection_sandton';
+            currentShippingCost = 0;
+            return;
+        }
+
+        if (fulfillmentType === 'mixed') {
+            banner.className = 'mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900';
+            banner.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <span class="text-2xl leading-none">🎁</span>
+                    <div>
+                        <p class="font-semibold">Mixed order — both digital and physical items</p>
+                        <p class="mt-1 text-amber-800/90">Your eBook will appear in <strong>My Library</strong> on your profile as soon as payment is confirmed. Your physical items will ship to the delivery address below.</p>
+                    </div>
+                </div>`;
+            banner.classList.remove('hidden');
+            return;
+        }
+
+        // Physical-only: keep the banner hidden so the layout stays clean.
+        banner.classList.add('hidden');
+        banner.innerHTML = '';
+    }
+
+    // Patch into the existing render flow so the banner stays in sync with the cart.
+    (function wrapRenderCheckoutSummary() {
+        const original = window.renderCheckoutSummary;
+        window.renderCheckoutSummary = function() {
+            if (typeof original === 'function') original.apply(this, arguments);
+            try { renderFulfillmentBanner(); } catch (err) { console.warn('Banner render failed:', err); }
+        };
+    })();
     
     document.addEventListener('DOMContentLoaded', async () => {
         await window.firebaseInitialized;
+
+        prefillBookCheckoutFromQuery();
 
         // Handle payment cancellation return
         const urlParams = new URLSearchParams(window.location.search);
@@ -379,6 +533,9 @@
             }
             // Update totals with current delivery method
             updateTotalsDisplay();
+            // Ensure the fulfillment banner reflects the current cart even when
+            // renderCheckoutSummary is a no-op on first paint.
+            try { renderFulfillmentBanner(); } catch (err) { console.warn('Banner render failed:', err); }
         };
 
         renderCheckoutView();
@@ -415,7 +572,7 @@
             }
             
             // Validate PEP store for PAXI delivery
-            if (selectedDeliveryMethod !== 'collection') {
+            if (!selectedDeliveryMethod.startsWith('collection_')) {
                 const pepStore = document.getElementById('pep-store').value.trim();
                 if (!pepStore) {
                     window.showMessage('Please enter your nearest PEP store for PAXI delivery.', 'error');
@@ -427,19 +584,41 @@
             // Build delivery info based on method
             let deliveryAddress;
             let deliveryMethod;
-            
-            if (selectedDeliveryMethod === 'collection') {
-                deliveryMethod = 'Collection';
+
+            if (isDigitalEbookCheckout) {
+                deliveryMethod = 'Digital Download';
+                deliveryAddress = {
+                    name: this.name.value,
+                    phone: this.phone.value,
+                    type: 'digital',
+                    line1: 'Digital delivery',
+                    line2: 'eBook secure download',
+                    city: 'Online',
+                    province: '',
+                    postalCode: ''
+                };
+            } else if (selectedDeliveryMethod.startsWith('collection_')) {
+                const isBenoniCollection = selectedDeliveryMethod === 'collection_benoni';
+                const selectedCollectionPoint = isBenoniCollection
+                    ? '150 Warbler Street, Crystal Palace, Benoni, 1501'
+                    : 'SASOL Place, 50 Katherine St, Wierda Valley, Sandton, 2196';
+
+                deliveryMethod = isBenoniCollection ? 'Collection (Benoni)' : 'Collection (Sandton)';
                 deliveryAddress = {
                     name: this.name.value,
                     phone: this.phone.value,
                     type: 'collection',
-                    location: 'SASOL Place, 50 Katherine St, Wierda Valley, Sandton, 2196',
-                    line1: 'SASOL Place',
-                    line2: '50 Katherine St',
-                    city: 'Sandton',
+                    collectionSite: isBenoniCollection ? 'Benoni' : 'Sandton',
+                    location: selectedCollectionPoint,
+                    collectionPoints: [
+                        'SASOL Place, 50 Katherine St, Wierda Valley, Sandton, 2196',
+                        '150 Warbler Street, Crystal Palace, Benoni, 1501'
+                    ],
+                    line1: isBenoniCollection ? '150 Warbler Street' : 'SASOL Place',
+                    line2: isBenoniCollection ? 'Crystal Palace' : '50 Katherine St',
+                    city: isBenoniCollection ? 'Benoni' : 'Sandton',
                     province: 'Gauteng',
-                    postalCode: '2196'
+                    postalCode: isBenoniCollection ? '1501' : '2196'
                 };
             } else {
                 deliveryMethod = selectedDeliveryMethod === 'paxi_express' ? 'PAXI Express (3-5 days)' : 'PAXI Standard (7-9 days)';
@@ -494,6 +673,18 @@
                 { email: 'system', uid: 'system' }
             );
 
+            // Ensure every cart item has a fulfillmentType (defensive for legacy carts)
+            const normalizedItems = (window.cart || []).map(function(it) {
+                if (it && it.fulfillmentType) return it;
+                const pid = (it && it.productId || '').toString().toLowerCase();
+                const nm = (it && it.name || '').toString().toLowerCase();
+                const isDigital = pid === 'ebook' || nm.includes('ebook');
+                return Object.assign({}, it, { fulfillmentType: isDigital ? 'digital' : 'physical' });
+            });
+            const hasDigital = normalizedItems.some(function(i) { return i.fulfillmentType === 'digital'; });
+            const hasPhysical = normalizedItems.some(function(i) { return i.fulfillmentType !== 'digital'; });
+            const computedOrderType = hasDigital && hasPhysical ? 'mixed' : (hasDigital ? 'digital' : 'physical');
+
             // Build the complete order data
             const orderData = {
                 orderId,
@@ -501,7 +692,9 @@
                 customerEmail,
                 customerName: deliveryAddress.name,
                 customerPhone: deliveryAddress.phone,
-                items: window.cart,
+                items: normalizedItems,
+                orderType: computedOrderType,
+                hasEbookItem: hasDigital,
                 deliveryAddress,
                 deliveryMethod,
                 subtotal,
@@ -583,3 +776,4 @@
     </div>
 </body>
 </html>
+

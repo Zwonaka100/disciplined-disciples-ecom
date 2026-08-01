@@ -30,50 +30,52 @@
                 <img src="Assets/45.png" alt="Disciplined Disciples Logo" style="height:48px; width:auto; margin-right:10px;">
                 <span class="font-bold text-xl">Disciplined Disciples</span>
             </a>
-            <nav class="nav-menu">
-                <ul class="flex space-x-6">
-                    <li><a href="index.html" class="nav-link">Home</a></li>
+    <nav class="nav-menu">
+    <ul class="flex space-x-6">
+                    <li><a href="index.html" class="nav-link active">Home</a></li>
                     <li><a href="about.html" class="nav-link">About</a></li>
                     <li><a href="shop.html" class="nav-link">Shop</a></li>
-                    <li><a href="blog.html" class="nav-link">Blog</a></li>
-                    <li><a href="contact.html" class="nav-link">Contact</a></li>
-                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a></li>
-                    <li><a href="cart.html" class="nav-link" aria-label="Shopping Cart"><i class="fas fa-shopping-cart"></i></a></li>
+                    <li><a href="book.html" class="nav-link">Book</a></li>
+                    <li><a href="mentorship.html" class="nav-link">Mentorship</a></li>
+                    <li><a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a></li>
+                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a></li>
+                    <li><a href="cart.html" class="nav-link" aria-label="Cart"><i class="fas fa-shopping-cart"></i></a></li>
                 </ul>
-                <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
-                <!-- Standardized Profile Dropdown -->
-                <div id="profile-ribbon" style="display: none; position: relative;">
-                    <button id="profile-btn" style="
-                        width: 42px;
-                        height: 42px;
-                        border-radius: 50%;
-                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                        color: white;
-                        font-weight: 600;
-                        font-size: 14px;
-                        border: none;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-                        transition: all 0.3s ease;
-                    " onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.5)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)';">
-                        <span id="profile-ribbon-initials" style="letter-spacing: 1px;">U</span>
-                    </button>
-                </div>
-            </nav>
+    <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
+    <!-- Modern Profile Button -->
+    <div id="profile-ribbon" style="display: none; position: relative;">
+        <button id="profile-btn" style="
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+        " onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.5)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)';">
+            <span id="profile-ribbon-initials" style="letter-spacing: 1px;">U</span>
+        </button>
+    </div>
+</nav>
             <button class="menu-toggle" aria-label="Toggle navigation">
                 <i class="fas fa-bars"></i>
             </button>
         </div>
         <nav class="mobile-menu">
             <ul class="py-4">
-                <li><a href="index.html" class="nav-link-mobile">Home</a></li>
+                <li><a href="index.html" class="nav-link-mobile active">Home</a></li>
                 <li><a href="about.html" class="nav-link-mobile">About</a></li>
                 <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
-                <li><a href="blog.html" class="nav-link-mobile">Blog</a></li>
-                <li><a href="contact.html" class="nav-link-mobile">Contact</a></li>
+                <li><a href="book.html" class="nav-link-mobile">Book</a></li>
+                <li><a href="mentorship.html" class="nav-link-mobile">Mentorship</a></li>
+                <li><a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-linkedin"></i> LinkedIn</a></li>
                 <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
                 <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
             </ul>
@@ -127,7 +129,46 @@
                 <p class="text-xl text-gray-600 mb-8">Your payment has been processed successfully.</p>
             </div>
 
-            <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <!-- DIGITAL ORDER SECTION (shown for ebook/digital purchases) -->
+            <div id="digital-order-section" class="bg-white rounded-lg shadow-lg p-8 mb-8 border-2 border-purple-400" style="display:none;">
+                <div class="mb-6 text-center">
+                    <i class="fas fa-book-open text-5xl text-purple-600 mb-3"></i>
+                    <h2 class="text-2xl font-bold text-purple-700 mb-2">Your eBook is Ready to Download!</h2>
+                    <p class="text-gray-600">No shipping needed — your digital purchase is available immediately.</p>
+                </div>
+                <div class="space-y-4 text-left">
+                    <div class="flex items-start space-x-3">
+                        <i class="fas fa-envelope text-blue-500 mt-1"></i>
+                        <div>
+                            <h3 class="font-semibold">Confirmation Email Sent</h3>
+                            <p class="text-gray-600">Check your inbox for your order confirmation with download instructions.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <i class="fas fa-download text-green-500 mt-1"></i>
+                        <div>
+                            <h3 class="font-semibold">How to Download</h3>
+                            <p class="text-gray-600">Go to <strong>My Profile → My Library</strong> and click the <strong>"Download eBook"</strong> button. Your download link is available for 25 downloads per day.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                        <i class="fas fa-infinity text-purple-500 mt-1"></i>
+                        <div>
+                            <h3 class="font-semibold">Lifetime Access</h3>
+                            <p class="text-gray-600">Your eBook is permanently linked to your account. You can re-download it anytime from your profile.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 text-center">
+                    <a href="profile.html" class="inline-block px-8 py-4 text-lg font-bold text-white rounded-lg shadow-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="fas fa-book-reader mr-2"></i>
+                        Go to My Library & Download
+                    </a>
+                </div>
+            </div>
+
+            <!-- PHYSICAL ORDER SECTION (shown for physical/mixed orders) -->
+            <div id="physical-order-section" class="bg-white rounded-lg shadow-lg p-8 mb-8">
                 <h2 class="text-2xl font-semibold mb-4">What happens next?</h2>
                 <div class="space-y-4 text-left">
                     <div class="flex items-start space-x-3">
@@ -162,7 +203,7 @@
             </div>
 
             <div class="space-y-4">
-                <a href="profile.html" class="btn btn-primary inline-block">
+                <a href="profile.html" id="profile-cta-btn" class="btn btn-primary inline-block">
                     <i class="fas fa-user mr-2"></i>
                     View My Orders
                 </a>
@@ -184,12 +225,13 @@
     </main>
 
     <!-- Footer Section -->
-    <footer class="footer bg-gray-800 text-white py-8 mt-12">
+    <footer class="footer">
         <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
             <div class="footer-col">
                 <h3 class="footer-heading">Disciplined Disciples</h3>
                 <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
                 <div class="social-links">
+                    <a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Follow Zolile on LinkedIn"><i class="fab fa-linkedin"></i></a>
                     <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a>
                     <a href="#" class="social-link" aria-label="Follow us on Facebook"><i class="fab fa-facebook-f"></i></a>
                     <a href="#" class="social-link" aria-label="Follow us on Twitter"><i class="fab fa-twitter"></i></a>
@@ -198,7 +240,7 @@
             <div class="footer-col">
                 <h3 class="footer-heading">Quick Links</h3>
                 <ul>
-                    <li><a href="#" class="footer-link">About Us</a></li>
+                    <li><a href="index.html" class="footer-link">Home</a></li>
                     <li><a href="shop.html" class="footer-link">Shop</a></li>
                     <li><a href="blog.html" class="footer-link">Blog</a></li>
                     <li><a href="contact.html" class="footer-link">Contact</a></li>
@@ -221,12 +263,42 @@
             </div>
         </div>
         <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
-            <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
-            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> ??</p>
+            <p>&copy; 2026 Disciplined Disciples. All rights reserved.</p>
+            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> 💜</p>
         </div>
     </footer>
 
     <script>
+        // Detect order type from localStorage cart
+        (function detectOrderType() {
+            let isDigital = false;
+            try {
+                const cartJson = localStorage.getItem('disciplinedDisciplesCart');
+                if (cartJson) {
+                    const cart = JSON.parse(cartJson);
+                    if (Array.isArray(cart)) {
+                        isDigital = cart.some(item =>
+                            item.fulfillmentType === 'digital' ||
+                            item.productId === 'ebook' ||
+                            (item.name && item.name.toLowerCase().includes('ebook'))
+                        );
+                    }
+                }
+            } catch (e) { /* ignore parse errors */ }
+
+            const digitalSection = document.getElementById('digital-order-section');
+            const physicalSection = document.getElementById('physical-order-section');
+            const profileBtn = document.getElementById('profile-cta-btn');
+
+            if (isDigital) {
+                digitalSection.style.display = 'block';
+                physicalSection.style.display = 'none';
+                // Update the profile button for digital orders
+                profileBtn.innerHTML = '<i class="fas fa-book-reader mr-2"></i> Go to My Library';
+                profileBtn.href = 'profile.html';
+            }
+        })();
+
         // Auto-redirect to profile after 10 seconds
         setTimeout(() => {
             window.location.href = 'profile.html?payment=success';
@@ -267,3 +339,4 @@
     </div>
 </body>
 </html>
+

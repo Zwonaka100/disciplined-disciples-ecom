@@ -776,10 +776,10 @@
                     <li><a href="index.html" class="nav-link">Home</a></li>
                     <li><a href="about.html" class="nav-link active">About</a></li>
                     <li><a href="shop.html" class="nav-link">Shop</a></li>
-                    <li><a href="blog.html" class="nav-link">Blog</a></li>
-                    <li><a href="contact.html" class="nav-link">Contact</a></li>
-                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a></li>
-                    <li><a href="cart.html" class="nav-link" aria-label="Shopping Cart"><i class="fas fa-shopping-cart"></i></a></li>
+                    <li><a href="book.html" class="nav-link">Book</a></li>
+                    <li><a href="mentorship.html" class="nav-link">Mentorship</a></li>
+                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a></li>
+                    <li><a href="cart.html" class="nav-link" aria-label="Cart"><i class="fas fa-shopping-cart"></i></a></li>
                 </ul>
                 <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
                 
@@ -814,8 +814,8 @@
                 <li><a href="index.html" class="nav-link-mobile">Home</a></li>
                 <li><a href="about.html" class="nav-link-mobile active">About</a></li>
                 <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
-                <li><a href="blog.html" class="nav-link-mobile">Blog</a></li>
-                <li><a href="contact.html" class="nav-link-mobile">Contact</a></li>
+                <li><a href="book.html" class="nav-link-mobile">Book</a></li>
+                <li><a href="mentorship.html" class="nav-link-mobile">Mentorship</a></li>
                 <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
                 <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
             </ul>
@@ -864,8 +864,8 @@
     <!-- Hero Section -->
     <section class="hero-about">
         <div class="hero-about-content">
-            <h1>Our Story</h1>
-            <p><strong>Not a brand. A movement.</strong>  Born from 16 years of struggle, faith, and the unrelenting belief that discipline is the DNA of success.</p>
+            <h1 id="about-hero-title">Our Story</h1>
+            <p id="about-hero-subtitle"><strong>Not a brand. A movement.</strong>  Born from 16 years of struggle, faith, and the unrelenting belief that discipline is the DNA of success.</p>
         </div>
     </section>
 
@@ -881,7 +881,7 @@
                 <p>In a world that celebrates instant gratification, Zolile Nomaqhiza dared to build something different. Not just a brand, but a <strong>movement</strong>. Not just apparel, but a <strong>declaration</strong> of purpose.</p>
                 <p>Born and raised in South Africa, Zolile witnessed firsthand the transformative power of discipline. From the streets of Johannesburg to the halls of corporate boardrooms, one truth remained constant: <em>"Discipline is the DNA of success."</em></p>
                 <p>Inspired by scripture and driven by faith, Zolile founded <strong>Disciplined Disciples</strong> with a radical vision—to create a tribe of individuals who understand that true freedom comes through discipline, and that every choice, every day, is a step toward greatness or mediocrity.</p>
-                <p><strong>"This is not about fashion. This is about identity. This is about who you choose to become."</strong> - Zolile Nomaqhiza</p>
+                <p id="about-founder-quote"><strong>"This is not about fashion. This is about identity. This is about who you choose to become."</strong> - Zolile Nomaqhiza</p>
             </div>
         </div>
     </section>
@@ -889,7 +889,7 @@
     <!-- What could not happen -->
     <div class="container">
         <div class="scripture-quote">
-            <p>"What could not happen without Discipline in 14 years, happened with Discipline in 2 years."</p>
+            <p id="about-journey-quote">"What could not happen without Discipline in 14 years, happened with Discipline in 2 years."</p>
         </div>
     </div>
 
@@ -954,6 +954,22 @@
         </div>
     </section>
 
+    <!-- Book Spotlight Section -->
+    <section style="background:#f2f2f2;padding:4rem 1rem;color:#222;border-top:1px solid #ececec;border-bottom:1px solid #ececec;">
+        <div style="max-width:960px;margin:0 auto;display:grid;grid-template-columns:220px 1fr;gap:2.5rem;align-items:center;">
+            <div style="border-radius:10px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.12);flex-shrink:0;">
+                <img src="Assets/book.png" alt="Relentlessly Disciplined book cover" style="width:100%;display:block;">
+            </div>
+            <div>
+                <p style="font-size:0.78rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#555;margin-bottom:0.8rem;">The Book</p>
+                <h2 style="font-size:1.9rem;font-weight:800;line-height:1.25;margin-bottom:0.8rem;">Relentlessly Disciplined</h2>
+                <p style="color:#555;font-size:1rem;line-height:1.7;margin-bottom:1.5rem;">Everything you just read — the 16 years, the 6 attempts, the grief, the daughter, the breakthrough — is now a book. For everyone still in the middle of their own story.</p>
+                <a href="book.html" style="display:inline-flex;align-items:center;gap:8px;padding:12px 26px;background:#ffffff;color:#222;border:1px solid #ddd;border-radius:8px;font-weight:700;font-size:0.92rem;text-decoration:none;transition:all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.background='#f5f5f5'" onmouseout="this.style.transform='translateY(0)';this.style.background='#ffffff'"><i class="fas fa-book"></i> Read More &amp; Order</a>
+            </div>
+        </div>
+        <style>@media(max-width:640px){section[style*="#f2f2f2"] > div{grid-template-columns:1fr !important; text-align:center;} section[style*="#f2f2f2"] a{margin:0 auto;}}</style>
+    </section>
+
     <!-- Values Section -->
     <section class="section-padding bg-white">
         <div class="container">
@@ -993,9 +1009,13 @@
     <!-- Call to Action -->
     <section class="cta-section">
         <div class="container">
-            <h2>The best chapter Starts now.</h2>
-            <p>This isn't the finish line - it's the opening line. <strong>Join the movement</strong> and wear your discipline with pride.</p>
-            <a href="shop.html" class="cta-button">Shop the Collection</a>
+            <h2>The best chapter starts now.</h2>
+            <p>This isn't the finish line — it's the opening line. <strong>Join the movement.</strong></p>
+            <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1rem;">
+                <a href="shop.html" class="cta-button">Shop the Collection</a>
+                <a href="book.html" style="display:inline-block;padding:1rem 3rem;background:transparent;color:white;font-size:1.125rem;font-weight:700;border-radius:50px;text-decoration:none;border:2px solid rgba(255,255,255,0.6);transition:all 0.3s ease;position:relative;z-index:1;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='transparent'">Order the Book</a>
+                <a href="mentorship.html" style="display:inline-block;padding:1rem 3rem;background:transparent;color:white;font-size:1.125rem;font-weight:700;border-radius:50px;text-decoration:none;border:2px solid rgba(255,255,255,0.6);transition:all 0.3s ease;position:relative;z-index:1;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='transparent'">Apply for Mentorship</a>
+            </div>
         </div>
     </section>
 
@@ -1038,12 +1058,45 @@
             </div>
         </div>
         <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
-            <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
+            <p>&copy; 2026 Disciplined Disciples. All rights reserved.</p>
             <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> 💜</p>
         </div>
     </footer>
 
     <script src="script.js?v=20260416b"></script>
+    <script>
+    (function () {
+        var firebaseConfig = {
+            apiKey: "AIzaSyBVpuDI_YJI7mxtT6-igSL7ZX3s-cqMRnc",
+            authDomain: "disciplined-disciples-1.firebaseapp.com",
+            projectId: "disciplined-disciples-1",
+            storageBucket: "disciplined-disciples-1.firebasestorage.app",
+            messagingSenderId: "565996965931",
+            appId: "1:565996965931:web:b9d18489caa790e7afda6e"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        firebase.firestore().collection('siteContent').doc('about').get().then(function (doc) {
+            if (!doc.exists) return;
+            var data = doc.data() || {};
+
+            var heroTitle = document.getElementById('about-hero-title');
+            var heroSubtitle = document.getElementById('about-hero-subtitle');
+            var founderQuote = document.getElementById('about-founder-quote');
+            var journeyQuote = document.getElementById('about-journey-quote');
+
+            if (data.heroTitle && heroTitle) heroTitle.textContent = data.heroTitle;
+            if (data.heroSubtitle && heroSubtitle) heroSubtitle.textContent = data.heroSubtitle;
+            if (data.founderQuote && founderQuote) founderQuote.textContent = data.founderQuote;
+            if (data.journeyQuote && journeyQuote) journeyQuote.textContent = data.journeyQuote;
+        }).catch(function (err) {
+            console.log('About content not configured yet:', err.code || err.message || err);
+        });
+    })();
+    </script>
 
     <!-- Scroll Animation Script -->
     <script>
@@ -1110,3 +1163,4 @@
     </div>
 </body>
 </html>
+

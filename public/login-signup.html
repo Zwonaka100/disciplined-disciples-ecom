@@ -22,50 +22,86 @@
       gtag('js', new Date());
       gtag('config', 'G-2J1GWH59V4');
     </script>
+    <style>
+      .google-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 11px 16px;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        background: #ffffff;
+        color: #1f2937;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+      }
+      .google-btn:hover { background: #f9fafb; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+      .google-btn:active { transform: translateY(1px); }
+      .google-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    </style>
 </head>
 <body class="bg-gray-50">
     <!-- Header -->
-    <header class="header">
+    <header class="header bg-white shadow">
         <div class="container flex justify-between items-center py-4">
             <a href="index.html" class="logo flex items-center">
                 <img src="Assets/45.png" alt="Disciplined Disciples Logo" style="height:48px; width:auto; margin-right:10px;">
-                <span>Disciplined Disciples</span>
+                <span class="font-bold text-xl">Disciplined Disciples</span>
             </a>
-            <nav class="nav-menu">
-                <ul class="flex space-x-6">
-                    <li><a href="index.html" class="nav-link">Home</a></li>
+    <nav class="nav-menu">
+    <ul class="flex space-x-6">
+                    <li><a href="index.html" class="nav-link active">Home</a></li>
                     <li><a href="about.html" class="nav-link">About</a></li>
                     <li><a href="shop.html" class="nav-link">Shop</a></li>
-                    <li><a href="blog.html" class="nav-link">Blog</a></li>
-                    <li><a href="contact.html" class="nav-link">Contact</a></li>
-                    <li><a href="cart.html" class="nav-link" aria-label="Shopping Cart"><i class="fas fa-shopping-cart"></i></a></li>
+                    <li><a href="book.html" class="nav-link">Book</a></li>
+                    <li><a href="mentorship.html" class="nav-link">Mentorship</a></li>
+                    <li><a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a></li>
+                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a></li>
+                    <li><a href="cart.html" class="nav-link" aria-label="Cart"><i class="fas fa-shopping-cart"></i></a></li>
                 </ul>
-                <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
-                <!-- Standardized Profile Dropdown -->
-                <div id="profile-ribbon" style="display: none; position: relative;">
-                    <button id="profile-btn" style="
-                        width: 42px;
-                        height: 42px;
-                        border-radius: 50%;
-                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                        color: white;
-                        font-weight: 600;
-                        font-size: 14px;
-                        border: none;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-                        transition: all 0.3s ease;
-                    " onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.5)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)';">
-                        <span id="profile-ribbon-initials" style="letter-spacing: 1px;">U</span>
-                    </button>
-                    
-
-                </div>
-            </nav>
+    <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
+    <!-- Modern Profile Button -->
+    <div id="profile-ribbon" style="display: none; position: relative;">
+        <button id="profile-btn" style="
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+        " onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.5)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)';">
+            <span id="profile-ribbon-initials" style="letter-spacing: 1px;">U</span>
+        </button>
+    </div>
+</nav>
+            <button class="menu-toggle" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
         </div>
+        <nav class="mobile-menu">
+            <ul class="py-4">
+                <li><a href="index.html" class="nav-link-mobile active">Home</a></li>
+                <li><a href="about.html" class="nav-link-mobile">About</a></li>
+                <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
+                <li><a href="book.html" class="nav-link-mobile">Book</a></li>
+                <li><a href="mentorship.html" class="nav-link-mobile">Mentorship</a></li>
+                <li><a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-linkedin"></i> LinkedIn</a></li>
+                <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
+                <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
+            </ul>
+            <a href="login-signup.html" id="login-signup-link-mobile" class="nav-link-mobile"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
+        </nav>
     </header>
 
     <!-- Profile Dropdown - floating compact dropdown -->
@@ -134,6 +170,15 @@
                             <input type="password" id="login-password" class="form-input" placeholder="��������" required autocomplete="current-password">
                         </div>
                         <button type="submit" class="btn btn-primary w-full">Login</button>
+                        <div class="flex items-center my-4">
+                            <div class="flex-grow border-t border-gray-300"></div>
+                            <span class="px-3 text-gray-500 text-sm">or</span>
+                            <div class="flex-grow border-t border-gray-300"></div>
+                        </div>
+                        <button type="button" id="login-google-btn" class="google-btn w-full">
+                            <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.972 32.91 29.42 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.397 0-9.935-3.066-11.281-7.946l-6.521 5.025C9.531 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
+                            <span>Continue with Google</span>
+                        </button>
                         <p class="text-center text-gray-600 mt-4">Forgot password? <a href="#" class="text-blue-600 hover:underline">Reset it</a></p>
                     </form>
                 </div>
@@ -157,6 +202,15 @@
                             <input type="password" id="signup-confirm-password" class="form-input" placeholder="��������" required autocomplete="new-password">
                         </div>
                         <button type="submit" class="btn btn-primary w-full">Sign Up</button>
+                        <div class="flex items-center my-4">
+                            <div class="flex-grow border-t border-gray-300"></div>
+                            <span class="px-3 text-gray-500 text-sm">or</span>
+                            <div class="flex-grow border-t border-gray-300"></div>
+                        </div>
+                        <button type="button" id="signup-google-btn" class="google-btn w-full">
+                            <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.972 32.91 29.42 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.397 0-9.935-3.066-11.281-7.946l-6.521 5.025C9.531 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
+                            <span>Continue with Google</span>
+                        </button>
                     </form>
                 </div>
             </div>
@@ -164,33 +218,34 @@
     </main>
 
     <!-- Footer -->
-    <footer class="footer bg-gray-800 text-white py-8 mt-12">
-        <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer class="footer">
+        <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
             <div class="footer-col">
-                <h3 class="footer-heading text-xl font-bold mb-4">Disciplined Disciples</h3>
-                <p class="footer-text text-gray-300 text-sm">Premium apparel designed to inspire discipline, purpose, and faith.</p>
-                <div class="social-links mt-4 flex space-x-4">
-                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="social-link text-gray-400 hover:text-white transition-colors duration-200 text-lg" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a>
-                    <a href="#" class="social-link text-gray-400 hover:text-white transition-colors duration-200 text-lg" aria-label="Follow us on Facebook"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" class="social-link text-gray-400 hover:text-white transition-colors duration-200 text-lg" aria-label="Follow us on Twitter"><i class="fab fa-twitter"></i></a>
+                <h3 class="footer-heading">Disciplined Disciples</h3>
+                <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
+                <div class="social-links">
+                    <a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Follow Zolile on LinkedIn"><i class="fab fa-linkedin"></i></a>
+                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link" aria-label="Follow us on Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-link" aria-label="Follow us on Twitter"><i class="fab fa-twitter"></i></a>
                 </div>
             </div>
             <div class="footer-col">
-                <h3 class="footer-heading text-lg font-semibold mb-4">Quick Links</h3>
+                <h3 class="footer-heading">Quick Links</h3>
                 <ul>
-                    <li class="mb-2"><a href="index.html" class="footer-link text-gray-300 hover:text-white transition-colors duration-200 text-sm">Home</a></li>
-                    <li class="mb-2"><a href="shop.html" class="footer-link text-gray-300 hover:text-white transition-colors duration-200 text-sm">Shop</a></li>
-                    <li class="mb-2"><a href="blog.html" class="footer-link text-gray-300 hover:text-white transition-colors duration-200 text-sm">Blog</a></li>
-                    <li class="mb-2"><a href="contact.html" class="footer-link text-gray-300 hover:text-white transition-colors duration-200 text-sm">Contact</a></li>
+                    <li><a href="index.html" class="footer-link">Home</a></li>
+                    <li><a href="shop.html" class="footer-link">Shop</a></li>
+                    <li><a href="blog.html" class="footer-link">Blog</a></li>
+                    <li><a href="contact.html" class="footer-link">Contact</a></li>
                 </ul>
             </div>
             <div class="footer-col">
-                <h3 class="footer-heading text-lg font-semibold mb-4">Support</h3>
+                <h3 class="footer-heading">Support</h3>
                 <ul>
-                    <li class="mb-2"><a href="faq.html" class="footer-link text-gray-300 hover:text-white transition-colors duration-200 text-sm">FAQs</a></li>
-                    <li class="mb-2"><a href="shipping-returns.html" class="footer-link text-gray-300 hover:text-white transition-colors duration-200 text-sm">Shipping & Returns</a></li>
-                    <li class="mb-2"><a href="privacy-policy.html" class="footer-link text-gray-300 hover:text-white transition-colors duration-200 text-sm">Privacy Policy</a></li>
-                    <li class="mb-2"><a href="terms-of-service.html" class="footer-link text-gray-300 hover:text-white transition-colors duration-200 text-sm">Terms of Service</a></li>
+                    <li><a href="faq.html" class="footer-link">FAQs</a></li>
+                    <li><a href="shipping-returns.html" class="footer-link">Shipping & Returns</a></li>
+                    <li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li>
+                    <li><a href="terms-of-service.html" class="footer-link">Terms of Service</a></li>
                 </ul>
             </div>
             <div class="footer-col">
@@ -201,8 +256,8 @@
             </div>
         </div>
         <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
-            <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
-            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> ??</p>
+            <p>&copy; 2026 Disciplined Disciples. All rights reserved.</p>
+            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> 💜</p>
         </div>
     </footer>
 
@@ -480,6 +535,83 @@
                 }
             });
 
+            // Google Sign-In (shared by login + signup buttons)
+            async function signInWithGoogle(triggerBtn) {
+                const originalText = triggerBtn ? triggerBtn.innerHTML : null;
+                try {
+                    if (triggerBtn) {
+                        triggerBtn.disabled = true;
+                        triggerBtn.innerHTML = '<span>Connecting to Google\u2026</span>';
+                    }
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    provider.setCustomParameters({ prompt: 'select_account' });
+                    const result = await firebase.auth().signInWithPopup(provider);
+                    const user = result.user;
+                    const isNew = result.additionalUserInfo && result.additionalUserInfo.isNewUser;
+
+                    // Ensure a profile doc exists (mirrors email/password signup behaviour)
+                    try {
+                        const userRef = firebase.firestore()
+                            .collection('artifacts').doc('default-app-id')
+                            .collection('users').doc(user.uid);
+                        const snap = await userRef.get();
+                        if (!snap.exists) {
+                            await userRef.set({
+                                name: user.displayName || (user.email || '').split('@')[0] || 'Disciple',
+                                email: user.email || '',
+                                photoURL: user.photoURL || null,
+                                provider: 'google',
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            }, { merge: true });
+                        } else {
+                            await userRef.set({
+                                lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
+                            }, { merge: true });
+                        }
+                    } catch (profileErr) {
+                        console.warn('Profile doc write skipped:', profileErr.message);
+                    }
+
+                    window.currentUserId = user.uid;
+                    sessionStorage.setItem('userLoggedIn', 'true');
+                    sessionStorage.setItem('userId', user.uid);
+                    localStorage.setItem('userLoggedIn', 'true');
+                    localStorage.setItem('userId', user.uid);
+
+                    window.showMessage(isNew ? 'Welcome to Disciplined Disciples!' : 'Signed in. Redirecting\u2026', 'success');
+
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const requestedRedirect = urlParams.get('redirect');
+                    const target = (typeof determinePostLoginDestination === 'function')
+                        ? determinePostLoginDestination(user, requestedRedirect || 'profile.html')
+                        : ((requestedRedirect) || (typeof isAdminEmail === 'function' && isAdminEmail(user.email) ? 'admin-dashboard.html' : 'profile.html'));
+
+                    setTimeout(() => {
+                        if (typeof redirectAfterAuthentication === 'function') {
+                            redirectAfterAuthentication(user, { requestedRedirect: target, fallbackUrl: 'profile.html' });
+                        } else {
+                            window.location.href = target;
+                        }
+                    }, 800);
+                } catch (err) {
+                    console.error('Google sign-in error:', err);
+                    if (triggerBtn) {
+                        triggerBtn.disabled = false;
+                        if (originalText) triggerBtn.innerHTML = originalText;
+                    }
+                    let msg = 'Google sign-in failed. Please try again.';
+                    if (err.code === 'auth/popup-closed-by-user') msg = 'Sign-in cancelled.';
+                    else if (err.code === 'auth/popup-blocked') msg = 'Popup blocked by your browser. Please allow popups and try again.';
+                    else if (err.code === 'auth/account-exists-with-different-credential') msg = 'An account with this email already exists with a different sign-in method. Please log in with that method first.';
+                    else if (err.code === 'auth/operation-not-allowed') msg = 'Google sign-in is not enabled. Please contact support.';
+                    else if (err.code === 'auth/unauthorized-domain') msg = 'This domain is not authorized for Google sign-in.';
+                    window.showMessage(msg, 'error');
+                }
+            }
+
+            document.getElementById('login-google-btn')?.addEventListener('click', (e) => signInWithGoogle(e.currentTarget));
+            document.getElementById('signup-google-btn')?.addEventListener('click', (e) => signInWithGoogle(e.currentTarget));
+
             // Handle already authenticated users
             // Don't show profile ribbon on login page - redirect if already logged in
             firebase.auth().onAuthStateChanged((user) => {
@@ -585,3 +717,4 @@
     </div>
 </body>
 </html>
+

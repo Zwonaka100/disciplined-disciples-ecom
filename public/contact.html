@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en-ZA">
 <head>
     <meta charset="UTF-8">
@@ -6,7 +6,7 @@
     
     <!-- Enhanced SEO Meta Tags -->
     <title>Contact Us | Disciplined Disciples | South African Streetwear</title>
-    <meta name="description" content="Get in touch with Disciplined Disciples. Contact us for orders, custom designs, wholesale inquiries. WhatsApp +27692060618 | Email zmabege@gmail.com | Johannesburg, SA">
+    <meta name="description" content="Get in touch with Disciplined Disciples. Contact us for orders, custom designs, wholesale inquiries. WhatsApp +27692060618 | Email nomaqhizazolile@gmail.com | Johannesburg, SA">
     <meta name="keywords" content="contact streetwear SA, Disciplined Disciples contact, streetwear inquiries Johannesburg, custom clothing SA, wholesale streetwear South Africa, order help, customer service">
     <meta name="author" content="Disciplined Disciples">
     <meta name="robots" content="index, follow">
@@ -59,7 +59,7 @@
           },
           {
             "@type": "ContactPoint",
-            "email": "zmabege@gmail.com",
+            "email": "nomaqhizazolile@gmail.com",
             "contactType": "Sales",
             "areaServed": "ZA"
           }
@@ -125,10 +125,10 @@
                     <li><a href="index.html" class="nav-link">Home</a></li>
                     <li><a href="about.html" class="nav-link">About</a></li>
                     <li><a href="shop.html" class="nav-link">Shop</a></li>
-                    <li><a href="blog.html" class="nav-link">Blog</a></li>
-                    <li><a href="contact.html" class="nav-link">Contact</a></li>
-                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a></li>
-                    <li><a href="cart.html" class="nav-link" aria-label="Shopping Cart"><i class="fas fa-shopping-cart"></i></a></li>
+                    <li><a href="book.html" class="nav-link">Book</a></li>
+                    <li><a href="mentorship.html" class="nav-link">Mentorship</a></li>
+                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a></li>
+                    <li><a href="cart.html" class="nav-link" aria-label="Cart"><i class="fas fa-shopping-cart"></i></a></li>
                 </ul>
                 <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
                 <!-- Standardized Profile Dropdown -->
@@ -162,8 +162,8 @@
                 <li><a href="index.html" class="nav-link-mobile">Home</a></li>
                 <li><a href="about.html" class="nav-link-mobile">About</a></li>
                 <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
-                <li><a href="blog.html" class="nav-link-mobile">Blog</a></li>
-                <li><a href="contact.html" class="nav-link-mobile">Contact</a></li>
+                <li><a href="book.html" class="nav-link-mobile">Book</a></li>
+                <li><a href="mentorship.html" class="nav-link-mobile">Mentorship</a></li>
                 <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
                 <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
             </ul>
@@ -219,6 +219,58 @@
             <p class="shop-subtitle" style="color:#e0e0e0;">We'd love to hear from you.</p>
         </div>
     </section>
+
+    <!-- Entry Path Selector -->
+    <section style="background:#f7f8fc;padding:2.5rem 1rem 0;">
+        <div class="container" style="max-width:960px;margin:0 auto;">
+            <p style="text-align:center;font-size:0.82rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#667eea;margin-bottom:0.8rem;">How can we help?</p>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem;" id="entry-path-grid">
+                <!-- Customer Support -->
+                <div onclick="selectPath('support')" id="path-support" style="background:white;border:2px solid #e5e7eb;border-radius:12px;padding:1.4rem 1rem;text-align:center;cursor:pointer;transition:all 0.2s ease;">
+                    <div style="width:48px;height:48px;border-radius:10px;background:#eff6ff;display:flex;align-items:center;justify-content:center;margin:0 auto 0.8rem;">
+                        <i class="fas fa-headset" style="color:#007bff;font-size:1.3rem;"></i>
+                    </div>
+                    <p style="font-weight:700;font-size:0.92rem;color:#1a202c;margin:0 0 0.3rem;">Customer Support</p>
+                    <p style="font-size:0.8rem;color:#9ca3af;margin:0;line-height:1.5;">Orders, returns, product questions</p>
+                </div>
+                <!-- Mentorship Enquiry -->
+                <a href="mentorship.html" id="path-mentorship" style="background:white;border:2px solid #e5e7eb;border-radius:12px;padding:1.4rem 1rem;text-align:center;cursor:pointer;transition:all 0.2s ease;text-decoration:none;display:block;">
+                    <div style="width:48px;height:48px;border-radius:10px;background:#f5f3ff;display:flex;align-items:center;justify-content:center;margin:0 auto 0.8rem;">
+                        <i class="fas fa-graduation-cap" style="color:#7c3aed;font-size:1.3rem;"></i>
+                    </div>
+                    <p style="font-weight:700;font-size:0.92rem;color:#1a202c;margin:0 0 0.3rem;">Mentorship Enquiry</p>
+                    <p style="font-size:0.8rem;color:#9ca3af;margin:0;line-height:1.5;">Apply to Zolile's mentorship programme</p>
+                </a>
+                <!-- Collaboration Enquiry -->
+                <div onclick="selectPath('collab')" id="path-collab" style="background:white;border:2px solid #e5e7eb;border-radius:12px;padding:1.4rem 1rem;text-align:center;cursor:pointer;transition:all 0.2s ease;">
+                    <div style="width:48px;height:48px;border-radius:10px;background:#f0fdf4;display:flex;align-items:center;justify-content:center;margin:0 auto 0.8rem;">
+                        <i class="fas fa-handshake" style="color:#059669;font-size:1.3rem;"></i>
+                    </div>
+                    <p style="font-weight:700;font-size:0.92rem;color:#1a202c;margin:0 0 0.3rem;">Collaboration Enquiry</p>
+                    <p style="font-size:0.8rem;color:#9ca3af;margin:0;line-height:1.5;">Brands, creatives, partnerships</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <style>
+        #entry-path-grid > div:hover, #entry-path-grid > a:hover { border-color:#667eea; transform:translateY(-3px); box-shadow:0 8px 24px rgba(102,126,234,0.12); }
+        #entry-path-grid > div.active-path { border-color:#667eea; background:#f8f6ff; }
+        @media(max-width:600px){ #entry-path-grid{ grid-template-columns:1fr; } }
+    </style>
+    <script>
+    function selectPath(type) {
+        document.querySelectorAll('#entry-path-grid > div').forEach(function(el){ el.classList.remove('active-path'); });
+        document.getElementById('path-' + type).classList.add('active-path');
+        var subjectEl = document.getElementById('cf-subject');
+        if (type === 'collab') {
+            subjectEl.value = 'Collaboration Enquiry';
+            subjectEl.focus();
+        } else {
+            subjectEl.value = '';
+        }
+        document.getElementById('contact-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    </script>
 
     <!-- Contact Form Section -->
     <style>
@@ -349,7 +401,7 @@
             </div>
         </div>
         <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
-            <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
+            <p>&copy; 2026 Disciplined Disciples. All rights reserved.</p>
             <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> 💜</p>
         </div>
     </footer>
@@ -410,3 +462,4 @@
     </div>
 </body>
 </html>
+

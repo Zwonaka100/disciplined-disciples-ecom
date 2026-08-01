@@ -29,18 +29,19 @@
                 <img src="Assets/45.png" alt="Disciplined Disciples Logo" style="height:48px; width:auto; margin-right:10px;">
                 <span class="font-bold text-xl">Disciplined Disciples</span>
             </a>
-            <nav class="nav-menu">
+    <nav class="nav-menu">
     <ul class="flex space-x-6">
-        <li><a href="index.html" class="nav-link">Home</a></li>
-        <li><a href="about.html" class="nav-link">About</a></li>
-        <li><a href="shop.html" class="nav-link">Shop</a></li>
-        <li><a href="blog.html" class="nav-link">Blog</a></li>
-        <li><a href="contact.html" class="nav-link">Contact</a></li>
-        <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a></li>
-        <li><a href="cart.html" class="nav-link" aria-label="Shopping Cart"><i class="fas fa-shopping-cart"></i></a></li>
-    </ul>
+                    <li><a href="index.html" class="nav-link active">Home</a></li>
+                    <li><a href="about.html" class="nav-link">About</a></li>
+                    <li><a href="shop.html" class="nav-link">Shop</a></li>
+                    <li><a href="book.html" class="nav-link">Book</a></li>
+                    <li><a href="mentorship.html" class="nav-link">Mentorship</a></li>
+                    <li><a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a></li>
+                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a></li>
+                    <li><a href="cart.html" class="nav-link" aria-label="Cart"><i class="fas fa-shopping-cart"></i></a></li>
+                </ul>
     <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
-    <!-- Standardized Profile Dropdown -->
+    <!-- Modern Profile Button -->
     <div id="profile-ribbon" style="display: none; position: relative;">
         <button id="profile-btn" style="
             width: 42px;
@@ -68,16 +69,16 @@
         </div>
         <nav class="mobile-menu">
             <ul class="py-4">
-                <li><a href="index.html" class="nav-link-mobile">Home</a></li>
+                <li><a href="index.html" class="nav-link-mobile active">Home</a></li>
                 <li><a href="about.html" class="nav-link-mobile">About</a></li>
                 <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
-                <li><a href="blog.html" class="nav-link-mobile">Blog</a></li>
-                <li><a href="contact.html" class="nav-link-mobile">Contact</a></li>
+                <li><a href="book.html" class="nav-link-mobile">Book</a></li>
+                <li><a href="mentorship.html" class="nav-link-mobile">Mentorship</a></li>
+                <li><a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-linkedin"></i> LinkedIn</a></li>
                 <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
                 <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
-                <a href="login-signup.html" id="login-signup-link-mobile" class="nav-link-mobile"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
-                <!-- Authentication links will be dynamically added here by script.js -->
             </ul>
+            <a href="login-signup.html" id="login-signup-link-mobile" class="nav-link-mobile"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
         </nav>
     </header>
 
@@ -150,14 +151,14 @@
                     </div>
                     <div class="flex justify-between items-center mb-4">
                         <span class="text-gray-700">Shipping:</span>
-                        <span class="font-bold text-xl">R <span id="cart-shipping">0.00</span></span>
+                        <span class="font-bold text-base text-gray-700" id="cart-shipping">Calculated at checkout</span>
                     </div>
                     <div class="flex justify-between items-center border-t border-gray-200 pt-4 mt-4">
                         <span class="text-lg font-semibold">Total:</span>
                         <span class="font-bold text-2xl text-blue-600">R <span id="cart-total">0.00</span></span>
                     </div>
-                    <button id="proceed-to-checkout-btn" class="btn-primary w-full mt-6">Proceed to Checkout</button>
-                    <a href="shop.html" class="btn-secondary w-full text-center block mt-4">Continue Shopping</a>
+                    <button id="proceed-to-checkout-btn" class="btn btn-primary w-full mt-6">Proceed to Checkout</button>
+                    <a href="shop.html" class="btn btn-secondary w-full text-center block mt-4">Continue Shopping</a>
                 </div>
             </div>
 
@@ -175,14 +176,14 @@
                     </div>
                     <div class="flex justify-between items-center mb-4">
                         <span class="text-gray-700">Shipping:</span>
-                        <span class="font-bold text-xl">R <span id="cart-shipping-mobile">0.00</span></span>
+                        <span class="font-bold text-base text-gray-700" id="cart-shipping-mobile">Calculated at checkout</span>
                     </div>
                     <div class="flex justify-between items-center border-t border-gray-200 pt-4 mt-4">
                         <span class="text-lg font-semibold">Total:</span>
                         <span class="font-bold text-2xl text-blue-600">R <span id="cart-total-mobile">0.00</span></span>
                     </div>
-                    <button id="proceed-to-checkout-btn-mobile" class="btn-primary w-full mt-6">Proceed to Checkout</button>
-                    <a href="shop.html" class="btn-secondary w-full text-center block mt-4">Continue Shopping</a>
+                    <button id="proceed-to-checkout-btn-mobile" class="btn btn-primary w-full mt-6">Proceed to Checkout</button>
+                    <a href="shop.html" class="btn btn-secondary w-full text-center block mt-4">Continue Shopping</a>
                 </div>
             </div>
 
@@ -190,33 +191,34 @@
     </section>
 
     <!-- Footer Section -->
-    <footer class="footer bg-gray-800 text-white py-8 mt-12">
-        <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer class="footer">
+        <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
             <div class="footer-col">
-                <h3 class="footer-heading text-xl font-bold mb-4">Disciplined Disciples</h3>
-                <p class="footer-text text-gray-300 text-sm">Premium apparel designed to inspire discipline, purpose, and faith.</p>
-                <div class="social-links mt-4 flex space-x-4">
-                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="social-link text-gray-400 hover:text-white transition-colors duration-200 text-lg" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a>
-                    <a href="#" class="social-link text-gray-400 hover:text-white transition-colors duration-200 text-lg" aria-label="Follow us on Facebook"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" class="social-link text-gray-400 hover:text-white transition-colors duration-200 text-lg" aria-label="Follow us on Twitter"><i class="fab fa-twitter"></i></a>
+                <h3 class="footer-heading">Disciplined Disciples</h3>
+                <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
+                <div class="social-links">
+                    <a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Follow Zolile on LinkedIn"><i class="fab fa-linkedin"></i></a>
+                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link" aria-label="Follow us on Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-link" aria-label="Follow us on Twitter"><i class="fab fa-twitter"></i></a>
                 </div>
             </div>
             <div class="footer-col">
-                <h3 class="footer-heading text-lg font-semibold mb-4">Quick Links</h3>
+                <h3 class="footer-heading">Quick Links</h3>
                 <ul>
-                    <li class="mb-2"><a href="index.html" class="footer-link text-gray-300 hover:text-white transition-colors duration-200 text-sm">Home</a></li>
-                    <li class="mb-2"><a href="shop.html" class="footer-link text-gray-300 hover:text-white transition-colors duration-200 text-sm">Shop</a></li>
-                    <li class="mb-2"><a href="blog.html" class="footer-link text-gray-300 hover:text-white transition-colors duration-200 text-sm">Blog</a></li>
-                    <li class="mb-2"><a href="contact.html" class="footer-link text-gray-300 hover:text-white transition-colors duration-200 text-sm">Contact</a></li>
+                    <li><a href="index.html" class="footer-link">Home</a></li>
+                    <li><a href="shop.html" class="footer-link">Shop</a></li>
+                    <li><a href="blog.html" class="footer-link">Blog</a></li>
+                    <li><a href="contact.html" class="footer-link">Contact</a></li>
                 </ul>
             </div>
             <div class="footer-col">
-                <h3 class="footer-heading text-lg font-semibold mb-4">Support</h3>
+                <h3 class="footer-heading">Support</h3>
                 <ul>
-                    <li class="mb-2"><a href="faq.html" class="footer-link text-gray-300 hover:text-white transition-colors duration-200 text-sm">FAQs</a></li>
-                    <li class="mb-2"><a href="shipping-returns.html" class="footer-link text-gray-300 hover:text-white transition-colors duration-200 text-sm">Shipping & Returns</a></li>
-                    <li class="mb-2"><a href="privacy-policy.html" class="footer-link text-gray-300 hover:text-white transition-colors duration-200 text-sm">Privacy Policy</a></li>
-                    <li class="mb-2"><a href="terms-of-service.html" class="footer-link text-gray-300 hover:text-white transition-colors duration-200 text-sm">Terms of Service</a></li>
+                    <li><a href="faq.html" class="footer-link">FAQs</a></li>
+                    <li><a href="shipping-returns.html" class="footer-link">Shipping & Returns</a></li>
+                    <li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li>
+                    <li><a href="terms-of-service.html" class="footer-link">Terms of Service</a></li>
                 </ul>
             </div>
             <div class="footer-col">
@@ -227,8 +229,8 @@
             </div>
         </div>
         <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
-            <p>&copy; 2025 Disciplined Disciples. All rights reserved.</p>
-            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> ??</p>
+            <p>&copy; 2026 Disciplined Disciples. All rights reserved.</p>
+            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> 💜</p>
         </div>
     </footer>
 
@@ -312,3 +314,4 @@
     </div>
 </body>
 </html>
+

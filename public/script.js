@@ -774,7 +774,7 @@ window.getInitialProducts = () => products;
 
 // --- Constants ---
 const VAT_RATE = 0; // Temporarily zero-rated for testing
-const SHIPPING_COST = 1.00; // Temporary flat shipping rate for testing
+const SHIPPING_COST = 0.00; // Shipping is selected at checkout, so cart stays zero
 const PAYFAST_CONFIG = {
     merchantId: '10004002',
     merchantKey: 'q1cd2rdny4a53',
@@ -958,7 +958,8 @@ function addToCart(productId, quantity = 1, size = 'N/A') {
             price: product.price,
             imageUrl: imageUrl || product.displayImage,
             quantity: quantity,
-            size: size // Store the selected size
+            size: size, // Store the selected size
+            fulfillmentType: (product.id === 'ebook' || (product.name || '').toLowerCase().includes('ebook')) ? 'digital' : 'physical'
         });
     }
     saveCartToLocalStorage();
@@ -1091,20 +1092,29 @@ window.loadUserDeliveryAddress = async () => {
         if (userDocSnap.exists) {
             window.currentUserProfile = userDocSnap.data();
             console.log("User profile loaded:", window.currentUserProfile);
-            const address = window.currentUserProfile.deliveryAddress;
-            if (address) {
-                document.getElementById('address-line1').value = address.line1 || '';
-                document.getElementById('address-line2').value = address.line2 || '';
-                document.getElementById('city').value = address.city || '';
-                document.getElementById('province').value = address.province || '';
-                document.getElementById('postal-code').value = address.postalCode || '';
-                document.getElementById('phone-number').value = address.phoneNumber || '';
-                document.getElementById('save-address').checked = true;
+
+            // Checkout now uses PAXI/Collection, so we only prefill fields that exist.
+            const profile = window.currentUserProfile || {};
+            const address = profile.deliveryAddress || {};
+
+            const nameInput = document.getElementById('name');
+            if (nameInput && !nameInput.value) {
+                nameInput.value = profile.name || '';
+            }
+
+            const phoneInput = document.getElementById('phone');
+            if (phoneInput && !phoneInput.value) {
+                phoneInput.value = profile.phone || address.phoneNumber || '';
+            }
+
+            const pepStoreInput = document.getElementById('pep-store');
+            if (pepStoreInput && !pepStoreInput.value) {
+                pepStoreInput.value = profile.preferredPepStore || address.pepStore || '';
             }
         }
     } catch (error) {
         console.error("Error loading user delivery address:", error);
-        showMessage("Failed to load saved address.", "error");
+        // Non-blocking: do not show an address error for PAXI/Collection checkout.
     }
 };
 
@@ -1308,6 +1318,172 @@ window.handlePaymentCompletion = async () => {
         const newUrl = window.location.pathname;
         window.history.replaceState({}, document.title, newUrl);
     }
+
+};
+
+// --- Ebook entitlement and download helpers ---
+
+// Shared helper: determine fulfillment type of an order from explicit order.orderType,
+// per-item fulfillmentType, legacy hasEbookItem, or productId/name heuristics.
+// Returns 'digital' | 'physical' | 'mixed'.
+window.getOrderFulfillmentType = function(order) {
+    if (!order) return 'physical';
+    if (order.orderType && ['digital', 'physical', 'mixed'].includes(order.orderType)) {
+        return order.orderType;
+    }
+    const items = Array.isArray(order.items) ? order.items : [];
+    if (items.length) {
+        let hasDigital = false;
+        let hasPhysical = false;
+        items.forEach(item => {
+            if (!item) return;
+            const ft = (item.fulfillmentType || '').toLowerCase();
+            if (ft === 'digital') { hasDigital = true; return; }
+            if (ft === 'physical') { hasPhysical = true; return; }
+            const pid = (item.productId || '').toString().toLowerCase();
+            const nm = (item.name || '').toString().toLowerCase();
+            if (pid === 'ebook' || nm.includes('ebook')) hasDigital = true;
+            else hasPhysical = true;
+        });
+        if (hasDigital && hasPhysical) return 'mixed';
+        if (hasDigital) return 'digital';
+        if (hasPhysical) return 'physical';
+    }
+    if (order.hasEbookItem) return 'digital';
+    return 'physical';
+};
+
+// Shared helper: pick out digital items from a cart/order items array.
+window.getDigitalItems = function(items) {
+    return (Array.isArray(items) ? items : []).filter(item => {
+        if (!item) return false;
+        const ft = (item.fulfillmentType || '').toLowerCase();
+        if (ft === 'digital') return true;
+        const pid = (item.productId || '').toString().toLowerCase();
+        const nm = (item.name || '').toString().toLowerCase();
+        return pid === 'ebook' || nm.includes('ebook');
+    });
+};
+
+window.checkEbookEntitlementAndShow = async function() {
+    try {
+        if (!window.db || !window.currentUserId) return;
+        const ordersRef = window.db.collection('artifacts').doc('default-app-id').collection('orders');
+        const ordersSnap = await ordersRef
+            .where('userId', '==', window.currentUserId)
+            .get();
+
+        let hasEbook = false;
+        let earliestPurchase = null;
+        ordersSnap.forEach(doc => {
+            const data = doc.data() || {};
+            const paid = ['paid', 'complete', 'completed', 'success'].includes((data.paymentStatus || '').toString().toLowerCase());
+            const items = Array.isArray(data.items) ? data.items : [];
+            if (paid && items.some(i => {
+                const productId = (i.productId || i.id || '').toString().toLowerCase();
+                const name = (i.name || '').toString().toLowerCase();
+                const ft = (i.fulfillmentType || '').toString().toLowerCase();
+                return ft === 'digital' || productId === 'ebook' || name.includes('ebook');
+            })) {
+                hasEbook = true;
+                const orderDate = data.orderDate && data.orderDate.toDate ? data.orderDate.toDate() : (data.orderDate ? new Date(data.orderDate) : null);
+                if (orderDate && (!earliestPurchase || orderDate < earliestPurchase)) {
+                    earliestPurchase = orderDate;
+                }
+            }
+        });
+
+        if (hasEbook) {
+            const section = document.getElementById('ebook-download-section');
+            if (section) section.style.display = 'block';
+            const status = document.getElementById('ebook-download-status');
+            if (status) status.textContent = 'You own this eBook. Click download to get your copy.';
+
+            // Populate the dedicated "My Library" card if it exists on this page.
+            const librarySection = document.getElementById('my-library-section');
+            const libraryItems = document.getElementById('my-library-items');
+            if (librarySection && libraryItems) {
+                const purchasedOn = earliestPurchase ? earliestPurchase.toLocaleDateString('en-ZA', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+                libraryItems.innerHTML = `
+                    <div class="flex gap-4 p-4 bg-white border border-indigo-100 rounded-lg">
+                        <img src="Assets/book.png" alt="Relentlessly Disciplined eBook cover" class="w-20 h-28 object-cover rounded shadow-sm flex-shrink-0" onerror="this.style.display='none'" />
+                        <div class="flex flex-col justify-between flex-1 min-w-0">
+                            <div>
+                                <h3 class="font-semibold text-gray-900 truncate">Relentlessly Disciplined eBook</h3>
+                                <p class="text-xs text-gray-500 mt-1">PDF • Permanent access</p>
+                                ${purchasedOn ? `<p class="text-xs text-gray-400 mt-1">Purchased ${purchasedOn}</p>` : ''}
+                            </div>
+                            <button id="library-download-ebook" type="button" class="mt-3 inline-flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 self-start">
+                                <i class="fas fa-download"></i>
+                                Download eBook
+                            </button>
+                        </div>
+                    </div>`;
+                librarySection.classList.remove('hidden');
+
+                const libBtn = document.getElementById('library-download-ebook');
+                if (libBtn && !libBtn.dataset.bound) {
+                    libBtn.dataset.bound = 'true';
+                    libBtn.addEventListener('click', async () => {
+                        libBtn.setAttribute('disabled', 'true');
+                        const originalHtml = libBtn.innerHTML;
+                        libBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
+                        try {
+                            if (typeof firebase === 'undefined' || !firebase.functions) {
+                                throw new Error('Firebase Functions client not available');
+                            }
+                            const getLink = firebase.functions().httpsCallable('getEbookDownloadLink');
+                            const result = await getLink({});
+                            const url = result && result.data && result.data.url;
+                            if (!url) throw new Error('No download URL returned');
+                            window.open(url, '_blank', 'noopener');
+                        } catch (error) {
+                            console.error('Library ebook download failed:', error);
+                            alert('Unable to prepare your eBook download. Please try again or contact support.');
+                        } finally {
+                            libBtn.removeAttribute('disabled');
+                            libBtn.innerHTML = originalHtml;
+                        }
+                    });
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Failed to check ebook entitlement:', err);
+    }
+};
+
+window.setupEbookDownloadButton = function() {
+    const btn = document.getElementById('download-ebook-btn');
+    const status = document.getElementById('ebook-download-status');
+    if (!btn) return;
+    btn.addEventListener('click', async function() {
+        try {
+            btn.setAttribute('disabled', 'true');
+            if (status) status.textContent = 'Preparing download...';
+
+            // Use Functions client (compat) to call the secure callable
+            if (typeof firebase === 'undefined' || !firebase.functions) {
+                throw new Error('Firebase Functions client not available');
+            }
+
+            const functions = firebase.functions();
+            const getLink = functions.httpsCallable('getEbookDownloadLink');
+            const result = await getLink({});
+            const url = result && result.data && result.data.url;
+            if (!url) throw new Error('No download URL returned');
+
+            // Open signed link in new tab
+            window.open(url, '_blank', 'noopener');
+            if (status) status.textContent = 'Download started. If it does not begin, check popup blocker.';
+        } catch (error) {
+            console.error('Ebook download failed:', error);
+            if (status) status.textContent = 'Unable to start download. Contact support.';
+            alert('Unable to prepare download: ' + (error.message || 'Unknown error'));
+        } finally {
+            btn.removeAttribute('disabled');
+        }
+    });
 };
 
 // --- Authentication UI Update Function ---
@@ -1603,6 +1779,15 @@ async function initFirebase() {
                     // Update header UI to show profile
                     updateHeaderUI(user);
                     updateAuthUI(true);
+
+                    if (window.location.pathname.includes('profile.html')) {
+                        if (typeof window.checkEbookEntitlementAndShow === 'function') {
+                            await window.checkEbookEntitlementAndShow();
+                        }
+                        if (typeof window.setupEbookDownloadButton === 'function') {
+                            window.setupEbookDownloadButton();
+                        }
+                    }
                     
                     if (document.body.classList.contains('checkout-page')) {
                          await window.loadUserDeliveryAddress();
@@ -1650,6 +1835,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Load products after Firebase is initialized
         if (typeof window.initializeProducts === 'function') {
             await window.initializeProducts();
+        }
+        // Ebook download logic for profile page
+        if (window.location.pathname.includes('profile.html')) {
+            if (typeof window.checkEbookEntitlementAndShow === 'function') window.checkEbookEntitlementAndShow();
+            if (typeof window.setupEbookDownloadButton === 'function') window.setupEbookDownloadButton();
         }
     } else {
         console.log("Firebase initialization failed. Using offline mode.");
@@ -2265,7 +2455,9 @@ function renderCartPage() {
         [desktopTotals, mobileTotals].forEach(group => {
             group.subtotal && (group.subtotal.textContent = totals.subtotal.toFixed(2));
             group.vat && (group.vat.textContent = totals.vat.toFixed(2));
-            group.shipping && (group.shipping.textContent = totals.shipping.toFixed(2));
+            if (group.shipping) {
+                group.shipping.textContent = totals.shipping > 0 ? `R ${totals.shipping.toFixed(2)}` : 'Calculated at checkout';
+            }
             group.total && (group.total.textContent = totals.total.toFixed(2));
         });
 
@@ -2427,6 +2619,7 @@ window.ProfileApp = (function() {
         profile: null,
         orders: [],
         filteredOrders: [],
+        mentorshipApplications: [],
         ordersUnsubscribe: null
     };
 
@@ -2444,6 +2637,9 @@ window.ProfileApp = (function() {
         orderFilter: () => document.getElementById('order-filter'),
         downloadOrdersBtn: () => document.getElementById('download-orders'),
         downloadOrdersPdfBtn: () => document.getElementById('download-orders-pdf'),
+        mentorshipSection: () => document.getElementById('mentorship-tools'),
+        mentorshipList: () => document.getElementById('mentorship-tools-list'),
+        mentorshipEmpty: () => document.getElementById('mentorship-tools-empty'),
         addressForm: () => document.getElementById('address-form'),
         addressInputs: {
             line1: () => document.getElementById('address-line1'),
@@ -2539,10 +2735,11 @@ window.ProfileApp = (function() {
         sessionStorage.setItem('userId', user.uid);
 
         try {
-            await Promise.all([loadProfile(), loadOrders()]);
+            await Promise.all([loadProfile(), loadOrders(), loadMentorshipApplications()]);
             bindEvents();
             renderProfileSummary();
             renderAddressForm();
+            renderMentorshipTools();
             renderOrders();
             showLoading(false);
         } catch (error) {
@@ -2628,6 +2825,48 @@ window.ProfileApp = (function() {
         
         // Set up real-time listener for order updates
         setupOrdersListener();
+    }
+
+    async function loadMentorshipApplications() {
+        state.mentorshipApplications = [];
+
+        if (!window.db || !state.user) {
+            return;
+        }
+
+        const byId = new Map();
+
+        try {
+            const uidSnap = await window.db.collection('mentorshipApplications')
+                .where('userId', '==', state.user.uid)
+                .get();
+            uidSnap.forEach(doc => {
+                byId.set(doc.id, { id: doc.id, ...doc.data() });
+            });
+        } catch (error) {
+            console.warn('Mentorship userId lookup failed:', error);
+        }
+
+        const email = String(state.user.email || '').trim().toLowerCase();
+        if (email) {
+            try {
+                const emailSnap = await window.db.collection('mentorshipApplications')
+                    .where('email', '==', email)
+                    .get();
+                emailSnap.forEach(doc => {
+                    byId.set(doc.id, { id: doc.id, ...doc.data() });
+                });
+            } catch (error) {
+                console.warn('Mentorship email lookup failed:', error);
+            }
+        }
+
+        state.mentorshipApplications = Array.from(byId.values())
+            .sort((a, b) => {
+                const ta = coerceToDate(a.createdAt)?.getTime() || 0;
+                const tb = coerceToDate(b.createdAt)?.getTime() || 0;
+                return tb - ta;
+            });
     }
     
     function setupOrdersListener() {
@@ -2730,6 +2969,27 @@ window.ProfileApp = (function() {
                 if (deleteBtn) {
                     const docId = deleteBtn.dataset.docId;
                     await deleteAwaitingPaymentOrder(docId);
+                    return;
+                }
+
+                const ebookBtn = event.target.closest('button[data-action="download-ebook-order"]');
+                if (ebookBtn) {
+                    ebookBtn.setAttribute('disabled', 'true');
+                    try {
+                        if (typeof firebase === 'undefined' || !firebase.functions) {
+                            throw new Error('Firebase Functions client not available');
+                        }
+                        const getLink = firebase.functions().httpsCallable('getEbookDownloadLink');
+                        const result = await getLink({});
+                        const url = result && result.data && result.data.url;
+                        if (!url) throw new Error('No download URL returned');
+                        window.open(url, '_blank', 'noopener');
+                    } catch (error) {
+                        console.error('Ebook download failed:', error);
+                        showAlert('error', 'Unable to prepare your eBook download. Please try again or contact support.');
+                    } finally {
+                        ebookBtn.removeAttribute('disabled');
+                    }
                     return;
                 }
 
@@ -2859,6 +3119,61 @@ window.ProfileApp = (function() {
         if (postal) postal.value = address.postalCode || '';
     }
 
+    function renderMentorshipTools() {
+        const section = selectors.mentorshipSection();
+        const list = selectors.mentorshipList();
+        const empty = selectors.mentorshipEmpty();
+        if (!section || !list || !empty) {
+            return;
+        }
+
+        section.classList.remove('hidden');
+        const apps = state.mentorshipApplications || [];
+
+        if (!apps.length) {
+            list.innerHTML = '';
+            empty.classList.remove('hidden');
+            return;
+        }
+
+        empty.classList.add('hidden');
+        list.innerHTML = apps.map(app => {
+            const statusRaw = String(app.status || 'new').toLowerCase();
+            const paymentRaw = String(app.paymentStatus || 'pending').toLowerCase();
+            const statusClass = statusRaw === 'active' || statusRaw === 'completed'
+                ? 'bg-emerald-100 text-emerald-700'
+                : (statusRaw === 'accepted' || statusRaw === 'contacted'
+                    ? 'bg-indigo-100 text-indigo-700'
+                    : 'bg-amber-100 text-amber-700');
+            const paymentClass = paymentRaw === 'paid' || paymentRaw === 'complete' || paymentRaw === 'completed' || paymentRaw === 'n/a'
+                ? 'bg-emerald-100 text-emerald-700'
+                : 'bg-amber-100 text-amber-700';
+            const date = coerceToDate(app.createdAt);
+            const packageName = app.packageName || app.package || 'Mentorship';
+
+            return `<article class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <h3 class="font-semibold text-slate-900">${escapeHtml(packageName)}</h3>
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="inline-flex rounded-full px-2.5 py-1 font-semibold ${statusClass}">${escapeHtml(statusRaw)}</span>
+                        <span class="inline-flex rounded-full px-2.5 py-1 font-semibold ${paymentClass}">${escapeHtml(paymentRaw)}</span>
+                    </div>
+                </div>
+                <p class="mt-2 text-sm text-slate-600">Submitted ${escapeHtml(date ? formatDate(date, { day: '2-digit', month: 'short', year: 'numeric' }) : 'recently')}.</p>
+                <div class="mt-3 flex flex-wrap gap-2">
+                    <a href="mentorship.html" class="inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition">
+                        <i class="fas fa-arrow-up-right-from-square"></i>
+                        Manage Package
+                    </a>
+                    <a href="https://wa.me/27692060618?text=Hi%20Zolile%2C%20I%20need%20an%20update%20on%20my%20mentorship%20application." target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100 transition">
+                        <i class="fab fa-whatsapp"></i>
+                        Message Mentor
+                    </a>
+                </div>
+            </article>`;
+        }).join('');
+    }
+
     function renderOrders() {
         const tableBody = selectors.ordersTableBody();
         if (!tableBody) {
@@ -2904,13 +3219,32 @@ window.ProfileApp = (function() {
         const row = document.createElement('tr');
         row.className = 'border-b last:border-0';
 
+        const fulfillmentType = window.getOrderFulfillmentType ? window.getOrderFulfillmentType(order) : 'physical';
+        const isDigitalOnly = fulfillmentType === 'digital';
+        const hasDigital = fulfillmentType === 'digital' || fulfillmentType === 'mixed';
+        const typeBadgeHtml = fulfillmentType === 'digital'
+            ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-100 text-indigo-700 ml-2">📖 Digital</span>'
+            : (fulfillmentType === 'mixed'
+                ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 ml-2">🎁 Mixed</span>'
+                : '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700 ml-2">📦 Physical</span>');
+
         const date = formatDate(order.orderDate);
         const status = order.status || 'Pending';
         const total = formatCurrency(order.totalAmount);
         const items = (order.items || []).map(item => `${item.name || 'Item'} x${item.quantity || 1}`).join(', ');
         const message = escapeHtml(order.statusMessage || order.lastCustomerMessage || 'We will update you soon.');
         const timeline = renderStatusTimeline(order);
-        const eta = order.estimatedArrivalText ? `<div class="mt-1 text-xs text-blue-600">ETA: ${escapeHtml(order.estimatedArrivalText)}</div>` : '';
+        const eta = (!isDigitalOnly && order.estimatedArrivalText) ? `<div class="mt-1 text-xs text-blue-600">ETA: ${escapeHtml(order.estimatedArrivalText)}</div>` : '';
+        const digitalNote = isDigitalOnly
+            ? '<div class="mt-2 text-xs text-indigo-700 bg-indigo-50 border border-indigo-200 rounded px-3 py-2">📖 Digital delivery — your eBook is in <strong>My Library</strong> at the top of this page.</div>'
+            : '';
+        const isPaidForDownload = ['paid', 'complete', 'completed', 'success'].includes((order.paymentStatus || '').toString().toLowerCase());
+        const downloadEbookButton = (hasDigital && isPaidForDownload)
+            ? `<button type="button" class="mt-3 mr-2 inline-flex items-center gap-2 rounded border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition" data-action="download-ebook-order" data-doc-id="${escapeHtml(order.docId)}">
+                    <i class="fas fa-book"></i>
+                    Download eBook
+               </button>`
+            : '';
         const invoiceButton = isInvoiceAvailable(order)
             ? `<button type="button" class="mt-3 inline-flex items-center gap-2 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-600 hover:bg-blue-100 transition" data-action="download-invoice" data-doc-id="${escapeHtml(order.docId)}">
                     <i class="fas fa-file-invoice"></i>
@@ -2925,7 +3259,7 @@ window.ProfileApp = (function() {
             : '';
 
         row.innerHTML = `
-            <td class="px-4 py-3 font-medium text-gray-700">${order.orderId}</td>
+            <td class="px-4 py-3 font-medium text-gray-700">${order.orderId}${typeBadgeHtml}</td>
             <td class="px-4 py-3 text-gray-500">${date}</td>
             <td class="px-4 py-3">
                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${statusBadgeClass(status)}">${status}</span>
@@ -2935,11 +3269,12 @@ window.ProfileApp = (function() {
                 ${items || '—'}
                 <div class="mt-2 text-xs text-gray-600 bg-gray-100 border border-gray-200 rounded px-3 py-2">${message}</div>
                 ${eta}
+                ${digitalNote}
                 <details class="mt-3">
                     <summary class="text-xs text-blue-600 cursor-pointer">See delivery journey</summary>
                     <ul class="mt-2 space-y-2">${timeline}</ul>
                 </details>
-                ${invoiceButton}
+                ${downloadEbookButton}${invoiceButton}
                 ${deleteButton}
             </td>
         `;
@@ -3559,7 +3894,20 @@ window.ProfileApp = (function() {
 
 window.AdminApp = (function() {
     const STATUS_OPTIONS = ['Awaiting Payment', 'Order Placed', 'Out for Delivery', 'Arriving Soon', 'Delivered', 'Cancelled'];
+    const DIGITAL_STATUS_OPTIONS = ['Awaiting Payment', 'Order Placed', 'Delivered (Digital)', 'Refund Requested', 'Refunded', 'Cancelled'];
     const PAYMENT_OPTIONS = ['Pending Payment', 'Paid', 'Refunded', 'Failed', 'Cancelled'];
+
+    // Determine fulfillment type for an order. Delegates to the global helper
+    // so the customer profile and admin dashboard share one source of truth.
+    function getOrderFulfillmentType(order) {
+        return window.getOrderFulfillmentType ? window.getOrderFulfillmentType(order) : 'physical';
+    }
+
+    function fulfillmentBadge(type) {
+        if (type === 'digital') return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-100 text-indigo-700">📖 Digital</span>';
+        if (type === 'mixed') return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700">🎁 Mixed</span>';
+        return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">📦 Physical</span>';
+    }
     const STATUS_ACTION_KEYS = ['orderPlaced', 'outForDelivery', 'eta', 'delivered', 'cancelled'];
     const STATUS_ACTION_TEMPLATES = STATUS_ACTION_KEYS
         .map(key => window.ORDER_STATUS_TEMPLATES?.[key])
@@ -3599,6 +3947,7 @@ window.AdminApp = (function() {
         filters: {
             status: 'all',
             payment: 'all',
+            type: 'all',
             customerQuery: '',
             dateFrom: '',
             dateTo: '',
@@ -3617,6 +3966,7 @@ window.AdminApp = (function() {
         totalCustomers: () => document.getElementById('admin-total-customers'),
         statusFilter: () => document.getElementById('admin-status-filter'),
         paymentFilter: () => document.getElementById('admin-payment-filter'),
+        typeFilter: () => document.getElementById('admin-type-filter'),
         customerFilter: () => document.getElementById('admin-customer-filter'),
     dateRange: () => document.getElementById('admin-date-range'),
         dateFrom: () => document.getElementById('admin-date-from'),
@@ -4288,7 +4638,13 @@ window.AdminApp = (function() {
 
     function buildStatusActions(order) {
         const docId = escapeHtml(order.docId);
-        const buttons = STATUS_ACTION_TEMPLATES.map(template => `<button type="button" data-doc-id="${docId}" data-status-action="${template.key}" class="px-2 py-1 text-xs rounded border border-slate-200 hover:border-blue-400 hover:text-blue-600 transition">${escapeHtml(template.buttonLabel || template.label)}</button>`);
+        const fulfillmentType = getOrderFulfillmentType(order);
+        const isDigitalOnly = fulfillmentType === 'digital';
+        // Digital orders cannot be "out for delivery" or have an ETA — those are shipping-only actions.
+        const allowedTemplates = isDigitalOnly
+            ? STATUS_ACTION_TEMPLATES.filter(t => !['outForDelivery', 'eta'].includes(t.key))
+            : STATUS_ACTION_TEMPLATES;
+        const buttons = allowedTemplates.map(template => `<button type="button" data-doc-id="${docId}" data-status-action="${template.key}" class="px-2 py-1 text-xs rounded border border-slate-200 hover:border-blue-400 hover:text-blue-600 transition">${escapeHtml(template.buttonLabel || template.label)}</button>`);
 
         if (isAwaitingPaymentOrder(order)) {
             buttons.push(`<button type="button" data-doc-id="${docId}" data-action="delete-awaiting-order" class="px-2 py-1 text-xs rounded border border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 transition">Delete order</button>`);
@@ -4299,7 +4655,10 @@ window.AdminApp = (function() {
 
     function isAdminPage() {
         const path = window.location.pathname;
-        return path.includes('admin-dashboard.html') || path.includes('/admin-dashboard');
+        return path.includes('admin-dashboard.html')
+            || path.includes('/admin-dashboard')
+            || path.includes('admin-orders.html')
+            || path.includes('/admin-orders');
     }
 
     async function init() {
@@ -4621,6 +4980,13 @@ window.AdminApp = (function() {
         const paymentFilter = selectors.paymentFilter();
         if (paymentFilter) {
             paymentFilter.addEventListener('change', () => {
+                renderOrders();
+            });
+        }
+
+        const typeFilter = selectors.typeFilter();
+        if (typeFilter) {
+            typeFilter.addEventListener('change', () => {
                 renderOrders();
             });
         }
@@ -4982,6 +5348,7 @@ window.AdminApp = (function() {
     function collectActiveFilters() {
         const statusEl = selectors.statusFilter();
         const paymentEl = selectors.paymentFilter();
+        const typeEl = selectors.typeFilter();
         const customerEl = selectors.customerFilter();
         const dateRangeEl = selectors.dateRange();
         const dateFromEl = selectors.dateFrom();
@@ -4989,6 +5356,7 @@ window.AdminApp = (function() {
 
         state.filters.status = statusEl ? (statusEl.value || 'all') : 'all';
         state.filters.payment = paymentEl ? (paymentEl.value || 'all') : 'all';
+        state.filters.type = typeEl ? (typeEl.value || 'all') : 'all';
         state.filters.customerQuery = customerEl ? customerEl.value.trim() : '';
         state.filters.dateFrom = dateFromEl && dateFromEl.value ? dateFromEl.value : '';
         state.filters.dateTo = dateToEl && dateToEl.value ? dateToEl.value : '';
@@ -5023,6 +5391,13 @@ window.AdminApp = (function() {
                 // Normalize "pending payment" to just "pending" for filtering
                 const normalizedPayment = paymentStatus.replace(/pending payment/gi, 'pending').replace(/\s+/g, ' ').trim();
                 if (!normalizedPayment.includes(paymentValue)) {
+                    return false;
+                }
+            }
+
+            const typeValue = (filters.type || 'all').toLowerCase();
+            if (typeValue !== 'all') {
+                if (getOrderFulfillmentType(order) !== typeValue) {
                     return false;
                 }
             }
@@ -5168,11 +5543,15 @@ window.AdminApp = (function() {
         const row = document.createElement('tr');
         row.className = 'border-b last:border-0 hover:bg-gray-50 transition-colors';
 
+        const fulfillmentType = getOrderFulfillmentType(order);
+        const isDigitalOnly = fulfillmentType === 'digital';
+        const typeBadge = fulfillmentBadge(fulfillmentType);
+
         const customer = state.customersById[order.userId] || {};
         const customerName = customer.name || order.customerName || 'Customer';
         const customerEmail = customer.email || order.customerEmail || '—';
     const deliveryAddress = order.deliveryAddress || customer.deliveryAddress || null;
-    const shippingAddress = deliveryAddress ? formatDeliveryAddress(deliveryAddress) : '';
+    const shippingAddress = (!isDigitalOnly && deliveryAddress) ? formatDeliveryAddress(deliveryAddress) : '';
     const shippingPhone = order.customerPhone || customer.phone || deliveryAddress?.phone || deliveryAddress?.phoneNumber || '';
     const shippingRecipient = deliveryAddress?.name || customerName;
 
@@ -5185,7 +5564,7 @@ window.AdminApp = (function() {
     const safeShippingPhone = escapeHtml(shippingPhone || '');
     const safeShippingAddress = escapeHtml(shippingAddress || '');
 
-        const statusOptions = buildOptions(STATUS_OPTIONS, order.status);
+        const statusOptions = buildOptions(isDigitalOnly ? DIGITAL_STATUS_OPTIONS : STATUS_OPTIONS, order.status);
         const paymentOptions = buildOptions(PAYMENT_OPTIONS, order.paymentStatus);
 
         const items = (order.items || []).map(item => {
@@ -5217,19 +5596,24 @@ window.AdminApp = (function() {
             <td class="px-4 py-3 text-sm font-semibold text-gray-800">
                 <div>${safeOrderId}</div>
                 <div class="text-xs text-gray-400">${safeDocId}</div>
+                <div class="mt-1">${typeBadge}</div>
                 ${adminBadge}
             </td>
             <td class="px-4 py-3 text-sm text-gray-500">${formatDate(order.orderDate)}</td>
             <td class="px-4 py-3 text-sm text-gray-700">
                 <div>${safeCustomerName}</div>
                 <div class="text-xs text-gray-400">${safeCustomerEmail}</div>
-                ${shippingAddress ? `
+                ${isDigitalOnly ? `
+                    <div class="mt-3 rounded border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs text-indigo-700">
+                        <div class="font-semibold uppercase tracking-wide text-[10px]">Digital delivery</div>
+                        <div class="mt-1">No shipping required — eBook delivered to the customer's profile library.</div>
+                    </div>` : (shippingAddress ? `
                     <div class="mt-3 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
                         <div class="font-semibold text-slate-700 uppercase tracking-wide text-[10px]">Shipping to</div>
                         <div class="mt-1">${safeShippingRecipient}</div>
                         ${safeShippingPhone ? `<div class="mt-1">${safeShippingPhone}</div>` : ''}
                         <div class="mt-1 leading-relaxed">${safeShippingAddress}</div>
-                    </div>` : ''}
+                    </div>` : '')}
             </td>
             <td class="px-4 py-3 text-sm text-gray-700">${formatCurrency(order.totalAmount)}</td>
             <td class="px-4 py-3 text-sm">
@@ -5246,15 +5630,23 @@ window.AdminApp = (function() {
                 <details class="group">
                     <summary class="cursor-pointer text-blue-600 hover:underline text-sm">Items (${order.items.length})</summary>
                     <ul class="mt-2 space-y-1 text-xs text-gray-500 group-open:animate-fade">${items || '<li>No items</li>'}</ul>
-                    ${safeTracking ? `<div class="mt-2 text-xs text-gray-500">Tracking: ${safeTracking}</div>` : ''}
+                    ${(!isDigitalOnly && safeTracking) ? `<div class="mt-2 text-xs text-gray-500">Tracking: ${safeTracking}</div>` : ''}
                 </details>
             </td>
-            <td class="px-4 py-3 text-sm text-gray-600">
-                <div class="text-xs text-gray-700 bg-slate-100 border border-slate-200 rounded px-3 py-2">${latestMessage}</div>
+            <td class="px-4 py-3 text-sm text-gray-600 align-top" style="min-width:260px;max-width:340px;">
+                <div class="text-xs text-gray-700 bg-slate-100 border border-slate-200 rounded px-3 py-2 line-clamp-2" title="${latestMessage}">${latestMessage}</div>
                 ${eta}
-                <ul class="mt-3 space-y-2">${historyList}</ul>
-                ${invoiceButton ? `<div class="mt-3">${invoiceButton}</div>` : ''}
-                <div class="mt-3 flex flex-wrap gap-2">${statusActions}</div>
+                <div class="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+                    <details class="group">
+                        <summary class="cursor-pointer text-blue-600 hover:underline font-medium">History (${(order.statusHistory || []).length})</summary>
+                        <ul class="mt-2 space-y-2 max-h-48 overflow-y-auto pr-1">${historyList}</ul>
+                    </details>
+                    <details class="group">
+                        <summary class="cursor-pointer text-slate-700 hover:text-blue-600 font-medium"><i class="fas fa-bolt mr-1 text-amber-500"></i>Quick actions</summary>
+                        <div class="mt-2 flex flex-wrap gap-2">${statusActions}</div>
+                    </details>
+                    ${invoiceButton}
+                </div>
             </td>
         `;
 

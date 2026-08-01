@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Activity - Disciplined</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="js/admin-auth-guard.js?v=20260602a"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" type="image/png" href="Assets/45.png">
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-900">
+    <div class="flex min-h-screen">
+        <aside id="admin-sidebar" class="w-64 bg-white border-r border-gray-200 fixed h-full overflow-y-auto z-30"></aside>
+
+        <main class="flex-1 ml-64 p-8 space-y-6">
+            <header class="flex items-center justify-between gap-3">
+                <div>
+                    <h1 class="text-2xl font-bold">Admin Activity Log</h1>
+                    <p class="text-slate-500">Audit every critical admin action across content, mentorship, collaborations, and community.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="activity-refresh" class="px-4 py-2 text-sm font-medium border border-slate-200 rounded hover:bg-slate-50 transition"><i class="fas fa-rotate-right mr-2"></i>Refresh</button>
+                    <button id="activity-export" class="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded hover:bg-blue-700 transition"><i class="fas fa-file-csv mr-2"></i>Export CSV</button>
+                </div>
+            </header>
+
+            <section class="bg-white rounded-xl shadow p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                    <input id="activity-search" type="text" placeholder="Search actor, action, target..." class="lg:col-span-2 border border-slate-200 rounded-lg px-3 py-2">
+                    <select id="activity-filter-action" class="border border-slate-200 rounded-lg px-3 py-2"><option value="all">All Actions</option></select>
+                    <select id="activity-filter-target" class="border border-slate-200 rounded-lg px-3 py-2"><option value="all">All Targets</option></select>
+                    <select id="activity-filter-actor" class="border border-slate-200 rounded-lg px-3 py-2"><option value="all">All Actors</option></select>
+                </div>
+                <p class="text-sm text-slate-500">Showing <span id="activity-count">0</span> rows</p>
+            </section>
+
+            <section class="bg-white rounded-xl shadow overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-50 text-left text-xs uppercase text-slate-500">
+                            <tr>
+                                <th class="px-4 py-3">Timestamp</th>
+                                <th class="px-4 py-3">Actor</th>
+                                <th class="px-4 py-3">Action</th>
+                                <th class="px-4 py-3">Target Type</th>
+                                <th class="px-4 py-3">Target ID</th>
+                                <th class="px-4 py-3">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activity-body">
+                            <tr><td colspan="6" class="px-4 py-8 text-center text-slate-500">Loading activity...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js?v=20260513a"></script>
+    <script src="admin-control-center.js?v=20260514a"></script>
+    <script src="js/admin-sidebar.js?v=20260601c" defer></script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin · Order Email Recovery</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <style>
+    *{box-sizing:border-box}body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{background:#111827;border:1px solid #1f2937;border-radius:16px;max-width:680px;width:100%;padding:36px;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+    h1{margin:0 0 6px;font-size:22px;background:linear-gradient(135deg,#a78bfa,#7c3aed);-webkit-background-clip:text;color:transparent}
+    p.lead{margin:0 0 24px;color:#94a3b8;font-size:14px}
+    label{display:block;font-size:13px;color:#94a3b8;margin:14px 0 6px}
+    input{width:100%;padding:12px 14px;background:#0b1220;border:1px solid #1f2937;border-radius:10px;color:#e2e8f0;font-size:14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+    button{margin-top:18px;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:0;padding:14px 22px;border-radius:10px;font-weight:600;cursor:pointer;font-size:14px}
+    button[disabled]{opacity:.6;cursor:not-allowed}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .row button{flex:1;min-width:160px}
+    .secondary{background:#1f2937!important}
+    pre{background:#0b1220;border:1px solid #1f2937;border-radius:10px;padding:14px;margin-top:18px;color:#cbd5e1;font-size:12px;max-height:240px;overflow:auto;white-space:pre-wrap}
+    .auth{padding:14px;border:1px dashed #334155;border-radius:10px;margin-bottom:18px;font-size:13px;color:#94a3b8}
+    .ok{color:#22c55e}.err{color:#f87171}
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+</head>
+<body>
+  <div class="card">
+    <h1>Order Email Recovery</h1>
+    <p class="lead">Re-send the confirmation email and re-grant ebook access for a paid order that did not deliver its email.</p>
+
+    <div id="auth-box" class="auth">Checking sign-in…</div>
+
+    <label for="orderId">Order ID</label>
+    <input id="orderId" placeholder="e.g. DD1779769223477jywnuu1w4" value="DD1779769223477jywnuu1w4" />
+
+    <div class="row">
+      <button id="recoverBtn" disabled>Re-send Confirmation Email</button>
+      <button id="signInBtn" class="secondary" style="display:none">Sign In</button>
+      <button id="signOutBtn" class="secondary" style="display:none">Sign Out</button>
+    </div>
+
+    <pre id="log">Ready.</pre>
+  </div>
+
+  <script>
+    const ADMIN_EMAILS = ['zmabege@gmail.com', 'nomaqhizazolile@gmail.com'];
+    const logEl = document.getElementById('log');
+    const authBox = document.getElementById('auth-box');
+    const recoverBtn = document.getElementById('recoverBtn');
+    const signInBtn = document.getElementById('signInBtn');
+    const signOutBtn = document.getElementById('signOutBtn');
+
+    function log(msg, cls){ const t = new Date().toLocaleTimeString(); logEl.innerHTML = `[${t}] ${cls?`<span class="${cls}">${msg}</span>`:msg}\n` + logEl.innerHTML; }
+
+    // Initialize Firebase (firebase-config.js only exposes getFirebaseConfig)
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(getFirebaseConfig());
+      }
+    } catch (e) {
+      authBox.innerHTML = '<span class="err">Firebase init failed: ' + e.message + '</span>';
+      log('Firebase init error: ' + e.message, 'err');
+    }
+
+    firebase.auth().onAuthStateChanged(async (user) => {
+      if (!user) {
+        authBox.innerHTML = 'Not signed in. <span class="err">Admin required.</span>';
+        signInBtn.style.display = '';
+        signOutBtn.style.display = 'none';
+        recoverBtn.disabled = true;
+        return;
+      }
+      const email = (user.email || '').toLowerCase();
+      const isAdmin = ADMIN_EMAILS.includes(email);
+      authBox.innerHTML = `Signed in as <strong>${email}</strong> — ${isAdmin ? '<span class="ok">admin OK</span>' : '<span class="err">NOT admin</span>'}`;
+      signInBtn.style.display = 'none';
+      signOutBtn.style.display = '';
+      recoverBtn.disabled = !isAdmin;
+    });
+
+    signInBtn.onclick = async () => {
+      try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        await firebase.auth().signInWithPopup(provider);
+      } catch (e) { log('Sign-in failed: ' + e.message, 'err'); }
+    };
+    signOutBtn.onclick = () => firebase.auth().signOut();
+
+    recoverBtn.onclick = async () => {
+      const orderId = document.getElementById('orderId').value.trim();
+      if (!orderId) { log('Enter an order ID.', 'err'); return; }
+      recoverBtn.disabled = true;
+      log('Submitting recovery request for ' + orderId + ' …');
+      try {
+        const user = firebase.auth().currentUser;
+        const ref = await firebase.firestore().collection('recoveryRequests').add({
+          orderId,
+          requestedBy: user.email,
+          requestedByUid: user.uid,
+          requestedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        log('Request created (' + ref.id + '). Watching for processing…', 'ok');
+
+        // Poll for status updates from the Cloud Function
+        const unsub = ref.onSnapshot((snap) => {
+          const data = snap.data() || {};
+          if (data.status === 'sent') {
+            log('SUCCESS · email sent to ' + (data.customerEmail || 'customer') + (data.hasEbook ? ' · ebook entitlement granted' : ''), 'ok');
+            unsub();
+            recoverBtn.disabled = false;
+          } else if (data.status === 'skipped') {
+            log('Skipped: ' + (data.reason || 'unknown'), 'err');
+            unsub();
+            recoverBtn.disabled = false;
+          } else if (data.status === 'failed') {
+            log('Failed: ' + (data.error || 'unknown'), 'err');
+            unsub();
+            recoverBtn.disabled = false;
+          }
+        });
+        // Safety timeout
+        setTimeout(() => { recoverBtn.disabled = false; }, 30000);
+      } catch (e) {
+        log('Error: ' + e.message, 'err');
+        recoverBtn.disabled = false;
+      }
+    };
+  </script>
+    <script src="js/admin-sidebar.js?v=20260601c" defer></script>
+</body>
+</html>

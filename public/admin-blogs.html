@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <script src="js/admin-auth-guard.js?v=20260602a"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="icon" type="image/png" href="Assets/45.png">
@@ -38,49 +39,7 @@
 
     <div class="flex min-h-screen">
         <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r border-gray-200 fixed h-full overflow-y-auto z-30">
-            <div class="p-6 border-b border-gray-200">
-                <a href="index.html" class="flex items-center gap-3">
-                    <img src="Assets/45.png" alt="Logo" class="h-10 w-10 rounded-lg object-cover">
-                    <div>
-                        <h1 class="font-bold text-gray-900">Disciplined</h1>
-                        <p class="text-xs text-gray-500">Admin Panel</p>
-                    </div>
-                </a>
-            </div>
-            <nav class="p-4 space-y-2">
-                <a href="admin-dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
-                    <i class="fas fa-chart-line w-5"></i><span>Dashboard</span>
-                </a>
-                <a href="admin-dashboard.html#orders-section" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
-                    <i class="fas fa-shopping-bag w-5"></i><span>Orders</span>
-                </a>
-                <a href="admin-products.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
-                    <i class="fas fa-box w-5"></i><span>Products</span>
-                </a>
-                <a href="admin-blogs.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-lg">
-                    <i class="fas fa-blog w-5"></i><span>Blogs</span>
-                </a>
-                <a href="admin-dashboard.html#messages-section" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
-                    <i class="fas fa-envelope w-5"></i><span>Messages</span>
-                </a>
-                <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 cursor-not-allowed">
-                    <i class="fas fa-users w-5"></i><span>The Tribe</span>
-                    <span class="ml-auto text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">Soon</span>
-                </a>
-                <div class="border-t border-gray-200 my-4"></div>
-                <a href="blog.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
-                    <i class="fas fa-eye w-5"></i><span>View Blog</span>
-                </a>
-                <a href="shop.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100">
-                    <i class="fas fa-store w-5"></i><span>View Shop</span>
-                </a>
-                <button onclick="logout()" class="w-full sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition">
-                    <i class="fas fa-sign-out-alt w-5"></i>
-                    <span>Logout</span>
-                </button>
-            </nav>
-        </aside>
+        <aside id="admin-sidebar" class="w-64 bg-white border-r border-gray-200 fixed h-full overflow-y-auto z-30"></aside>
 
         <!-- Main Content -->
         <main class="flex-1 ml-64 p-8">
@@ -835,5 +794,6 @@
             }, 4000);
         }
     </script>
+    <script src="js/admin-sidebar.js?v=20260601c" defer></script>
 </body>
 </html>

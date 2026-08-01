@@ -68,6 +68,8 @@ h1, h2, h3, h4, h5, h6 {
     display: flex; /* Always visible on desktop */
     align-items: center;
     gap: 1rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
 }
 
 /* Push login link and profile button away from the nav list */
@@ -81,7 +83,8 @@ h1, h2, h3, h4, h5, h6 {
     padding: 0;
     margin: 0;
     display: flex;
-    gap: 1.5rem; /* Space between links */
+    gap: 1rem; /* Space between links */
+    flex-wrap: wrap;
 }
 
 .nav-link {
@@ -89,8 +92,24 @@ h1, h2, h3, h4, h5, h6 {
     text-decoration: none;
     font-weight: 500;
     padding: 0.5rem 0;
+    white-space: nowrap;
     transition: color 0.3s ease, border-bottom 0.3s ease;
     position: relative;
+}
+
+@media (min-width: 769px) and (max-width: 1180px) {
+    .nav-menu ul {
+        gap: 0.75rem;
+    }
+
+    .nav-link {
+        font-size: 0.93rem;
+    }
+
+    #login-signup-link {
+        font-size: 0.9rem;
+        margin-left: 0.5rem;
+    }
 }
 
 .nav-link::after {
@@ -258,6 +277,160 @@ h1, h2, h3, h4, h5, h6 {
     background-color: #f0f0f0;
     border-color: #ccc;
     box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+}
+
+.valley-moment-section {
+    padding: 4rem 0;
+    background: #ffffff;
+    color: #222;
+    border-top: 1px solid #ececec;
+    border-bottom: 1px solid #ececec;
+}
+
+.valley-moment-eyebrow {
+    margin: 0;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-size: 0.76rem;
+    color: #555;
+    font-weight: 700;
+}
+
+.valley-moment-title {
+    color: #222;
+    font-size: 2.2rem;
+    margin: 0.7rem 0;
+    max-width: 850px;
+}
+
+.valley-moment-copy {
+    margin: 0;
+    max-width: 900px;
+    color: #555;
+    font-size: 1.08rem;
+}
+
+.book-spotlight-grid,
+.guide-grid,
+.double-cta-grid {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
+}
+
+.book-cover-wrap,
+.guide-image-wrap {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+    background: #fff;
+}
+
+.book-cover-image,
+.guide-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+.book-kicker {
+    margin: 0 0 0.7rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #555;
+    font-weight: 700;
+}
+
+.book-cta-row {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+}
+
+.journey-grid,
+.valley-voices-grid {
+    display: grid;
+    gap: 1.2rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.journey-step-card,
+.voice-card,
+.impact-cta-card,
+.story-proof-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 1.4rem;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+}
+
+.journey-step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    font-weight: 700;
+    color: #222;
+    background: #f3f4f6;
+    margin-bottom: 0.8rem;
+}
+
+.journey-step-card h3,
+.impact-cta-card h3 {
+    margin: 0 0 0.6rem;
+}
+
+.journey-step-card p,
+.impact-cta-card p,
+.voice-quote {
+    margin: 0;
+    color: #4b5563;
+}
+
+.story-proof-card {
+    text-align: left;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.story-proof-card p {
+    margin: 0 0 0.9rem;
+    color: #334155;
+}
+
+.voice-card {
+    text-align: left;
+}
+
+.voice-quote {
+    font-size: 1.05rem;
+    font-style: italic;
+    margin-bottom: 0.8rem;
+}
+
+.voice-author {
+    margin: 0;
+    color: #1f2937;
+    font-weight: 600;
+    font-size: 0.92rem;
+}
+
+.mentorship-collab-section {
+    background: linear-gradient(160deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.impact-cta-card {
+    height: 100%;
+}
+
+.impact-cta-card .btn {
+    margin-top: 1rem;
 }
 
 /* Product Grid */
@@ -802,17 +975,18 @@ h1, h2, h3, h4, h5, h6 {
     background-color: #fff;
     padding: 2rem;
     border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    border: 1px solid #ececec;
 }
 
 #cart-summary h2, #cart-summary-mobile h2 {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     color: #222;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
 }
 
 #cart-total, #cart-total-mobile {
-    font-size: 2.25rem;
+    font-size: 1.9rem;
     color: #007bff; /* Accent color */
 }
 
@@ -1936,5 +2110,21 @@ h1, h2, h3, h4, h5, h6 {
         margin-left: 0;
         width: 100%;
         justify-content: space-between;
+    }
+
+    .book-spotlight-grid,
+    .guide-grid,
+    .double-cta-grid,
+    .journey-grid,
+    .valley-voices-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .valley-moment-title {
+        font-size: 1.7rem;
+    }
+
+    .valley-moment-copy {
+        font-size: 1rem;
     }
 }

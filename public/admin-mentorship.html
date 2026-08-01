@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mentorship &middot; Admin &middot; Disciplined Disciples</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="js/admin-auth-guard.js?v=20260602a"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="Assets/45.png">
+    <style>
+        .pkg-pill { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:9999px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; }
+        .pkg-discovery      { background:#e0f2fe; color:#075985; }
+        .pkg-single         { background:#fef3c7; color:#92400e; }
+        .pkg-focus          { background:#ede9fe; color:#5b21b6; }
+        .pkg-transformation { background:#fce7f3; color:#9d174d; }
+        .pay-paid    { background:#dcfce7; color:#166534; }
+        .pay-pending { background:#fee2e2; color:#991b1b; }
+        .pay-na      { background:#f1f5f9; color:#475569; }
+        .col-header { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; }
+        .app-card { background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:12px; box-shadow:0 1px 2px rgba(15,23,42,0.04); transition:all 0.15s ease; }
+        .app-card:hover { box-shadow:0 6px 18px rgba(15,23,42,0.08); border-color:#cbd5e1; }
+        .app-card.expanded { box-shadow:0 10px 26px rgba(15,23,42,0.10); border-color:#4f46e5; }
+    </style>
+    <script>
+        // Guard handled by shared admin-auth-guard.js
+    </script>
+</head>
+<body class="bg-slate-100 text-slate-900 min-h-screen">
+    <div class="flex min-h-screen">
+        <aside id="admin-sidebar" class="w-64 bg-white border-r border-gray-200 fixed h-full overflow-y-auto z-30"></aside>
+
+        <main class="flex-1 ml-64 p-6 lg:p-8 space-y-6">
+            <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-900">Mentorship Pipeline</h1>
+                    <p class="text-sm text-slate-500 mt-1">Drag-free kanban &mdash; click a card to expand, change status, or add notes.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button id="mentorship-refresh" class="px-4 py-2 text-sm font-medium border border-slate-200 bg-white rounded hover:bg-slate-50 transition">
+                        <i class="fas fa-rotate-right mr-2"></i>Refresh
+                    </button>
+                </div>
+            </header>
+
+            <div id="mentorship-alert" class="hidden"></div>
+
+            <!-- KPI strip -->
+            <section class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <div class="bg-white rounded-xl p-4 shadow border border-slate-100">
+                    <p class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Total</p>
+                    <p id="kpi-total" class="text-2xl font-bold text-slate-900 mt-1">&mdash;</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow border border-slate-100">
+                    <p class="text-xs uppercase tracking-wider text-slate-500 font-semibold">New</p>
+                    <p id="kpi-new" class="text-2xl font-bold text-blue-700 mt-1">&mdash;</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow border border-slate-100">
+                    <p class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Active</p>
+                    <p id="kpi-active" class="text-2xl font-bold text-violet-700 mt-1">&mdash;</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow border border-slate-100">
+                    <p class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Completed</p>
+                    <p id="kpi-completed" class="text-2xl font-bold text-emerald-700 mt-1">&mdash;</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow border border-slate-100">
+                    <p class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Revenue (30d)</p>
+                    <p id="kpi-revenue" class="text-2xl font-bold text-slate-900 mt-1">&mdash;</p>
+                </div>
+            </section>
+
+            <!-- Filter bar -->
+            <section class="bg-white rounded-xl p-3 shadow border border-slate-100 flex flex-wrap items-center gap-2">
+                <input id="mentorship-search" type="search" placeholder="Search by name or email&hellip;" class="flex-1 min-w-[200px] border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                <select id="mentorship-package-filter" class="border border-slate-200 rounded px-2 py-2 text-xs">
+                    <option value="all">All packages</option>
+                    <option value="discovery">Discovery (R0)</option>
+                    <option value="single">Single Session (R249)</option>
+                    <option value="focus">Focus Pack (R799)</option>
+                    <option value="transformation">Transformation (R1,499)</option>
+                </select>
+                <select id="mentorship-payment-filter" class="border border-slate-200 rounded px-2 py-2 text-xs">
+                    <option value="all">Any payment status</option>
+                    <option value="paid">Paid only</option>
+                    <option value="pending">Pending only</option>
+                </select>
+            </section>
+
+            <!-- Kanban -->
+            <section id="kanban" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+                <!-- columns injected -->
+            </section>
+        </main>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="js/admin-sidebar.js?v=20260601c" defer></script>
+    <script>
+    (function () {
+        'use strict';
+
+        const STATUSES = [
+            { key: 'new',       label: 'New',         color: 'bg-blue-50  border-blue-200    text-blue-800',    dot: 'bg-blue-500' },
+            { key: 'contacted', label: 'Contacted',   color: 'bg-amber-50 border-amber-200   text-amber-800',   dot: 'bg-amber-500' },
+            { key: 'accepted',  label: 'Accepted',    color: 'bg-violet-50 border-violet-200 text-violet-800',  dot: 'bg-violet-500' },
+            { key: 'active',    label: 'Active',      color: 'bg-indigo-50 border-indigo-200 text-indigo-800',  dot: 'bg-indigo-500' },
+            { key: 'completed', label: 'Completed',   color: 'bg-emerald-50 border-emerald-200 text-emerald-800', dot: 'bg-emerald-500' }
+        ];
+        const PKG_LABELS = {
+            discovery:      'Discovery',
+            single:         'Single',
+            focus:          'Focus',
+            transformation: 'Transformation'
+        };
+
+        let allApps = [];
+        let expandedId = null;
+
+        function $(id) { return document.getElementById(id); }
+
+        function ensureFirebase() {
+            if (firebase.apps && firebase.apps.length) return firebase.firestore();
+            if (typeof getFirebaseConfig === 'function') {
+                firebase.initializeApp(getFirebaseConfig());
+                return firebase.firestore();
+            }
+            return null;
+        }
+
+        function showAlert(kind, msg) {
+            const el = $('mentorship-alert');
+            const cls = kind === 'error'
+                ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                : kind === 'success'
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                    : 'bg-sky-100 text-sky-800 border border-sky-200';
+            el.className = 'p-3 rounded-lg text-sm ' + cls;
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            if (kind !== 'error') setTimeout(() => el.classList.add('hidden'), 5000);
+        }
+
+        function relativeTime(d) {
+            if (!d) return '\u2014';
+            const sec = Math.floor((Date.now() - d.getTime()) / 1000);
+            if (sec < 60) return 'just now';
+            if (sec < 3600) return Math.floor(sec / 60) + 'm ago';
+            if (sec < 86400) return Math.floor(sec / 3600) + 'h ago';
+            return Math.floor(sec / 86400) + 'd ago';
+        }
+        function toDate(ts) {
+            if (!ts) return null;
+            if (typeof ts.toDate === 'function') return ts.toDate();
+            if (ts instanceof Date) return ts;
+            return null;
+        }
+        function escH(s) {
+            if (s == null) return '';
+            return String(s).replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+        }
+        function fmtR(n) {
+            const v = Number(n) || 0;
+            return 'R' + v.toLocaleString('en-ZA', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        }
+
+        function packagePillHTML(pkg) {
+            const key = (pkg || '').toLowerCase();
+            const cls = ['discovery','single','focus','transformation'].includes(key) ? 'pkg-' + key : 'pkg-discovery';
+            return '<span class="pkg-pill ' + cls + '">' + escH(PKG_LABELS[key] || pkg || 'No package') + '</span>';
+        }
+        function paymentPillHTML(pay) {
+            const p = (pay || '').toLowerCase();
+            if (p === 'paid')    return '<span class="pkg-pill pay-paid">Paid</span>';
+            if (p === 'pending') return '<span class="pkg-pill pay-pending">Pending</span>';
+            return '<span class="pkg-pill pay-na">Free / N/A</span>';
+        }
+
+        function renderKpis() {
+            const cnt = { new:0, contacted:0, accepted:0, active:0, completed:0 };
+            let revenue30 = 0;
+            const cutoff = Date.now() - 30 * 86400 * 1000;
+            allApps.forEach(a => {
+                const s = (a.status || 'new').toLowerCase();
+                if (cnt[s] !== undefined) cnt[s]++;
+                const pay = (a.paymentStatus || '').toLowerCase();
+                if (pay === 'paid') {
+                    const paidAt = toDate(a.paymentCompletedAt) || toDate(a.createdAt);
+                    if (paidAt && paidAt.getTime() >= cutoff) revenue30 += Number(a.amountPaid || a.amount || 0);
+                }
+            });
+            $('kpi-total').textContent = allApps.length;
+            $('kpi-new').textContent = cnt.new;
+            $('kpi-active').textContent = cnt.accepted + cnt.active;
+            $('kpi-completed').textContent = cnt.completed;
+            $('kpi-revenue').textContent = fmtR(revenue30);
+        }
+
+        function applyFilters(list) {
+            const q = ($('mentorship-search').value || '').trim().toLowerCase();
+            const pkg = $('mentorship-package-filter').value;
+            const pay = $('mentorship-payment-filter').value;
+            return list.filter(a => {
+                if (q) {
+                    const hay = ((a.name || '') + ' ' + (a.email || '') + ' ' + (a.goal || '')).toLowerCase();
+                    if (!hay.includes(q)) return false;
+                }
+                if (pkg !== 'all' && (a.package || '').toLowerCase() !== pkg) return false;
+                if (pay !== 'all') {
+                    const ps = (a.paymentStatus || '').toLowerCase();
+                    if (pay === 'paid' && ps !== 'paid') return false;
+                    if (pay === 'pending' && ps !== 'pending') return false;
+                }
+                return true;
+            });
+        }
+
+        function renderKanban() {
+            const board = $('kanban');
+            const filtered = applyFilters(allApps);
+            const grouped = {};
+            STATUSES.forEach(s => grouped[s.key] = []);
+            filtered.forEach(a => {
+                const s = (a.status || 'new').toLowerCase();
+                if (grouped[s]) grouped[s].push(a); else grouped.new.push(a);
+            });
+
+            const html = STATUSES.map(col => {
+                const items = grouped[col.key];
+                const cards = items.length === 0
+                    ? '<p class="text-xs text-slate-400 italic px-1 py-2">Empty</p>'
+                    : items.map(renderCard).join('');
+                return `
+                    <div class="rounded-xl border ${col.color.replace('text-','border-').split(' ')[1] || 'border-slate-200'} ${col.color.split(' ')[0]} p-3 min-h-[200px]">
+                        <div class="flex items-center justify-between mb-3 px-1">
+                            <h3 class="col-header flex items-center gap-2 ${col.color.split(' ').filter(c => c.startsWith('text-')).join(' ')}">
+                                <span class="status-dot ${col.dot}" style="width:8px;height:8px;border-radius:50%;display:inline-block;"></span>
+                                ${col.label}
+                            </h3>
+                            <span class="text-xs font-bold text-slate-500">${items.length}</span>
+                        </div>
+                        <div class="space-y-2">${cards}</div>
+                    </div>
+                `;
+            }).join('');
+
+            board.innerHTML = html;
+
+            // Wire interactions
+            board.querySelectorAll('.app-card').forEach(card => {
+                const id = card.getAttribute('data-id');
+                card.querySelector('.card-toggle')?.addEventListener('click', () => toggleExpand(id));
+                card.querySelector('.status-select')?.addEventListener('change', (e) => updateStatus(id, e.target.value));
+                card.querySelector('.notes-save')?.addEventListener('click', () => saveNotes(id));
+                card.querySelector('.delete-btn')?.addEventListener('click', () => deleteApp(id));
+            });
+        }
+
+        function renderCard(a) {
+            const created = toDate(a.createdAt);
+            const isOpen = expandedId === a.id;
+            const amount = a.paymentStatus === 'Paid' && a.amountPaid ? a.amountPaid : a.amount;
+            return `
+                <article class="app-card ${isOpen ? 'expanded' : ''}" data-id="${a.id}">
+                    <div class="flex items-start justify-between gap-2 cursor-pointer card-toggle">
+                        <div class="min-w-0 flex-1">
+                            <p class="font-semibold text-sm text-slate-900 truncate">${escH(a.name || '(no name)')}</p>
+                            <p class="text-xs text-slate-500 truncate">${escH(a.email || '')}</p>
+                            <div class="flex flex-wrap items-center gap-1 mt-1.5">
+                                ${packagePillHTML(a.package)}
+                                ${paymentPillHTML(a.paymentStatus)}
+                                ${amount ? `<span class="text-xs font-bold text-slate-700">${fmtR(amount)}</span>` : ''}
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-${isOpen ? 'up' : 'down'} text-slate-400 text-xs mt-1"></i>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-2">${relativeTime(created)}</p>
+
+                    ${isOpen ? `
+                        <div class="mt-3 pt-3 border-t border-slate-200 space-y-2">
+                            ${a.phone ? `<p class="text-xs text-slate-600"><i class="fas fa-phone fa-fw text-slate-400"></i> <a href="tel:${escH(a.phone)}" class="hover:underline">${escH(a.phone)}</a> <a href="https://wa.me/${escH(a.phone.replace(/[^0-9]/g,''))}" target="_blank" class="ml-1 text-emerald-600 hover:underline"><i class="fab fa-whatsapp"></i></a></p>` : ''}
+                            ${a.track ? `<p class="text-xs text-slate-600"><i class="fas fa-tag fa-fw text-slate-400"></i> ${escH(a.track)}</p>` : ''}
+                            ${a.goal ? `<div class="text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded p-2"><strong class="text-slate-500 text-[10px] uppercase tracking-wider">Goal</strong><br>${escH(a.goal)}</div>` : ''}
+                            <div>
+                                <label class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Move to</label>
+                                <select class="status-select w-full border border-slate-200 rounded px-2 py-1.5 text-xs mt-1">
+                                    ${STATUSES.map(s => `<option value="${s.key}" ${(a.status || 'new') === s.key ? 'selected' : ''}>${s.label}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Notes</label>
+                                <textarea class="notes-textarea w-full border border-slate-200 rounded px-2 py-1.5 text-xs mt-1" rows="2" placeholder="Internal notes\u2026">${escH(a.notes || '')}</textarea>
+                                <button class="notes-save mt-2 text-xs px-3 py-1.5 bg-violet-600 text-white rounded hover:bg-violet-700"><i class="fas fa-save mr-1"></i> Save notes</button>
+                                <button class="delete-btn ml-2 text-xs px-3 py-1.5 bg-rose-50 text-rose-700 border border-rose-200 rounded hover:bg-rose-100"><i class="fas fa-trash mr-1"></i> Delete</button>
+                            </div>
+                            <p class="text-[10px] text-slate-400">ID: <code>${escH(a.id)}</code></p>
+                        </div>
+                    ` : ''}
+                </article>
+            `;
+        }
+
+        function toggleExpand(id) {
+            expandedId = expandedId === id ? null : id;
+            renderKanban();
+        }
+
+        async function updateStatus(id, status) {
+            const db = ensureFirebase();
+            if (!db) return;
+            try {
+                await db.collection('mentorshipApplications').doc(id).update({
+                    status: status,
+                    statusUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                const app = allApps.find(a => a.id === id);
+                if (app) app.status = status;
+                renderKpis();
+                renderKanban();
+                showAlert('success', 'Moved to ' + status);
+            } catch (e) {
+                console.error(e); showAlert('error', 'Update failed: ' + e.message);
+            }
+        }
+
+        async function saveNotes(id) {
+            const db = ensureFirebase();
+            if (!db) return;
+            const card = document.querySelector('.app-card[data-id="' + id + '"]');
+            const notes = (card?.querySelector('.notes-textarea')?.value || '').trim();
+            try {
+                await db.collection('mentorshipApplications').doc(id).update({
+                    notes: notes,
+                    notesUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                const app = allApps.find(a => a.id === id);
+                if (app) app.notes = notes;
+                showAlert('success', 'Notes saved.');
+            } catch (e) {
+                console.error(e); showAlert('error', 'Save failed: ' + e.message);
+            }
+        }
+
+        async function deleteApp(id) {
+            if (!confirm('Delete this application? This cannot be undone.')) return;
+            const db = ensureFirebase();
+            if (!db) return;
+            try {
+                await db.collection('mentorshipApplications').doc(id).delete();
+                allApps = allApps.filter(a => a.id !== id);
+                expandedId = null;
+                renderKpis(); renderKanban();
+                showAlert('success', 'Deleted.');
+            } catch (e) {
+                console.error(e); showAlert('error', 'Delete failed: ' + e.message);
+            }
+        }
+
+        async function loadApps() {
+            const db = ensureFirebase();
+            if (!db) { showAlert('error', 'Firebase not ready.'); return; }
+            const btn = $('mentorship-refresh');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading\u2026';
+            try {
+                const snap = await db.collection('mentorshipApplications')
+                    .orderBy('createdAt', 'desc')
+                    .limit(200).get();
+                allApps = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+                renderKpis();
+                renderKanban();
+            } catch (e) {
+                console.error('[mentorship admin] load failed', e);
+                showAlert('error', 'Could not load applications: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-rotate-right mr-2"></i>Refresh';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            $('mentorship-refresh').addEventListener('click', loadApps);
+            ['mentorship-search','mentorship-package-filter','mentorship-payment-filter'].forEach(id => {
+                $(id).addEventListener('input', renderKanban);
+                $(id).addEventListener('change', renderKanban);
+            });
+            // Wait briefly for firebase auth bootstrap then load
+            setTimeout(loadApps, 600);
+        });
+    })();
+    </script>
+</body>
+</html>

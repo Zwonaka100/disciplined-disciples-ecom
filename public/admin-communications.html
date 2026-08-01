@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Communications &middot; Admin &middot; Disciplined Disciples</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+    <script src="js/admin-auth-guard.js?v=20260602a"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="Assets/45.png">
+    <style>
+        .source-badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:9999px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; }
+        .src-contact { background:#dbeafe; color:#1e40af; }
+        .src-mentorship { background:#ede9fe; color:#5b21b6; }
+        .src-collaboration { background:#ffe4e6; color:#9f1239; }
+        .src-community { background:#fef3c7; color:#92400e; }
+        .status-dot { display:inline-block; width:8px; height:8px; border-radius:50%; }
+        .status-open { background:#3b82f6; }
+        .status-replied { background:#10b981; }
+        .status-closed { background:#94a3b8; }
+        .thread-row { cursor:pointer; transition:background-color 120ms ease; }
+        .thread-row:hover { background:#f8fafc; }
+        .thread-row.active { background:#eff6ff; border-left:3px solid #3b82f6; }
+        .msg-inbound { background:#f1f5f9; color:#0f172a; }
+        .msg-outbound { background:linear-gradient(135deg,#eef2ff 0%,#ede9fe 100%); color:#1e1b4b; border:1px solid #c7d2fe; }
+    </style>
+    <script>
+        // Guard handled by shared admin-auth-guard.js
+    </script>
+</head>
+<body class="bg-slate-100 text-slate-900 min-h-screen">
+    <div class="flex min-h-screen">
+        <aside id="admin-sidebar" class="w-64 bg-white border-r border-gray-200 fixed h-full overflow-y-auto z-30"></aside>
+
+        <main class="flex-1 ml-64 p-6 lg:p-8 space-y-6">
+            <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-900">Communications</h1>
+                    <p class="text-sm text-slate-500 mt-1">Every conversation in one place &mdash; auto-collected from the website.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button id="comm-refresh" class="px-4 py-2 text-sm font-medium border border-slate-200 bg-white rounded hover:bg-slate-50 transition">
+                        <i class="fas fa-rotate-right mr-2"></i>Refresh
+                    </button>
+                </div>
+            </header>
+
+            <div id="comm-alert" class="hidden"></div>
+
+            <nav class="border-b border-slate-200 flex gap-1" role="tablist">
+                <button data-tab="threads" class="comm-tab px-5 py-3 text-sm font-semibold border-b-2 border-blue-600 text-blue-700" role="tab">
+                    <i class="fas fa-inbox mr-2"></i>Threads <span id="threads-count" class="ml-1 text-xs text-slate-400"></span>
+                </button>
+                <button data-tab="people" class="comm-tab px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800" role="tab">
+                    <i class="fas fa-users mr-2"></i>People
+                </button>
+                <button data-tab="broadcast" class="comm-tab px-5 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800" role="tab">
+                    <i class="fas fa-bullhorn mr-2"></i>Broadcast
+                </button>
+            </nav>
+
+            <section id="tab-threads" class="comm-tab-panel">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-1 bg-white rounded-xl shadow border border-slate-100">
+                        <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between gap-2">
+                            <input id="comm-search" type="search" placeholder="Search threads&hellip;" class="flex-1 border border-slate-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            <select id="comm-source-filter" class="border border-slate-200 rounded px-2 py-2 text-xs">
+                                <option value="all">All sources</option>
+                                <option value="contact">Contact</option>
+                                <option value="mentorship">Mentorship</option>
+                                <option value="collaboration">Collaboration</option>
+                                <option value="community">Community</option>
+                            </select>
+                        </div>
+                        <div class="px-4 py-2 border-b border-slate-100 flex gap-1 text-xs">
+                            <button data-status="open" class="status-tab px-3 py-1 rounded font-semibold bg-blue-50 text-blue-700">Open</button>
+                            <button data-status="replied" class="status-tab px-3 py-1 rounded font-semibold text-slate-500 hover:bg-slate-100">Replied</button>
+                            <button data-status="closed" class="status-tab px-3 py-1 rounded font-semibold text-slate-500 hover:bg-slate-100">Closed</button>
+                            <button data-status="all" class="status-tab px-3 py-1 rounded font-semibold text-slate-500 hover:bg-slate-100">All</button>
+                        </div>
+                        <div id="threads-list" class="divide-y divide-slate-100 max-h-[640px] overflow-y-auto">
+                            <div class="p-6 text-center text-sm text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading&hellip;</div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-2 bg-white rounded-xl shadow border border-slate-100">
+                        <div id="thread-detail">
+                            <div class="px-6 py-16 text-center text-slate-400">
+                                <i class="fas fa-comments text-4xl mb-3 opacity-40"></i>
+                                <p class="text-sm">Select a thread on the left to view the conversation.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-people" class="comm-tab-panel hidden">
+                <div class="bg-white rounded-xl shadow p-8 text-center">
+                    <i class="fas fa-users text-4xl text-purple-500 mb-4"></i>
+                    <h2 class="text-lg font-semibold text-slate-900">People &amp; Customers</h2>
+                    <p class="mt-2 text-sm text-slate-500 max-w-md mx-auto">Lifetime value, segments (paying, eBook owners, repeat), and a searchable customer list with CSV export.</p>
+                    <a href="admin-customers.html" class="mt-6 inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition">
+                        Open Customers <i class="fas fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+            </section>
+
+            <section id="tab-broadcast" class="comm-tab-panel hidden">
+                <div class="bg-white rounded-xl shadow p-8 text-center">
+                    <i class="fas fa-bullhorn text-4xl text-emerald-500 mb-4"></i>
+                    <h2 class="text-lg font-semibold text-slate-900">Broadcast Email</h2>
+                    <p class="mt-2 text-sm text-slate-500 max-w-md mx-auto">Send announcements, promotions, and newsletters to any audience segment with test sends, recent jobs, and personalization tokens.</p>
+                    <a href="admin-broadcast.html" class="mt-6 inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition">
+                        Open Broadcast <i class="fas fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script>
+    (function () {
+        'use strict';
+
+        var SOURCE_META = {
+            contact: { label: 'Contact', cls: 'src-contact', icon: 'fa-envelope' },
+            mentorship: { label: 'Mentorship', cls: 'src-mentorship', icon: 'fa-user-graduate' },
+            collaboration: { label: 'Collaboration', cls: 'src-collaboration', icon: 'fa-handshake' },
+            community: { label: 'Community', cls: 'src-community', icon: 'fa-heart' }
+        };
+
+        var state = {
+            threads: [],
+            filtered: [],
+            activeId: null,
+            statusFilter: 'open',
+            sourceFilter: 'all',
+            search: ''
+        };
+
+        function $(id) { return document.getElementById(id); }
+        function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+        function escMultiline(s) { return esc(s).replace(/\n/g, '<br>'); }
+
+        function showAlert(kind, msg) {
+            var wrap = $('comm-alert');
+            var color = kind === 'error' ? 'bg-red-50 border-red-200 text-red-800'
+                : kind === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                : 'bg-blue-50 border-blue-200 text-blue-800';
+            wrap.className = 'rounded-lg border px-4 py-3 text-sm ' + color;
+            wrap.textContent = msg;
+            wrap.classList.remove('hidden');
+            if (kind === 'success') setTimeout(function () { wrap.classList.add('hidden'); }, 4000);
+        }
+
+        function relativeTime(ts) {
+            if (!ts) return '';
+            var d;
+            try { d = ts.toDate ? ts.toDate() : new Date(ts); } catch (e) { return ''; }
+            if (!d || isNaN(d.getTime())) return '';
+            var diff = Date.now() - d.getTime();
+            var m = Math.floor(diff / 60000);
+            if (m < 1) return 'just now';
+            if (m < 60) return m + 'm ago';
+            var h = Math.floor(m / 60);
+            if (h < 24) return h + 'h ago';
+            var days = Math.floor(h / 24);
+            if (days < 7) return days + 'd ago';
+            return d.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' });
+        }
+
+        function absoluteTime(ts) {
+            if (!ts) return '';
+            try {
+                var d = ts.toDate ? ts.toDate() : new Date(ts);
+                return d.toLocaleString('en-ZA', { dateStyle: 'medium', timeStyle: 'short' });
+            } catch (e) { return ''; }
+        }
+
+        function ensureFirebase() {
+            if (typeof getFirebaseConfig !== 'function') throw new Error('firebase-config.js not loaded');
+            if (!firebase.apps.length) firebase.initializeApp(getFirebaseConfig());
+        }
+
+        function applyFilters() {
+            var search = state.search.toLowerCase();
+            state.filtered = state.threads.filter(function (t) {
+                if (state.statusFilter !== 'all' && (t.status || 'open') !== state.statusFilter) return false;
+                if (state.sourceFilter !== 'all' && t.source !== state.sourceFilter) return false;
+                if (search) {
+                    var hay = ((t.participantName || '') + ' ' + (t.participantEmail || '') + ' ' + (t.subject || '') + ' ' + (t.summary || '')).toLowerCase();
+                    if (hay.indexOf(search) === -1) return false;
+                }
+                return true;
+            });
+            renderList();
+        }
+
+        function renderList() {
+            var host = $('threads-list');
+            $('threads-count').textContent = state.threads.length ? '(' + state.threads.length + ')' : '';
+            if (!state.filtered.length) {
+                host.innerHTML = '<div class="p-6 text-center text-sm text-slate-400">No threads match these filters.</div>';
+                return;
+            }
+            host.innerHTML = state.filtered.map(function (t) {
+                var meta = SOURCE_META[t.source] || { label: t.source || 'Other', cls: '', icon: 'fa-message' };
+                var unreadDot = t.unread ? '<span class="inline-block w-2 h-2 rounded-full bg-blue-500 ml-1" title="Unread"></span>' : '';
+                var activeCls = t.id === state.activeId ? 'active' : '';
+                return '<div class="thread-row ' + activeCls + ' px-4 py-3" data-id="' + esc(t.id) + '">'
+                    + '<div class="flex items-center justify-between gap-2">'
+                    + '<span class="source-badge ' + meta.cls + '"><i class="fas ' + meta.icon + '"></i> ' + esc(meta.label) + '</span>'
+                    + '<span class="text-[11px] text-slate-400">' + esc(relativeTime(t.lastActivityAt || t.createdAt)) + '</span>'
+                    + '</div>'
+                    + '<p class="mt-2 text-sm font-semibold text-slate-900 truncate">' + esc(t.participantName || 'Unknown') + ' ' + unreadDot + '</p>'
+                    + '<p class="text-xs text-slate-500 truncate">' + esc(t.subject || '(no subject)') + '</p>'
+                    + '<p class="mt-1 text-xs text-slate-400 line-clamp-2">' + esc(t.summary || '') + '</p>'
+                    + '</div>';
+            }).join('');
+            Array.prototype.forEach.call(host.querySelectorAll('.thread-row'), function (el) {
+                el.addEventListener('click', function () { openThread(el.getAttribute('data-id')); });
+            });
+        }
+
+        function loadThreads() {
+            ensureFirebase();
+            var db = firebase.firestore();
+            var host = $('threads-list');
+            host.innerHTML = '<div class="p-6 text-center text-sm text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading&hellip;</div>';
+            return db.collection('inboxThreads').orderBy('lastActivityAt', 'desc').limit(200).get()
+                .then(function (snap) {
+                    state.threads = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+                    applyFilters();
+                })
+                .catch(function (err) {
+                    console.error('[communications] load threads failed:', err);
+                    host.innerHTML = '<div class="p-6 text-center text-sm text-red-600">Could not load threads: ' + esc(err.message || err) + '</div>';
+                });
+        }
+
+        function openThread(id) {
+            state.activeId = id;
+            renderList();
+            var detailHost = $('thread-detail');
+            detailHost.innerHTML = '<div class="p-10 text-center text-sm text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading conversation&hellip;</div>';
+            var db = firebase.firestore();
+            var ref = db.collection('inboxThreads').doc(id);
+            return Promise.all([
+                ref.get(),
+                ref.collection('messages').orderBy('createdAt', 'asc').limit(100).get()
+            ]).then(function (results) {
+                var threadSnap = results[0];
+                var msgsSnap = results[1];
+                if (!threadSnap.exists) {
+                    detailHost.innerHTML = '<div class="p-10 text-center text-sm text-red-600">Thread not found.</div>';
+                    return;
+                }
+                var thread = Object.assign({ id: id }, threadSnap.data());
+                var messages = msgsSnap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+                renderDetail(thread, messages);
+                if (thread.unread) {
+                    ref.update({ unread: false }).catch(function () {});
+                    var idx = -1;
+                    for (var i = 0; i < state.threads.length; i++) { if (state.threads[i].id === id) { idx = i; break; } }
+                    if (idx > -1) { state.threads[idx].unread = false; renderList(); }
+                }
+            }).catch(function (err) {
+                console.error('[communications] open thread failed:', err);
+                detailHost.innerHTML = '<div class="p-10 text-center text-sm text-red-600">Failed to load: ' + esc(err.message || err) + '</div>';
+            });
+        }
+
+        function renderDetail(thread, messages) {
+            var meta = SOURCE_META[thread.source] || { label: thread.source || 'Other', cls: '', icon: 'fa-message' };
+            var statusCls = thread.status === 'replied' ? 'status-replied' : (thread.status === 'closed' ? 'status-closed' : 'status-open');
+            var messagesHtml = messages.length ? messages.map(function (m) {
+                var isOut = m.direction === 'outbound';
+                return '<div class="flex ' + (isOut ? 'justify-end' : 'justify-start') + '">'
+                    + '<div class="' + (isOut ? 'msg-outbound' : 'msg-inbound') + ' max-w-[80%] px-4 py-3 rounded-2xl ' + (isOut ? 'rounded-br-sm' : 'rounded-bl-sm') + '">'
+                    + '<p class="text-[11px] uppercase tracking-wide opacity-70 mb-1">' + esc(isOut ? 'You' : (m.authorName || 'Customer')) + ' &middot; ' + esc(absoluteTime(m.createdAt)) + '</p>'
+                    + '<div class="text-sm leading-relaxed">' + escMultiline(m.body || '') + '</div>'
+                    + '</div>'
+                    + '</div>';
+            }).join('') : '<p class="text-center text-sm text-slate-400 py-6">No messages yet.</p>';
+
+            var replyBox;
+            if (!thread.participantEmail) {
+                replyBox = '<div class="border-t border-slate-200 px-6 py-4 bg-amber-50">'
+                    + '<p class="text-sm text-amber-800"><i class="fas fa-circle-info mr-2"></i>No email address on file for this thread, so a reply cannot be sent. Use WhatsApp or update the record manually.</p>'
+                    + '</div>';
+            } else {
+                replyBox = '<div class="border-t border-slate-200 px-6 py-4 bg-slate-50">'
+                    + '<label class="block text-xs font-semibold text-slate-600 mb-1">Reply to ' + esc(thread.participantEmail) + '</label>'
+                    + '<textarea id="reply-body" rows="4" maxlength="8000" placeholder="Write a personal reply&hellip;" class="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>'
+                    + '<div class="mt-3 flex items-center justify-between gap-3">'
+                    + '<p class="text-[11px] text-slate-500">Sent from <strong>Zolile Nomaqhiza &middot; Disciplined Disciples</strong>. The customer will receive it as a normal email.</p>'
+                    + '<button id="send-reply" data-id="' + esc(thread.id) + '" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-semibold transition">'
+                    + '<i class="fas fa-paper-plane mr-2"></i>Send reply</button>'
+                    + '</div>'
+                    + '</div>';
+            }
+
+            var nextStatus = thread.status === 'closed' ? 'open' : 'closed';
+            var toggleLabel = thread.status === 'closed' ? 'Reopen' : 'Mark closed';
+            var host = $('thread-detail');
+            host.innerHTML = '<header class="px-6 py-4 border-b border-slate-200 flex items-start justify-between gap-3">'
+                + '<div class="min-w-0">'
+                + '<div class="flex items-center gap-2 flex-wrap">'
+                + '<span class="source-badge ' + meta.cls + '"><i class="fas ' + meta.icon + '"></i> ' + esc(meta.label) + '</span>'
+                + '<span class="inline-flex items-center gap-1.5 text-xs text-slate-500"><span class="status-dot ' + statusCls + '"></span> ' + esc(thread.status || 'open') + '</span>'
+                + '</div>'
+                + '<h2 class="mt-2 text-lg font-semibold text-slate-900 truncate">' + esc(thread.subject || '(no subject)') + '</h2>'
+                + '<p class="text-sm text-slate-600">' + esc(thread.participantName || 'Unknown')
+                + (thread.participantEmail ? ' &middot; <a href="mailto:' + esc(thread.participantEmail) + '" class="text-blue-600 hover:underline">' + esc(thread.participantEmail) + '</a>' : '')
+                + (thread.participantPhone ? ' &middot; ' + esc(thread.participantPhone) : '')
+                + '</p>'
+                + '</div>'
+                + '<div class="flex flex-col gap-1 text-xs">'
+                + '<button data-action="toggle-status" data-id="' + esc(thread.id) + '" data-status="' + esc(nextStatus) + '" class="px-3 py-1.5 border border-slate-200 rounded hover:bg-slate-50 font-semibold">' + toggleLabel + '</button>'
+                + '</div>'
+                + '</header>'
+                + '<div class="px-6 py-5 space-y-4 max-h-[440px] overflow-y-auto" id="thread-messages">' + messagesHtml + '</div>'
+                + replyBox;
+
+            var sendBtn = $('send-reply');
+            if (sendBtn) sendBtn.addEventListener('click', function () { sendReply(thread.id); });
+            Array.prototype.forEach.call(host.querySelectorAll('[data-action="toggle-status"]'), function (btn) {
+                btn.addEventListener('click', function () { toggleStatus(btn.getAttribute('data-id'), btn.getAttribute('data-status')); });
+            });
+        }
+
+        function sendReply(threadId) {
+            var ta = $('reply-body');
+            var btn = $('send-reply');
+            var body = (ta && ta.value || '').trim();
+            if (body.length < 2) { showAlert('error', 'Reply is too short.'); return; }
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending&hellip;';
+            var fn = firebase.app().functions('us-central1').httpsCallable('replyToInboxThread');
+            fn({ threadId: threadId, body: body })
+                .then(function () {
+                    showAlert('success', 'Reply sent. The customer will see it in their inbox.');
+                    ta.value = '';
+                    return openThread(threadId);
+                })
+                .then(function () {
+                    var idx = -1;
+                    for (var i = 0; i < state.threads.length; i++) { if (state.threads[i].id === threadId) { idx = i; break; } }
+                    if (idx > -1) { state.threads[idx].status = 'replied'; state.threads[idx].lastActivityAt = new Date(); applyFilters(); }
+                })
+                .catch(function (err) {
+                    console.error('[communications] reply failed:', err);
+                    showAlert('error', 'Send failed: ' + (err.message || err));
+                })
+                .then(function () {
+                    btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Send reply';
+                });
+        }
+
+        function toggleStatus(threadId, newStatus) {
+            ensureFirebase();
+            firebase.firestore().collection('inboxThreads').doc(threadId)
+                .update({ status: newStatus, lastActivityAt: firebase.firestore.FieldValue.serverTimestamp() })
+                .then(function () {
+                    var idx = -1;
+                    for (var i = 0; i < state.threads.length; i++) { if (state.threads[i].id === threadId) { idx = i; break; } }
+                    if (idx > -1) { state.threads[idx].status = newStatus; applyFilters(); }
+                    return openThread(threadId);
+                })
+                .catch(function (err) { showAlert('error', 'Update failed: ' + (err.message || err)); });
+        }
+
+        function bindEvents() {
+            Array.prototype.forEach.call(document.querySelectorAll('.comm-tab'), function (btn) {
+                btn.addEventListener('click', function () {
+                    var tab = btn.getAttribute('data-tab');
+                    Array.prototype.forEach.call(document.querySelectorAll('.comm-tab'), function (b) {
+                        var active = b.getAttribute('data-tab') === tab;
+                        b.classList.toggle('border-blue-600', active);
+                        b.classList.toggle('text-blue-700', active);
+                        b.classList.toggle('border-transparent', !active);
+                        b.classList.toggle('text-slate-500', !active);
+                    });
+                    Array.prototype.forEach.call(document.querySelectorAll('.comm-tab-panel'), function (p) {
+                        p.classList.toggle('hidden', p.id !== 'tab-' + tab);
+                    });
+                });
+            });
+            Array.prototype.forEach.call(document.querySelectorAll('.status-tab'), function (btn) {
+                btn.addEventListener('click', function () {
+                    state.statusFilter = btn.getAttribute('data-status');
+                    Array.prototype.forEach.call(document.querySelectorAll('.status-tab'), function (b) {
+                        var active = b.getAttribute('data-status') === state.statusFilter;
+                        b.classList.toggle('bg-blue-50', active);
+                        b.classList.toggle('text-blue-700', active);
+                        b.classList.toggle('text-slate-500', !active);
+                    });
+                    applyFilters();
+                });
+            });
+            $('comm-source-filter').addEventListener('change', function (e) { state.sourceFilter = e.target.value; applyFilters(); });
+            $('comm-search').addEventListener('input', function (e) { state.search = e.target.value || ''; applyFilters(); });
+            $('comm-refresh').addEventListener('click', loadThreads);
+        }
+
+        function init() {
+            bindEvents();
+            var auth = firebase.auth();
+            auth.onAuthStateChanged(function (user) {
+                if (!user) return;
+                var email = (user.email || '').toLowerCase();
+                if (email !== 'zmabege@gmail.com' && email !== 'nomaqhizazolile@gmail.com') {
+                    showAlert('error', 'Admins only.');
+                    return;
+                }
+                sessionStorage.setItem('userLoggedIn', 'true');
+                sessionStorage.setItem('userId', user.uid);
+                loadThreads();
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            try { ensureFirebase(); } catch (e) { console.error(e); }
+            init();
+        });
+    })();
+    </script>
+    <script src="js/admin-sidebar.js?v=20260601c" defer></script>
+</body>
+</html>
