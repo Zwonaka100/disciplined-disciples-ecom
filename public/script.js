@@ -1368,12 +1368,31 @@ window.getDigitalItems = function(items) {
 window.checkEbookEntitlementAndShow = async function() {
     try {
         if (!window.db || !window.currentUserId) return;
-        const ordersRef = window.db.collection('artifacts').doc('default-app-id').collection('orders');
-        const ordersSnap = await ordersRef
-            .where('userId', '==', window.currentUserId)
-            .get();
+        const db = window.db;
+        const userId = window.currentUserId;
 
-        let hasEbook = false;
+        // Prefer explicit entitlement records, then fall back to paid-order scan for legacy data.
+        let hasEntitlement = false;
+        try {
+            const entitlementTopRef = db.collection('ebookEntitlements').doc(userId);
+            const entitlementItemsRef = entitlementTopRef.collection('items').limit(1);
+            const [entTopSnap, entItemsSnap] = await Promise.all([
+                entitlementTopRef.get(),
+                entitlementItemsRef.get()
+            ]);
+
+            hasEntitlement = !!(
+                (entTopSnap.exists && entTopSnap.data() && entTopSnap.data().hasEbook === true) ||
+                (entItemsSnap && !entItemsSnap.empty)
+            );
+        } catch (entErr) {
+            console.warn('Entitlement lookup failed, falling back to order scan:', entErr && entErr.message ? entErr.message : entErr);
+        }
+
+        const ordersRef = db.collection('artifacts').doc('default-app-id').collection('orders');
+        const ordersSnap = await ordersRef.where('userId', '==', userId).get();
+
+        let hasEbookFromOrders = false;
         let earliestPurchase = null;
         ordersSnap.forEach(doc => {
             const data = doc.data() || {};
@@ -1385,13 +1404,15 @@ window.checkEbookEntitlementAndShow = async function() {
                 const ft = (i.fulfillmentType || '').toString().toLowerCase();
                 return ft === 'digital' || productId === 'ebook' || name.includes('ebook');
             })) {
-                hasEbook = true;
+                hasEbookFromOrders = true;
                 const orderDate = data.orderDate && data.orderDate.toDate ? data.orderDate.toDate() : (data.orderDate ? new Date(data.orderDate) : null);
                 if (orderDate && (!earliestPurchase || orderDate < earliestPurchase)) {
                     earliestPurchase = orderDate;
                 }
             }
         });
+
+        const hasEbook = hasEntitlement || hasEbookFromOrders;
 
         if (hasEbook) {
             const section = document.getElementById('ebook-download-section');

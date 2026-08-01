@@ -215,6 +215,40 @@
             }).join('');
         }
 
+        function inferOrderLane(order) {
+            var items = Array.isArray(order && order.items) ? order.items : [];
+            var explicitType = (order && order.orderType ? String(order.orderType) : '').toLowerCase();
+
+            var hasEbook = false;
+            var hasPhysicalBook = false;
+            var hasClothing = false;
+
+            items.forEach(function (it) {
+                var name = (it && it.name ? String(it.name) : '').toLowerCase();
+                var pid = (it && (it.productId || it.id) ? String(it.productId || it.id) : '').toLowerCase();
+                var ft = (it && it.fulfillmentType ? String(it.fulfillmentType) : '').toLowerCase();
+
+                var isEbook = ft === 'digital' || pid === 'ebook' || name.indexOf('ebook') !== -1;
+                var isBookPhysical = !isEbook && (name.indexOf('physical book') !== -1 || (name.indexOf('book') !== -1 && name.indexOf('ebook') === -1) || (pid.indexOf('book') !== -1 && pid !== 'ebook'));
+
+                if (isEbook) hasEbook = true;
+                else if (isBookPhysical) hasPhysicalBook = true;
+                else hasClothing = true;
+            });
+
+            if (!items.length) {
+                if (explicitType === 'digital') return 'book_digital';
+                if (explicitType === 'mixed') return 'mixed';
+                return 'clothing';
+            }
+
+            if (hasEbook && (hasPhysicalBook || hasClothing)) return 'mixed';
+            if (hasEbook) return 'book_digital';
+            if (hasPhysicalBook && hasClothing) return 'mixed';
+            if (hasPhysicalBook) return 'book_physical';
+            return 'clothing';
+        }
+
         function loadActionQueue() {
             var host = $('action-queue');
             host.innerHTML = '<div class="px-6 py-8 text-center text-sm text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i>Loading&hellip;</div>';
@@ -222,13 +256,14 @@
             if (!db) { host.innerHTML = '<div class="px-6 py-8 text-center text-sm text-red-600">Firebase not initialised.</div>'; return; }
 
             var threadsP = db.collection('inboxThreads').where('status', '==', 'open').orderBy('lastActivityAt', 'desc').limit(8).get().catch(function () { return { docs: [] }; });
-            // Orders pending fulfillment (paid but not shipped/delivered). Fall back to status=='pending' as well.
             var ordersP = db.collection('artifacts').doc('default-app-id').collection('orders').orderBy('orderDate', 'desc').limit(50).get().catch(function () {
-                // Fall back to unsorted fetch if missing index
                 return db.collection('artifacts').doc('default-app-id').collection('orders').limit(50).get().catch(function () { return { docs: [] }; });
             });
+            var mentorshipP = db.collection('mentorshipApplications').orderBy('createdAt', 'desc').limit(50).get().catch(function () {
+                return db.collection('mentorshipApplications').limit(50).get().catch(function () { return { docs: [] }; });
+            });
 
-            Promise.all([threadsP, ordersP]).then(function (results) {
+            Promise.all([threadsP, ordersP, mentorshipP]).then(function (results) {
                 var items = [];
 
                 results[0].docs.forEach(function (d) {
@@ -238,7 +273,7 @@
                         href: 'admin-communications.html',
                         icon: meta.icon,
                         badgeCls: meta.cls,
-                        title: (t.participantName || 'Unknown') + ' \u00b7 ' + meta.label,
+                        title: (t.participantName || 'Unknown') + ' - ' + meta.label,
                         subtitle: t.subject || '(no subject)',
                         meta: relativeTime(t.lastActivityAt || t.createdAt),
                         cta: 'Reply',
@@ -251,27 +286,95 @@
                     var status = (o.status || '').toLowerCase();
                     var payment = (o.paymentStatus || '').toLowerCase();
                     var paid = payment === 'paid' || payment === 'complete' || payment === 'completed';
+                    var lane = inferOrderLane(o);
                     var needsAction = false;
                     var label = '';
+
                     if (paid && (status === 'pending' || status === 'processing' || status === 'order placed' || !status)) {
-                        needsAction = true; label = 'Paid \u00b7 needs fulfillment';
+                        needsAction = true;
+                        if (lane === 'book_digital') label = 'Paid - digital book delivery check';
+                        else if (lane === 'book_physical') label = 'Paid - physical book fulfillment';
+                        else if (lane === 'mixed') label = 'Paid - mixed fulfillment (book + clothing)';
+                        else label = 'Paid - clothing fulfillment';
                     } else if (status === 'pending' && !paid && payment !== 'failed' && payment !== 'cancelled') {
-                        needsAction = true; label = 'Pending order';
+                        needsAction = true;
+                        if (lane === 'book_digital') label = 'Pending payment - digital book order';
+                        else if (lane === 'book_physical') label = 'Pending payment - physical book order';
+                        else if (lane === 'mixed') label = 'Pending payment - mixed order';
+                        else label = 'Pending payment - clothing order';
                     }
+
                     if (!needsAction) return;
+
                     var customer = o.customerName || (o.customer && o.customer.name) || o.customerEmail || 'Customer';
                     var orderRef = o.orderId || d.id.slice(0, 8);
+                    var icon = 'fa-box';
+                    var badgeCls = paid ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700';
+                    if (paid) {
+                        if (lane === 'book_digital') { icon = 'fa-book-open'; badgeCls = 'bg-indigo-50 text-indigo-700'; }
+                        else if (lane === 'book_physical') { icon = 'fa-book'; badgeCls = 'bg-violet-50 text-violet-700'; }
+                        else if (lane === 'mixed') { icon = 'fa-boxes-stacked'; badgeCls = 'bg-orange-50 text-orange-700'; }
+                        else { icon = 'fa-shirt'; badgeCls = 'bg-emerald-50 text-emerald-700'; }
+                    }
+
                     items.push({
                         href: 'admin-orders.html',
-                        icon: 'fa-box',
-                        badgeCls: paid ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700',
-                        title: customer + ' \u00b7 ' + orderRef,
-                        subtitle: label + ' \u00b7 ' + fmtR(o.totalAmount || o.total || 0),
+                        icon: icon,
+                        badgeCls: badgeCls,
+                        title: customer + ' - ' + orderRef,
+                        subtitle: label + ' - ' + fmtR(o.totalAmount || o.total || 0),
                         meta: relativeTime(o.orderDate || o.createdAt),
                         cta: 'Open',
                         sortKey: (function () {
-                            var d = o.orderDate || o.createdAt;
-                            return (d && d.toMillis) ? d.toMillis() : 0;
+                            var dt = o.orderDate || o.createdAt;
+                            return (dt && dt.toMillis) ? dt.toMillis() : 0;
+                        })()
+                    });
+                });
+
+                results[2].docs.forEach(function (d) {
+                    var m = d.data() || {};
+                    var payment = (m.paymentStatus || '').toLowerCase();
+                    var status = (m.status || '').toLowerCase();
+                    var amount = Number(m.amountPaid || m.amount || 0) || 0;
+                    var isFreeDiscovery = amount <= 0;
+                    var isPaid = payment === 'paid' || payment === 'complete' || payment === 'completed' || payment === 'success';
+                    var isPendingPay = payment === 'pending' || payment === 'pending payment' || payment === '';
+                    var isClosed = status === 'completed' || status === 'closed' || status === 'cancelled' || status === 'canceled';
+
+                    var needsAction = false;
+                    var label = '';
+
+                    if (isFreeDiscovery) {
+                        if (!isClosed) {
+                            needsAction = true;
+                            label = 'Discovery request - needs response';
+                        }
+                    } else if (isPaid) {
+                        if (!isClosed) {
+                            needsAction = true;
+                            label = 'Paid mentorship - schedule next step';
+                        }
+                    } else if (isPendingPay) {
+                        needsAction = true;
+                        label = 'Mentorship payment pending';
+                    }
+
+                    if (!needsAction) return;
+
+                    var applicant = m.name || m.email || 'Applicant';
+                    var packageName = m.packageName || m.package || 'Mentorship';
+                    items.push({
+                        href: 'admin-mentorship.html',
+                        icon: 'fa-user-graduate',
+                        badgeCls: isPaid ? 'bg-violet-50 text-violet-700' : (isFreeDiscovery ? 'bg-sky-50 text-sky-700' : 'bg-amber-50 text-amber-700'),
+                        title: applicant + ' - ' + packageName,
+                        subtitle: label + (amount > 0 ? (' - ' + fmtR(amount)) : ''),
+                        meta: relativeTime(m.createdAt || m.paymentCompletedAt),
+                        cta: 'Open',
+                        sortKey: (function () {
+                            var dt = m.createdAt || m.paymentCompletedAt;
+                            return (dt && dt.toMillis) ? dt.toMillis() : 0;
                         })()
                     });
                 });
