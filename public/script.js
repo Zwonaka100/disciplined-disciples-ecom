@@ -1395,9 +1395,13 @@ window.getDigitalItems = function(items) {
 
 window.checkEbookEntitlementAndShow = async function() {
     try {
-        if (!window.db || !window.currentUserId) return;
+        if (!window.db || !window.currentUserId) {
+            console.log('[MyLibrary] Skipped - db or currentUserId not ready yet.', { hasDb: !!window.db, currentUserId: window.currentUserId });
+            return;
+        }
         const db = window.db;
         const userId = window.currentUserId;
+        console.log('[MyLibrary] Checking ebook entitlement for userId:', userId);
 
         // Prefer explicit entitlement records, then fall back to paid-order scan for legacy data.
         let hasEntitlement = false;
@@ -1413,12 +1417,14 @@ window.checkEbookEntitlementAndShow = async function() {
                 (entTopSnap.exists && entTopSnap.data() && entTopSnap.data().hasEbook === true) ||
                 (entItemsSnap && !entItemsSnap.empty)
             );
+            console.log('[MyLibrary] Entitlement doc check:', { topExists: entTopSnap.exists, topData: entTopSnap.exists ? entTopSnap.data() : null, itemsEmpty: entItemsSnap.empty, hasEntitlement });
         } catch (entErr) {
-            console.warn('Entitlement lookup failed, falling back to order scan:', entErr && entErr.message ? entErr.message : entErr);
+            console.warn('[MyLibrary] Entitlement lookup failed, falling back to order scan:', entErr && entErr.message ? entErr.message : entErr);
         }
 
         const ordersRef = db.collection('artifacts').doc('default-app-id').collection('orders');
         const ordersSnap = await ordersRef.where('userId', '==', userId).get();
+        console.log(`[MyLibrary] Order scan found ${ordersSnap.size} order(s) for userId ${userId}.`);
 
         let hasEbookFromOrders = false;
         let earliestPurchase = null;
@@ -1426,12 +1432,14 @@ window.checkEbookEntitlementAndShow = async function() {
             const data = doc.data() || {};
             const paid = ['paid', 'complete', 'completed', 'success'].includes((data.paymentStatus || '').toString().toLowerCase());
             const items = Array.isArray(data.items) ? data.items : [];
-            if (paid && items.some(i => {
+            const matchesEbook = items.some(i => {
                 const productId = (i.productId || i.id || '').toString().toLowerCase();
                 const name = (i.name || '').toString().toLowerCase();
                 const ft = (i.fulfillmentType || '').toString().toLowerCase();
                 return ft === 'digital' || productId === 'ebook' || name.includes('ebook');
-            })) {
+            });
+            console.log(`[MyLibrary] Order ${doc.id}: paymentStatus="${data.paymentStatus}" paid=${paid} matchesEbook=${matchesEbook}`, items);
+            if (paid && matchesEbook) {
                 hasEbookFromOrders = true;
                 const orderDate = data.orderDate && data.orderDate.toDate ? data.orderDate.toDate() : (data.orderDate ? new Date(data.orderDate) : null);
                 if (orderDate && (!earliestPurchase || orderDate < earliestPurchase)) {
@@ -1441,6 +1449,7 @@ window.checkEbookEntitlementAndShow = async function() {
         });
 
         const hasEbook = hasEntitlement || hasEbookFromOrders;
+        console.log('[MyLibrary] Final decision:', { hasEntitlement, hasEbookFromOrders, hasEbook });
 
         if (hasEbook) {
             // Populate the dedicated "My Library" card if it exists on this page.
@@ -1491,9 +1500,11 @@ window.checkEbookEntitlementAndShow = async function() {
                     });
                 }
             }
+        } else {
+            console.log('[MyLibrary] User is not entitled to the ebook - section stays hidden.');
         }
     } catch (err) {
-        console.error('Failed to check ebook entitlement:', err);
+        console.error('[MyLibrary] Failed to check ebook entitlement:', err);
     }
 };
 
