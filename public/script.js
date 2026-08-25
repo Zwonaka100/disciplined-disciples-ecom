@@ -11,6 +11,17 @@ window.currentUserId = null; // To store the logged-in user's UID
 window.currentUserProfile = {}; // To store user profile data including address
 window.serverTimestamp = null; // To store Firestore's serverTimestamp function
 
+// Firebase Hosting's cleanUrls setting strips the .html extension in production
+// (e.g. /profile.html is served/shown as /profile), so a plain
+// pathname.includes('x.html') check silently never matches there. This works
+// whether the current URL has the extension or not (clean URLs in production,
+// direct .html links, local dev/emulator).
+function isOnPage(pageName) {
+    const path = window.location.pathname;
+    const clean = pageName.replace(/\.html$/i, '');
+    return path.includes(`${clean}.html`) || path === `/${clean}` || path.endsWith(`/${clean}`);
+}
+
 const ADMIN_EMAILS = ['zmabege@gmail.com', 'nomaqhizazolile@gmail.com'];
 
 function isAdminEmail(candidate) {
@@ -734,7 +745,7 @@ async function handleLogout() {
         notify('Logged out successfully.', 'success');
 
         setTimeout(() => {
-            const redirectTarget = window.location.pathname.includes('admin-dashboard.html')
+            const redirectTarget = isOnPage('admin-dashboard')
                 ? 'login-signup.html?redirect=admin-dashboard.html'
                 : 'index.html';
             window.location.replace(redirectTarget);
@@ -1265,7 +1276,7 @@ window.handlePaymentCompletion = async () => {
     const paymentStatus = urlParams.get('payment');
     const payfastPaymentId = urlParams.get('pf_payment_id');
     const orderDocId = localStorage.getItem('pendingOrderDocId') || urlParams.get('order') || localStorage.getItem('pendingOrderId');
-    const successViaThankYou = window.location.pathname.includes('thank-you.html');
+    const successViaThankYou = isOnPage('thank-you');
     const isSuccessful = paymentStatus === 'success' || !!payfastPaymentId || successViaThankYou;
 
     if (!window.db || typeof window.db.collection !== 'function') {
@@ -1324,7 +1335,7 @@ window.handlePaymentCompletion = async () => {
             }
             showMessage('Payment successful! Your order is being processed.', 'success');
 
-            if (window.location.pathname.includes('profile.html')) {
+            if (isOnPage('profile')) {
                 setTimeout(() => {
                     const ordersTab = document.querySelector('[data-tab="orders"]');
                     if (ordersTab) {
@@ -1802,7 +1813,7 @@ async function initFirebase() {
                     updateHeaderUI(user);
                     updateAuthUI(true);
 
-                    if (window.location.pathname.includes('profile.html')) {
+                    if (isOnPage('profile')) {
                         if (typeof window.checkEbookEntitlementAndShow === 'function') {
                             await window.checkEbookEntitlementAndShow();
                         }
@@ -1856,7 +1867,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             await window.initializeProducts();
         }
         // Ebook download logic for profile page
-        if (window.location.pathname.includes('profile.html')) {
+        if (isOnPage('profile')) {
             if (typeof window.checkEbookEntitlementAndShow === 'function') window.checkEbookEntitlementAndShow();
         }
     } else {
