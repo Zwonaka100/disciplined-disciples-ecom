@@ -5,6 +5,7 @@ const PDFDocument = require('pdfkit');
 const { Storage } = require('@google-cloud/storage');
 const crypto = require('crypto');
 const querystring = require('querystring');
+const path = require('path');
 
 // Initialize Firebase Admin SDK explicitly for this project.
 admin.initializeApp({
@@ -184,7 +185,7 @@ async function resolveEbookFile() {
   const [files] = await bucket.getFiles({ prefix: 'ebook/' });
   const pdfs = files.filter((f) => f.name.toLowerCase().endsWith('.pdf'));
   if (!pdfs.length) {
-    throw new Error('No ebook PDF found in storage under ebook/ prefix.');
+    throw new functions.https.HttpsError('not-found', 'No ebook PDF found in storage under the ebook/ prefix.');
   }
   pdfs.sort((a, b) => {
     const ta = new Date(a.metadata?.updated || a.metadata?.timeCreated || 0).getTime();
@@ -196,6 +197,7 @@ async function resolveEbookFile() {
 
 async function getSignedReadUrl(file, expirySeconds) {
   // Prefer Firebase download tokens (no signBlob IAM needed). Falls back to V4 signed URL.
+  let tokenErr = null;
   try {
     const [metadata] = await file.getMetadata();
     let token = null;
@@ -211,13 +213,23 @@ async function getSignedReadUrl(file, expirySeconds) {
     const bucketName = file.bucket.name;
     const encodedPath = encodeURIComponent(file.name);
     return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodedPath}?alt=media&token=${token}`;
-  } catch (tokenErr) {
-    console.warn('Firebase token URL failed, falling back to signed URL:', tokenErr.message);
+  } catch (err) {
+    tokenErr = err;
+    console.error(`[getSignedReadUrl] firebaseStorageDownloadTokens path failed for ${file.name}:`, err.message);
+  }
+
+  try {
     const [url] = await file.getSignedUrl({
       action: 'read',
       expires: Date.now() + expirySeconds * 1000
     });
     return url;
+  } catch (signErr) {
+    console.error(`[getSignedReadUrl] V4 getSignedUrl fallback also failed for ${file.name}:`, signErr.message);
+    throw new functions.https.HttpsError(
+      'internal',
+      `Could not generate a download link (token error: ${tokenErr ? tokenErr.message : 'n/a'}; sign error: ${signErr.message}).`
+    );
   }
 }
 
@@ -312,7 +324,12 @@ exports.getEbookDownloadLink = withSecrets.https.onCall(async (data, context) =>
   return { url, expiresIn: LINK_EXPIRY_SECONDS, file: file.name };
 });
 
+const BRAND_PURPLE = '#4f46e5';
+const LOGO_PATH = path.join(__dirname, 'assets', 'logo.png');
+
 // Generate Invoice PDF (omits shipping section for digital-only orders)
+// Total/VAT are always derived from the order's actual totalAmount - never recomputed,
+// so this can never drift from what was really charged (the business is not VAT registered).
 async function generateInvoicePDF(orderId, order, userProfile) {
     return new Promise((resolve, reject) => {
         const doc = new PDFDocument({ margin: 50 });
@@ -330,97 +347,112 @@ async function generateInvoicePDF(orderId, order, userProfile) {
     const items = Array.isArray(order.items) ? order.items : [];
     const digitalOnly = isDigitalOnlyOrder(order);
 
-        // Header
-        doc.fontSize(20).text('DISCIPLINED DISCIPLES', 50, 50);
-        doc.fontSize(10)
-           .text('Premium South African Streetwear & Books', 50, 75)
-           .text(`Email: ${SENDER_EMAIL}`, 50, 90)
-           .text(`Phone: ${SUPPORT_PHONE}`, 50, 105)
-           .text('Johannesburg, South Africa', 50, 120);
+        // Header - clean white background so the logo shows properly, thin brand-purple rule beneath.
+        try {
+            doc.image(LOGO_PATH, 50, 42, { width: 54 });
+        } catch (imgErr) {
+            console.warn('[generateInvoicePDF] Failed to embed logo:', imgErr.message);
+        }
+        doc.fillColor('#1f2937').fontSize(17).text('DISCIPLINED DISCIPLES', 118, 46);
+        doc.fontSize(9).fillColor('#6b7280')
+           .text('Premium South African Streetwear & Books', 118, 67)
+           .text(`${SENDER_EMAIL}  \u00b7  ${SUPPORT_PHONE}`, 118, 80)
+           .text('Johannesburg, South Africa', 118, 93);
 
-        // Invoice Title
-        doc.fontSize(24).text('INVOICE', 400, 50);
+        doc.fillColor('#1f2937').fontSize(20).text('INVOICE', 400, 46);
+        doc.fontSize(9).fillColor('#6b7280')
+        .text(`Invoice #: ${safeOrderId.substring(0, 12)}`, 400, 72)
+        .text(`Date: ${orderDateValue.toLocaleDateString('en-ZA')}`, 400, 85)
+        .text(`Status: ${digitalOnly ? 'Delivered (Digital)' : (order.status || 'Order Placed')}`, 400, 98);
 
-        // Invoice Details
-        doc.fontSize(12)
-        .text(`Invoice #: ${safeOrderId.substring(0, 12)}`, 400, 80)
-        .text(`Date: ${orderDateValue.toLocaleDateString('en-ZA')}`, 400, 100)
-        .text(`Status: ${digitalOnly ? 'Delivered (Digital)' : (order.status || 'Order Placed')}`, 400, 120);
+        doc.moveTo(50, 115).lineTo(550, 115).lineWidth(1.5).strokeColor(BRAND_PURPLE).stroke();
+        doc.strokeColor('#000000').lineWidth(1);
 
         // Customer Details
-        doc.fontSize(14).text('Bill To:', 50, 160);
-        doc.fontSize(12)
-           .text(userProfile.name || order.customerName || 'Customer', 50, 180)
-           .text(userProfile.email || order.customerEmail || '', 50, 195);
+        let y = 140;
+        doc.fillColor('#1f2937').fontSize(12).text('Bill To:', 50, y);
+        y += 18;
+        doc.fontSize(10).fillColor('#4b5563')
+           .text(userProfile.name || order.customerName || 'Customer', 50, y);
+        y += 14;
+        doc.text(userProfile.email || order.customerEmail || '', 50, y);
+        y += 14;
 
         if (!digitalOnly && order.deliveryAddress) {
-            doc.text(order.deliveryAddress.line1 || '', 50, 210);
+            doc.text(order.deliveryAddress.line1 || '', 50, y);
+            y += 14;
             if (order.deliveryAddress.line2) {
-                doc.text(order.deliveryAddress.line2, 50, 225);
+                doc.text(order.deliveryAddress.line2, 50, y);
+                y += 14;
             }
-            doc.text(`${order.deliveryAddress.city || ''}, ${order.deliveryAddress.province || ''} ${order.deliveryAddress.postalCode || ''}`, 50, 240);
+            doc.text(`${order.deliveryAddress.city || ''}, ${order.deliveryAddress.province || ''} ${order.deliveryAddress.postalCode || ''}`, 50, y);
+            y += 14;
         } else if (digitalOnly) {
-            doc.fontSize(10).fillColor('#4f46e5').text('Digital delivery \u2014 download from your profile', 50, 215).fillColor('#000');
+            doc.fillColor(BRAND_PURPLE).fontSize(9).text('Digital delivery \u2014 download anytime from your profile', 50, y);
+            y += 14;
         }
 
         // Items Table
-        let yPosition = 280;
-        doc.fontSize(12).text('Item', 50, yPosition);
-        doc.text('Size', 200, yPosition);
-        doc.text('Color', 250, yPosition);
-        doc.text('Qty', 300, yPosition);
-        doc.text('Price', 350, yPosition);
-        doc.text('Total', 450, yPosition);
-        doc.moveTo(50, yPosition + 15).lineTo(550, yPosition + 15).stroke();
-        yPosition += 25;
+        let yPosition = Math.max(y + 20, 260);
+        doc.rect(50, yPosition - 6, 500, 20).fillColor('#eef2ff').fill();
+        doc.fillColor('#3730a3').fontSize(9);
+        doc.text('Item', 56, yPosition);
+        doc.text('Size', 220, yPosition);
+        doc.text('Color', 270, yPosition);
+        doc.text('Qty', 330, yPosition);
+        doc.text('Price', 380, yPosition);
+        doc.text('Total', 470, yPosition);
+        yPosition += 24;
 
-    items.forEach(item => {
-      const price = Number(item.price) || 0;
-      const quantity = Number(item.quantity) || 1;
-      doc.text(item.name || 'Item', 50, yPosition);
-      doc.text(item.size || (isEbookItem(item) ? 'Digital' : 'N/A'), 200, yPosition);
-      doc.text(item.color || (isEbookItem(item) ? 'PDF' : 'N/A'), 250, yPosition);
-      doc.text(quantity.toString(), 300, yPosition);
-      doc.text(`R${price.toFixed(2)}`, 350, yPosition);
-      doc.text(`R${(price * quantity).toFixed(2)}`, 450, yPosition);
-            yPosition += 20;
+        doc.fillColor('#1f2937').fontSize(10);
+        items.forEach(item => {
+          const price = Number(item.price) || 0;
+          const quantity = Number(item.quantity) || 1;
+          doc.text(item.name || 'Item', 56, yPosition, { width: 155 });
+          doc.text(item.size || (isEbookItem(item) ? 'Digital' : 'N/A'), 220, yPosition);
+          doc.text(item.color || (isEbookItem(item) ? 'PDF' : 'N/A'), 270, yPosition);
+          doc.text(quantity.toString(), 330, yPosition);
+          doc.text(`R${price.toFixed(2)}`, 380, yPosition);
+          doc.text(`R${(price * quantity).toFixed(2)}`, 470, yPosition);
+          yPosition += 20;
         });
 
-        // Totals
-        yPosition += 20;
+        // Totals - always the order's real totalAmount, never independently recomputed.
+        yPosition += 15;
     const subtotal = items.reduce((sum, item) => {
       const price = Number(item.price) || 0;
       const quantity = Number(item.quantity) || 1;
       return sum + price * quantity;
     }, 0);
-    const vat = subtotal * 0.15;
     const shipping = digitalOnly ? 0 : Number(order.shipping || order.shippingFee || order.shippingCost || 0);
-        const total = subtotal + vat + shipping;
+    const total = Number(order.totalAmount) || (subtotal + shipping);
 
-        doc.text('Subtotal:', 350, yPosition);
-        doc.text(`R${subtotal.toFixed(2)}`, 450, yPosition);
+        doc.fillColor('#4b5563').fontSize(10);
+        doc.text('Subtotal:', 380, yPosition);
+        doc.text(`R${subtotal.toFixed(2)}`, 470, yPosition);
         yPosition += 15;
 
-        doc.text('VAT (15%):', 350, yPosition);
-        doc.text(`R${vat.toFixed(2)}`, 450, yPosition);
+        doc.text('VAT (0% \u2014 not VAT registered):', 380, yPosition, { width: 130 });
+        doc.text('R0.00', 470, yPosition);
         yPosition += 15;
 
         if (!digitalOnly) {
-            doc.text('Shipping:', 350, yPosition);
-            doc.text(`R${shipping.toFixed(2)}`, 450, yPosition);
+            doc.text('Shipping:', 380, yPosition);
+            doc.text(`R${shipping.toFixed(2)}`, 470, yPosition);
             yPosition += 15;
         }
 
-        doc.moveTo(350, yPosition + 5).lineTo(550, yPosition + 5).stroke();
-        yPosition += 15;
+        doc.moveTo(380, yPosition + 4).lineTo(550, yPosition + 4).strokeColor(BRAND_PURPLE).stroke();
+        doc.strokeColor('#000000');
+        yPosition += 16;
 
-        doc.fontSize(14).text('Total:', 350, yPosition);
-        doc.text(`R${total.toFixed(2)}`, 450, yPosition);
+        doc.fillColor('#1f2937').fontSize(13).text('Total:', 380, yPosition);
+        doc.text(`R${total.toFixed(2)}`, 470, yPosition);
 
-        yPosition += 50;
-        doc.fontSize(10)
+        yPosition += 45;
+        doc.fontSize(9).fillColor('#6b7280')
            .text('Thank you for choosing discipline.', 50, yPosition)
-           .text(`For support, contact us at ${SENDER_EMAIL}`, 50, yPosition + 15);
+           .text(`For support, contact ${SENDER_EMAIL} \u00b7 ${SUPPORT_PHONE}`, 50, yPosition + 14);
 
         doc.end();
     });
@@ -655,6 +687,64 @@ async function sendOrderPlacedEmails(orderId, order, docRef) {
     }
 
   console.log(`Order confirmation emails dispatched for ${orderId} (type=${orderType})`);
+}
+
+// Mentorship purchases have no order document, so they get their own invoice email,
+// reusing the same generateInvoicePDF() template/branding as ebook/book orders.
+async function sendMentorshipInvoiceEmail(applicationId, appData, amount) {
+    const orderLike = {
+        orderId: applicationId,
+        orderDate: new Date(),
+        items: [{
+            name: `Mentorship — ${appData.packageName || appData.package || 'Programme'}`,
+            price: Number(amount) || 0,
+            quantity: 1,
+            fulfillmentType: 'service'
+        }],
+        totalAmount: Number(amount) || 0,
+        status: 'Paid'
+    };
+    const userProfile = { name: appData.name, email: appData.email };
+
+    const invoiceBuffer = await generateInvoicePDF(applicationId, orderLike, userProfile);
+    const ownerScope = appData.userId || 'guest';
+    const invoicePath = `invoices/${ownerScope}/mentorship-${applicationId}.pdf`;
+    const invoiceFile = bucket.file(invoicePath);
+    await invoiceFile.save(invoiceBuffer, { metadata: { contentType: 'application/pdf' }, resumable: false });
+
+    if (appData.email) {
+        const firstName = (appData.name || 'friend').toString().trim().split(' ')[0] || 'friend';
+        const trimmedId = applicationId.substring(0, 12);
+        const html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+            <div style="background: #ffffff; border-bottom: 3px solid #4f46e5; padding: 30px; text-align: center;">
+              <h1 style="margin: 0; font-size: 26px; color: #1f2937;">Payment received, ${firstName}!</h1>
+              <p style="margin: 10px 0 0 0; font-size: 15px; color: #4b5563;">Your mentorship spot is confirmed.</p>
+            </div>
+            <div style="padding: 28px; background: #f9fafb;">
+              <div style="background: white; padding: 18px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #4f46e5;">
+                <p style="margin: 5px 0; color: #4b5563;">Programme: <strong>${appData.packageName || appData.package || 'Mentorship'}</strong></p>
+                <p style="margin: 5px 0; color: #4b5563;">Amount: <strong>R${(Number(amount) || 0).toFixed(2)}</strong></p>
+                <p style="margin: 5px 0; color: #4b5563;">Reference: ${trimmedId}</p>
+              </div>
+              <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h3 style="margin: 0 0 10px 0; color: #111827;">A note from Zolile</h3>
+                <p style="color: #4b5563; line-height: 1.7;">${firstName}, thank you for trusting me with this season of your journey. I'll be reaching out personally within 5–7 business days to schedule your first session. This isn't a course — it's a relationship built on discipline.</p>
+                ${FOUNDER_SIGNATURE}
+              </div>
+              <p style="color: #6b7280; font-size: 13px;">Questions in the meantime? Reply to this email or WhatsApp ${SUPPORT_PHONE}.</p>
+            </div>
+          </div>
+        `;
+        await sendMailReliable({
+            to: appData.email,
+            subject: `✅ Mentorship payment confirmed — ${trimmedId}`,
+            html,
+            attachments: [{ filename: `Invoice-Mentorship-${trimmedId}.pdf`, content: invoiceBuffer, contentType: 'application/pdf' }]
+        }, { type: 'mentorship_invoice_customer', applicationId, userId: appData.userId || null });
+    }
+
+    return { invoicePath };
 }
 
 // Send Order Confirmation Email with Invoice
@@ -906,6 +996,18 @@ exports.verifyPayfastPayment = withSecrets.https.onRequest(async (req, res) => {
         }, { type: 'mentorship_paid', applicationId: orderId });
       } catch (e) {
         console.error('[mentorship-paid email] failed:', e.message);
+      }
+
+      // Customer-facing invoice email (separate from the owner notification above).
+      try {
+        const { invoicePath } = await sendMentorshipInvoiceEmail(orderId, appData, amount);
+        await appRef.set({
+          invoicePath,
+          invoiceGeneratedAt: admin.firestore.FieldValue.serverTimestamp(),
+          paymentConfirmationSentAt: admin.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+      } catch (e) {
+        console.error('[mentorship invoice email] failed:', e.message);
       }
 
       res.json({ success: true, message: 'Mentorship payment recorded', orderId });
