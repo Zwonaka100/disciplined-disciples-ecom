@@ -7,7 +7,7 @@ Allow: /
 Crawl-delay: 1
 
 # Sitemap location
-Sitemap: https://disciplined-disciples-1.web.app/sitemap.xml
+Sitemap: https://disciplineddisciples.co.za/sitemap.xml
 
 # Google-specific directives
 User-agent: Googlebot

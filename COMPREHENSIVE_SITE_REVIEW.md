@@ -5,6 +5,8 @@
 **Reviewer:** GitHub Copilot (Claude Sonnet 4.5)  
 **Status:** 🟡 ALMOST READY - Critical Actions Required
 
+> ⚠️ **Superseded — see git history for current state.** Several items this review flagged as missing have since shipped: the dedicated About page (founder story), the Book and Mentorship pages, and full POPIA cookie-consent implementation (same day as this review — see `POPIA_COMPLIANCE_IMPLEMENTATION.md`). Treat the specific gaps below as a historical snapshot, not a live task list — check current code/git log before prioritizing anything from this doc.
+
 ---
 
 ## 📊 EXECUTIVE SUMMARY
