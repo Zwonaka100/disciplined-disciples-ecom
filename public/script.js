@@ -316,7 +316,35 @@ async function getPrimaryLogoDataUrl(preferredSelectors) {
         }
     }
 
+    // No matching element found on this page (none of the preferred/fallback selectors exist
+    // in the current DOM) - fetch the brand asset directly instead of giving up silently.
+    try {
+        const dataUrl = await fetchLogoAsDataUrl();
+        if (dataUrl) {
+            cachedPrimaryLogoDataUrl = dataUrl;
+            return dataUrl;
+        }
+    } catch (error) {
+        console.warn('Unable to fetch brand logo asset:', error);
+    }
+
     return null;
+}
+
+function fetchLogoAsDataUrl() {
+    return fetch('Assets/45.png')
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error(`Logo fetch failed with status ${response.status}`);
+            }
+            return response.blob();
+        })
+        .then((blob) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error('Failed to read logo blob.'));
+            reader.readAsDataURL(blob);
+        }));
 }
 
 async function convertImageElementToDataUrl(element) {
@@ -1415,11 +1443,6 @@ window.checkEbookEntitlementAndShow = async function() {
         const hasEbook = hasEntitlement || hasEbookFromOrders;
 
         if (hasEbook) {
-            const section = document.getElementById('ebook-download-section');
-            if (section) section.style.display = 'block';
-            const status = document.getElementById('ebook-download-status');
-            if (status) status.textContent = 'You own this eBook. Click download to get your copy.';
-
             // Populate the dedicated "My Library" card if it exists on this page.
             const librarySection = document.getElementById('my-library-section');
             const libraryItems = document.getElementById('my-library-items');
@@ -1472,39 +1495,6 @@ window.checkEbookEntitlementAndShow = async function() {
     } catch (err) {
         console.error('Failed to check ebook entitlement:', err);
     }
-};
-
-window.setupEbookDownloadButton = function() {
-    const btn = document.getElementById('download-ebook-btn');
-    const status = document.getElementById('ebook-download-status');
-    if (!btn) return;
-    btn.addEventListener('click', async function() {
-        try {
-            btn.setAttribute('disabled', 'true');
-            if (status) status.textContent = 'Preparing download...';
-
-            // Use Functions client (compat) to call the secure callable
-            if (typeof firebase === 'undefined' || !firebase.functions) {
-                throw new Error('Firebase Functions client not available');
-            }
-
-            const functions = firebase.functions();
-            const getLink = functions.httpsCallable('getEbookDownloadLink');
-            const result = await getLink({});
-            const url = result && result.data && result.data.url;
-            if (!url) throw new Error('No download URL returned');
-
-            // Open signed link in new tab
-            window.open(url, '_blank', 'noopener');
-            if (status) status.textContent = 'Download started. If it does not begin, check popup blocker.';
-        } catch (error) {
-            console.error('Ebook download failed:', error);
-            if (status) status.textContent = 'Unable to start download. Contact support.';
-            alert('Unable to prepare download: ' + (error.message || 'Unknown error'));
-        } finally {
-            btn.removeAttribute('disabled');
-        }
-    });
 };
 
 // --- Authentication UI Update Function ---
@@ -1805,9 +1795,6 @@ async function initFirebase() {
                         if (typeof window.checkEbookEntitlementAndShow === 'function') {
                             await window.checkEbookEntitlementAndShow();
                         }
-                        if (typeof window.setupEbookDownloadButton === 'function') {
-                            window.setupEbookDownloadButton();
-                        }
                     }
                     
                     if (document.body.classList.contains('checkout-page')) {
@@ -1860,7 +1847,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Ebook download logic for profile page
         if (window.location.pathname.includes('profile.html')) {
             if (typeof window.checkEbookEntitlementAndShow === 'function') window.checkEbookEntitlementAndShow();
-            if (typeof window.setupEbookDownloadButton === 'function') window.setupEbookDownloadButton();
         }
     } else {
         console.log("Firebase initialization failed. Using offline mode.");
@@ -2993,27 +2979,6 @@ window.ProfileApp = (function() {
                     return;
                 }
 
-                const ebookBtn = event.target.closest('button[data-action="download-ebook-order"]');
-                if (ebookBtn) {
-                    ebookBtn.setAttribute('disabled', 'true');
-                    try {
-                        if (typeof firebase === 'undefined' || !firebase.functions) {
-                            throw new Error('Firebase Functions client not available');
-                        }
-                        const getLink = firebase.functions().httpsCallable('getEbookDownloadLink');
-                        const result = await getLink({});
-                        const url = result && result.data && result.data.url;
-                        if (!url) throw new Error('No download URL returned');
-                        window.open(url, '_blank', 'noopener');
-                    } catch (error) {
-                        console.error('Ebook download failed:', error);
-                        showAlert('error', 'Unable to prepare your eBook download. Please try again or contact support.');
-                    } finally {
-                        ebookBtn.removeAttribute('disabled');
-                    }
-                    return;
-                }
-
                 const button = event.target.closest('button[data-action="download-invoice"]');
                 if (!button) {
                     return;
@@ -3029,6 +2994,24 @@ window.ProfileApp = (function() {
                 await downloadInvoicePdf(order);
             });
             tableBody.dataset.bound = 'true';
+        }
+
+        const mentorshipList = selectors.mentorshipList();
+        if (mentorshipList && !mentorshipList.dataset.bound) {
+            mentorshipList.addEventListener('click', async event => {
+                const button = event.target.closest('button[data-action="download-mentorship-invoice"]');
+                if (!button) {
+                    return;
+                }
+                const appId = button.dataset.appId;
+                const app = (state.mentorshipApplications || []).find(candidate => candidate.id === appId);
+                if (!app) {
+                    showAlert('error', 'We could not find that application. Please refresh and try again.');
+                    return;
+                }
+                await downloadMentorshipInvoicePdf(app);
+            });
+            mentorshipList.dataset.bound = 'true';
         }
     }
 
@@ -3171,6 +3154,13 @@ window.ProfileApp = (function() {
                 : 'bg-amber-100 text-amber-700';
             const date = coerceToDate(app.createdAt);
             const packageName = app.packageName || app.package || 'Mentorship';
+            const isPaid = ['paid', 'complete', 'completed'].includes(paymentRaw);
+            const invoiceButton = isPaid
+                ? `<button type="button" class="inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition" data-action="download-mentorship-invoice" data-app-id="${escapeHtml(app.id)}">
+                        <i class="fas fa-file-invoice"></i>
+                        Download Invoice
+                   </button>`
+                : '';
 
             return `<article class="rounded-lg border border-slate-200 bg-slate-50 p-4">
                 <div class="flex flex-wrap items-center justify-between gap-2">
@@ -3190,6 +3180,7 @@ window.ProfileApp = (function() {
                         <i class="fab fa-whatsapp"></i>
                         Message Mentor
                     </a>
+                    ${invoiceButton}
                 </div>
             </article>`;
         }).join('');
@@ -3242,7 +3233,6 @@ window.ProfileApp = (function() {
 
         const fulfillmentType = window.getOrderFulfillmentType ? window.getOrderFulfillmentType(order) : 'physical';
         const isDigitalOnly = fulfillmentType === 'digital';
-        const hasDigital = fulfillmentType === 'digital' || fulfillmentType === 'mixed';
         const typeBadgeHtml = fulfillmentType === 'digital'
             ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-100 text-indigo-700 ml-2">📖 Digital</span>'
             : (fulfillmentType === 'mixed'
@@ -3256,18 +3246,8 @@ window.ProfileApp = (function() {
         const message = escapeHtml(order.statusMessage || order.lastCustomerMessage || 'We will update you soon.');
         const timeline = renderStatusTimeline(order);
         const eta = (!isDigitalOnly && order.estimatedArrivalText) ? `<div class="mt-1 text-xs text-blue-600">ETA: ${escapeHtml(order.estimatedArrivalText)}</div>` : '';
-        const digitalNote = isDigitalOnly
-            ? '<div class="mt-2 text-xs text-indigo-700 bg-indigo-50 border border-indigo-200 rounded px-3 py-2">📖 Digital delivery — your eBook is in <strong>My Library</strong> at the top of this page.</div>'
-            : '';
-        const isPaidForDownload = ['paid', 'complete', 'completed', 'success'].includes((order.paymentStatus || '').toString().toLowerCase());
-        const downloadEbookButton = (hasDigital && isPaidForDownload)
-            ? `<button type="button" class="mt-3 mr-2 inline-flex items-center gap-2 rounded border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition" data-action="download-ebook-order" data-doc-id="${escapeHtml(order.docId)}">
-                    <i class="fas fa-book"></i>
-                    Download eBook
-               </button>`
-            : '';
         const invoiceButton = isInvoiceAvailable(order)
-            ? `<button type="button" class="mt-3 inline-flex items-center gap-2 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-600 hover:bg-blue-100 transition" data-action="download-invoice" data-doc-id="${escapeHtml(order.docId)}">
+            ? `<button type="button" class="mt-3 inline-flex items-center gap-2 rounded border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition" data-action="download-invoice" data-doc-id="${escapeHtml(order.docId)}">
                     <i class="fas fa-file-invoice"></i>
                     Download Invoice
                </button>`
@@ -3290,12 +3270,11 @@ window.ProfileApp = (function() {
                 ${items || '—'}
                 <div class="mt-2 text-xs text-gray-600 bg-gray-100 border border-gray-200 rounded px-3 py-2">${message}</div>
                 ${eta}
-                ${digitalNote}
                 <details class="mt-3">
                     <summary class="text-xs text-blue-600 cursor-pointer">See delivery journey</summary>
                     <ul class="mt-2 space-y-2">${timeline}</ul>
                 </details>
-                ${downloadEbookButton}${invoiceButton}
+                ${invoiceButton}
                 ${deleteButton}
             </td>
         `;
@@ -3416,6 +3395,12 @@ window.ProfileApp = (function() {
         URL.revokeObjectURL(url);
     }
 
+    // Single source of truth for the contact info shown on customer-facing PDFs.
+    // Mirrors SENDER_EMAIL/SUPPORT_PHONE in functions/index.js so the two never drift apart.
+    const OFFICIAL_EMAIL = 'nomaqhizazolile@gmail.com';
+    const OFFICIAL_PHONE = '+27 69 206 0618';
+    const BRAND_ACCENT_HEX = '#4f46e5';
+
     async function downloadOrdersPdf() {
         if (!state.filteredOrders.length) {
             showAlert('info', 'There are no orders to download right now.', true);
@@ -3433,8 +3418,7 @@ window.ProfileApp = (function() {
         const pageHeight = doc.internal.pageSize.getHeight();
         const margin = 48;
 
-        const accent = hexToRgb('#111827');
-        const accentSecondary = hexToRgb('#2563EB');
+        const accent = hexToRgb(BRAND_ACCENT_HEX);
         const neutralText = hexToRgb('#1F2937');
         const mutedText = hexToRgb('#4B5563');
         const subtleBackground = hexToRgb('#F3F4F6');
@@ -3442,34 +3426,38 @@ window.ProfileApp = (function() {
 
         const logoDataUrl = await getBrandLogoDataUrl();
 
-        doc.setFillColor(accent.r, accent.g, accent.b);
-        doc.rect(0, 0, pageWidth, 110, 'F');
-
+        // Clean white header so the logo shows properly, with a thin brand-accent rule beneath.
         if (logoDataUrl) {
-            doc.addImage(logoDataUrl, 'PNG', margin, 24, 72, 72);
+            doc.addImage(logoDataUrl, 'PNG', margin, 20, 64, 64);
         }
 
-        doc.setTextColor(255, 255, 255);
+        doc.setTextColor(neutralText.r, neutralText.g, neutralText.b);
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(22);
-        doc.text('Disciplined Disciples', margin + 92, 46);
-        doc.setFontSize(14);
+        doc.setFontSize(20);
+        doc.text('Disciplined Disciples', margin + 82, 40);
+        doc.setFontSize(13);
         doc.setFont('helvetica', 'normal');
-        doc.text('Order History Summary', margin + 92, 68);
-        doc.setFontSize(11);
-        doc.text(`Generated: ${new Date().toLocaleString('en-ZA')}`, pageWidth - margin, 46, { align: 'right' });
+        doc.setTextColor(mutedText.r, mutedText.g, mutedText.b);
+        doc.text('Order History Summary', margin + 82, 60);
+        doc.setFontSize(10);
+        doc.text(`Generated: ${new Date().toLocaleString('en-ZA')}`, pageWidth - margin, 40, { align: 'right' });
+
+        doc.setDrawColor(accent.r, accent.g, accent.b);
+        doc.setLineWidth(1.5);
+        doc.line(margin, 96, pageWidth - margin, 96);
+        doc.setLineWidth(1);
 
         const customerName = state.profile?.name || state.user?.email || 'Customer';
         const pendingCount = state.filteredOrders.filter(order => (order.status || '').toLowerCase().includes('pending')).length;
         const totalSpend = state.filteredOrders.reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0);
 
-        let cursorY = 140;
+        let cursorY = 120;
 
         doc.setFillColor(subtleBackground.r, subtleBackground.g, subtleBackground.b);
         doc.roundedRect(margin, cursorY, pageWidth - 2 * margin, 88, 12, 12, 'F');
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
-        doc.setTextColor(accentSecondary.r, accentSecondary.g, accentSecondary.b);
+        doc.setTextColor(accent.r, accent.g, accent.b);
         doc.text('At a glance', margin + 20, cursorY + 28);
 
         doc.setFont('helvetica', 'normal');
@@ -3556,7 +3544,7 @@ window.ProfileApp = (function() {
         doc.setFont('helvetica', 'italic');
         doc.setFontSize(10);
         doc.setTextColor(mutedText.r, mutedText.g, mutedText.b);
-        doc.text('Need help with an order? Reach us at support@disciplineddisciples.com.', margin, cursorY);
+        doc.text(`Need help with an order? Reach us at ${OFFICIAL_EMAIL} · ${OFFICIAL_PHONE}.`, margin, cursorY);
 
         doc.save(`disciplined-disciples-order-history-${Date.now()}.pdf`);
         showAlert('success', 'Order history PDF downloaded.', true);
@@ -3574,8 +3562,7 @@ window.ProfileApp = (function() {
         const pageHeight = doc.internal.pageSize.getHeight();
         const margin = 48;
 
-        const accent = hexToRgb('#111827');
-        const accentSecondary = hexToRgb('#2563EB');
+        const accent = hexToRgb(BRAND_ACCENT_HEX);
         const neutralText = hexToRgb('#1F2937');
         const mutedText = hexToRgb('#4B5563');
         const subtleBackground = hexToRgb('#F3F4F6');
@@ -3583,28 +3570,34 @@ window.ProfileApp = (function() {
 
         const logoDataUrl = await getBrandLogoDataUrl();
 
-        doc.setFillColor(accent.r, accent.g, accent.b);
-        doc.rect(0, 0, pageWidth, 120, 'F');
-
+        // Clean white header so the logo shows properly, with a thin brand-accent rule beneath.
         if (logoDataUrl) {
-            doc.addImage(logoDataUrl, 'PNG', margin, 26, 90, 90);
+            doc.addImage(logoDataUrl, 'PNG', margin, 22, 70, 70);
         }
 
-        doc.setTextColor(255, 255, 255);
+        doc.setTextColor(neutralText.r, neutralText.g, neutralText.b);
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(28);
-        doc.text('Invoice', margin + 110, 56);
+        doc.setFontSize(26);
+        doc.text('Invoice', margin + 90, 34);
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(12);
-        doc.text('Disciplined Disciples', margin + 110, 78);
-        doc.text('inspired@disciplineddisciples.com', margin + 110, 96);
+        doc.setFontSize(11);
+        doc.setTextColor(mutedText.r, mutedText.g, mutedText.b);
+        doc.text('Disciplined Disciples', margin + 90, 62);
+        doc.text(`${OFFICIAL_EMAIL}  ·  ${OFFICIAL_PHONE}`, margin + 90, 78);
 
         const invoiceDateText = `Invoice Date: ${new Date().toLocaleDateString('en-ZA')}`;
         const invoiceNumberText = `Invoice No: ${(order.orderId || order.docId || '').toUpperCase()}`;
-        doc.text(invoiceDateText, pageWidth - margin, 56, { align: 'right' });
-        doc.text(invoiceNumberText, pageWidth - margin, 78, { align: 'right' });
+        doc.setTextColor(mutedText.r, mutedText.g, mutedText.b);
+        doc.setFontSize(11);
+        doc.text(invoiceDateText, pageWidth - margin, 34, { align: 'right' });
+        doc.text(invoiceNumberText, pageWidth - margin, 50, { align: 'right' });
 
-        let cursorY = 150;
+        doc.setDrawColor(accent.r, accent.g, accent.b);
+        doc.setLineWidth(1.5);
+        doc.line(margin, 104, pageWidth - margin, 104);
+        doc.setLineWidth(1);
+
+        let cursorY = 130;
         const rightColumnX = pageWidth / 2 + 10;
 
         const fallbackEmail = order.customerEmail || order.deliveryAddress?.email || '';
@@ -3637,7 +3630,7 @@ window.ProfileApp = (function() {
             cursorY += 16;
         });
 
-        let orderDetailsY = 170;
+        let orderDetailsY = 150;
         const details = [
             `Order ID: ${order.orderId || order.docId}`,
             `Order Date: ${formatDate(order.orderDate)}`,
@@ -3745,11 +3738,11 @@ window.ProfileApp = (function() {
 
         const summaryBoxWidth = 220;
         doc.setFillColor(subtleBackground.r, subtleBackground.g, subtleBackground.b);
-        doc.roundedRect(pageWidth - margin - summaryBoxWidth, cursorY, summaryBoxWidth, 110, 10, 10, 'F');
+        doc.roundedRect(pageWidth - margin - summaryBoxWidth, cursorY, summaryBoxWidth, 130, 10, 10, 'F');
 
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
-        doc.setTextColor(accentSecondary.r, accentSecondary.g, accentSecondary.b);
+        doc.setTextColor(accent.r, accent.g, accent.b);
         doc.text('Payment Summary', pageWidth - margin - summaryBoxWidth + 16, cursorY + 24);
 
         doc.setFont('helvetica', 'normal');
@@ -3758,13 +3751,15 @@ window.ProfileApp = (function() {
         let summaryY = cursorY + 44;
         doc.text(`Subtotal: ${formatCurrency(subtotal)}`, pageWidth - margin - summaryBoxWidth + 16, summaryY);
         summaryY += 20;
+        doc.text('VAT (0% — not VAT registered): R0.00', pageWidth - margin - summaryBoxWidth + 16, summaryY, { maxWidth: summaryBoxWidth - 32 });
+        summaryY += 20;
         doc.text(`Shipping: ${formatCurrency(shipping)}`, pageWidth - margin - summaryBoxWidth + 16, summaryY);
         summaryY += 20;
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(accent.r, accent.g, accent.b);
         doc.text(`Total: ${formatCurrency(totalAmount)}`, pageWidth - margin - summaryBoxWidth + 16, summaryY);
 
-        cursorY += 140;
+        cursorY += 160;
 
         if (cursorY > pageHeight - margin) {
             doc.addPage();
@@ -3776,12 +3771,36 @@ window.ProfileApp = (function() {
         doc.setTextColor(mutedText.r, mutedText.g, mutedText.b);
         doc.text('Thank you for shopping with Disciplined Disciples.', margin, cursorY);
         cursorY += 18;
-        doc.text('If you have any questions about this invoice, reply to inspired@disciplineddisciples.com.', margin, cursorY);
+        doc.text(`If you have any questions about this invoice, reply to ${OFFICIAL_EMAIL} or WhatsApp ${OFFICIAL_PHONE}.`, margin, cursorY);
 
         doc.save(`disciplined-disciples-invoice-${order.orderId || order.docId}.pdf`);
         showAlert('success', 'Invoice PDF downloaded.', true);
     }
     window.downloadInvoicePdf = downloadInvoicePdf;
+
+    // Mentorship applications aren't stored as orders, so this adapts one into the same
+    // shape downloadInvoicePdf() expects, reusing the exact same template/branding.
+    async function downloadMentorshipInvoicePdf(app) {
+        const amount = Number(app.amountPaid) || Number(app.amount) || 0;
+        const orderLike = {
+            orderId: app.id,
+            docId: app.id,
+            customerEmail: app.email || '',
+            customerName: app.name || '',
+            orderDate: app.paymentCompletedAt || app.createdAt,
+            paymentStatus: app.paymentStatus || 'Paid',
+            status: 'Paid',
+            items: [{
+                name: `Mentorship — ${app.packageName || app.package || 'Programme'}`,
+                quantity: 1,
+                price: amount
+            }],
+            totalAmount: amount,
+            shippingFee: 0
+        };
+        await downloadInvoicePdf(orderLike);
+    }
+    window.downloadMentorshipInvoicePdf = downloadMentorshipInvoicePdf;
 
     function buildItemLabel(item) {
         const parts = [];
