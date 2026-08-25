@@ -28,5 +28,6 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DISCIPLINED_DISCIPLES_1 }}
           projectId: disciplined-disciples-1
+          channelId: live
 
 
