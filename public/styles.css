@@ -54,6 +54,12 @@ h1, h2, h3, h4, h5, h6 {
     align-items: center;
     padding-top: 1rem;
     padding-bottom: 1rem;
+    /* Header spans the full width so the logo sits near the left edge */
+    max-width: none;
+    width: 100%;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    box-sizing: border-box;
 }
 
 .logo {
@@ -126,6 +132,12 @@ h1, h2, h3, h4, h5, h6 {
         font-size: 0.88rem;
     }
 
+    .logo span {
+        font-size: 1.05rem !important;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 940px) {
     .logo span {
         display: none;
     }
