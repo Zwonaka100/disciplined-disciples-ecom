@@ -51,10 +51,10 @@
     }
     </script>
     
-    <link rel="stylesheet" href="styles.css?v=20261005b">
+    <link rel="stylesheet" href="styles.css?v=20261005c">
     <link rel="stylesheet" href="profile-avatar-fix.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="icon" type="image/png" href="Assets/45.png">
     
     <!-- Firebase SDKs -->
@@ -770,11 +770,11 @@
     <header class="header bg-white shadow">
         <div class="container flex justify-between items-center py-4">
             <a href="index.html" class="logo flex items-center">
-                <img src="Assets/45.png" alt="Disciplined Disciples Logo" class="logo-img">
+                <img src="Assets/45.png" alt="Disciplined Disciples Logo" style="height:48px; width:auto; margin-right:10px;">
                 <span class="font-bold text-xl">Disciplined Disciples</span>
             </a>
-            <nav class="nav-menu">
-                <ul class="flex space-x-6">
+    <nav class="nav-menu">
+    <ul class="flex space-x-6">
                     <li><a href="index.html" class="nav-link">Home</a></li>
                     <li class="nav-dropdown">
                         <a href="about.html" class="nav-link nav-dropdown-toggle active" aria-haspopup="true">About <i class="fas fa-chevron-down"></i></a>
@@ -787,33 +787,33 @@
                     <li><a href="journal.html" class="nav-link">Journal</a></li>
                     <li><a href="academy.html" class="nav-link">Academy</a></li>
                     <li><a href="shop.html" class="nav-link">Shop</a></li>
+                    <li><a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a></li>
                     <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a></li>
                     <li><a href="cart.html" class="nav-link" aria-label="Cart"><i class="fas fa-shopping-cart"></i></a></li>
                 </ul>
-                <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
-                
-                <!-- Profile Dropdown -->
-                <div id="profile-ribbon" style="display: none; position: relative;">
-                    <button id="profile-btn" style="
-                        width: 42px;
-                        height: 42px;
-                        border-radius: 50%;
-                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                        color: white;
-                        font-weight: 600;
-                        font-size: 14px;
-                        border: none;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-                        transition: all 0.3s ease;
-                    " onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.5)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)';">
-                        <span id="profile-ribbon-initials" style="letter-spacing: 1px;">U</span>
-                    </button>
-                </div>
-            </nav>
+    <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
+    <!-- Modern Profile Button -->
+    <div id="profile-ribbon" style="display: none; position: relative;">
+        <button id="profile-btn" style="
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+        " onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.5)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)';">
+            <span id="profile-ribbon-initials" style="letter-spacing: 1px;">U</span>
+        </button>
+    </div>
+</nav>
             <button class="menu-toggle" aria-label="Toggle navigation">
                 <i class="fas fa-bars"></i>
             </button>
@@ -827,6 +827,7 @@
                 <li><a href="journal.html" class="nav-link-mobile">Journal</a></li>
                 <li><a href="academy.html" class="nav-link-mobile">Academy</a></li>
                 <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
+                <li><a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-linkedin"></i> LinkedIn</a></li>
                 <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
                 <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
             </ul>
@@ -834,7 +835,7 @@
         </nav>
     </header>
 
-    <!-- Profile Dropdown Menu -->
+    <!-- Modern Profile Dropdown -->
     <div id="profile-dropdown" class="hidden" style="
         position: fixed;
         right: 16px;
@@ -875,6 +876,7 @@
             </button>
         </div>
     </div>
+
 
     <!-- Hero Section -->
     <section class="hero-about">
@@ -1035,13 +1037,14 @@
         </div>
     </section>
 
-    <!-- Footer Section -->
+    <!-- Footer -->
     <footer class="footer">
         <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
             <div class="footer-col">
                 <h3 class="footer-heading">Disciplined Disciples</h3>
                 <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
                 <div class="social-links">
+                    <a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Follow Zolile on LinkedIn"><i class="fab fa-linkedin"></i></a>
                     <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a>
                     <a href="#" class="social-link" aria-label="Follow us on Facebook"><i class="fab fa-facebook-f"></i></a>
                     <a href="#" class="social-link" aria-label="Follow us on Twitter"><i class="fab fa-twitter"></i></a>
@@ -1055,7 +1058,6 @@
                     <li><a href="academy.html" class="footer-link">Academy</a></li>
                     <li><a href="journal.html" class="footer-link">30-Day Journal</a></li>
                     <li><a href="speaking.html" class="footer-link">Speaking</a></li>
-                    <li><a href="about.html" class="footer-link">About</a></li>
                     <li><a href="blog.html" class="footer-link">Blog</a></li>
                     <li><a href="contact.html" class="footer-link">Contact</a></li>
                 </ul>
@@ -1159,11 +1161,7 @@
     </script>
 
     <!-- WhatsApp Floating Button -->
-    <a href="https://wa.me/27692060618?text=Hi%20Disciplined%20Disciples!%20I%20have%20a%20question%20about%20your%20products." 
-       class="whatsapp-float" 
-       target="_blank" 
-       rel="noopener noreferrer"
-       aria-label="Chat on WhatsApp">
+    <a href="https://wa.me/27692060618?text=Hi%20Disciplined%20Disciples!%20I%20have%20a%20question%20about%20your%20products." class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp">
         <i class="fab fa-whatsapp"></i>
     </a>
 

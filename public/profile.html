@@ -11,7 +11,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="styles.css?v=20261005b">
+    <link rel="stylesheet" href="styles.css?v=20261005c">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
         (function () {
             const hasSession = sessionStorage.getItem('userLoggedIn') && sessionStorage.getItem('userId');
@@ -101,7 +102,7 @@
         </nav>
     </header>
 
-    <!-- Profile Dropdown - floating compact dropdown -->
+    <!-- Modern Profile Dropdown -->
     <div id="profile-dropdown" class="hidden" style="
         position: fixed;
         right: 16px;
@@ -142,6 +143,7 @@
             </button>
         </div>
     </div>
+
 
     <div id="profile-loading" class="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-40 hidden">
         <div class="text-center">
@@ -281,7 +283,7 @@
         </section>
     </main>
 
-    <!-- Footer Section -->
+    <!-- Footer -->
     <footer class="footer">
         <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
             <div class="footer-col">
@@ -341,11 +343,7 @@
     </script>
 
     <!-- WhatsApp Floating Button -->
-    <a href="https://wa.me/27692060618?text=Hi%20Disciplined%20Disciples!%20I%20have%20a%20question%20about%20your%20products." 
-       class="whatsapp-float" 
-       target="_blank" 
-       rel="noopener noreferrer"
-       aria-label="Chat on WhatsApp">
+    <a href="https://wa.me/27692060618?text=Hi%20Disciplined%20Disciples!%20I%20have%20a%20question%20about%20your%20products." class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp">
         <i class="fab fa-whatsapp"></i>
     </a>
 

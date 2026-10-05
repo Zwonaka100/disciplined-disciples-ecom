@@ -6,9 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Page Not Found | Disciplined Disciples</title>
     <meta name="robots" content="noindex, nofollow">
-    <link rel="stylesheet" href="styles.css?v=20261005b">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="styles.css?v=20261005c">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="icon" type="image/png" href="Assets/45.png">
     <!-- Google Analytics 4 -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-2J1GWH59V4"></script>
@@ -197,6 +197,48 @@
         </nav>
     </header>
 
+    <!-- Modern Profile Dropdown -->
+    <div id="profile-dropdown" class="hidden" style="
+        position: fixed;
+        right: 16px;
+        top: 70px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        min-width: 220px;
+        z-index: 9999;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.05);
+    ">
+        <div style="padding: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <p id="dropdown-user-name" style="font-weight: 600; font-size: 15px; margin: 0;">Welcome!</p>
+            <p id="dropdown-user-email" style="font-size: 12px; opacity: 0.85; margin: 4px 0 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></p>
+        </div>
+        <div style="padding: 8px 0;">
+            <a href="profile.html" style="display: flex; align-items: center; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f3e8ff'; this.style.color='#7c3aed';" onmouseout="this.style.background='transparent'; this.style.color='#374151';">
+                <i class="fas fa-user-circle" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
+                My Profile
+            </a>
+            <a href="profile.html#orders" style="display: flex; align-items: center; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f3e8ff'; this.style.color='#7c3aed';" onmouseout="this.style.background='transparent'; this.style.color='#374151';">
+                <i class="fas fa-box" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
+                My Orders
+            </a>
+            <a href="journal.html" style="display: flex; align-items: center; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f3e8ff'; this.style.color='#7c3aed';" onmouseout="this.style.background='transparent'; this.style.color='#374151';">
+                <i class="fas fa-pen-nib" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
+                My Journal
+            </a>
+            <a href="profile.html#account" style="display: flex; align-items: center; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f3e8ff'; this.style.color='#7c3aed';" onmouseout="this.style.background='transparent'; this.style.color='#374151';">
+                <i class="fas fa-cog" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
+                Settings
+            </a>
+            <div style="height: 1px; background: #e5e7eb; margin: 8px 0;"></div>
+            <button id="dropdown-logout-btn" style="display: flex; align-items: center; width: 100%; padding: 12px 16px; color: #dc2626; background: none; border: none; font-size: 14px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#fef2f2';" onmouseout="this.style.background='transparent';">
+                <i class="fas fa-sign-out-alt" style="margin-right: 12px; width: 16px;"></i>
+                Logout
+            </button>
+        </div>
+    </div>
+
     <div class="not-found-container">
         <a href="index.html">
             <img src="Assets/45.png" alt="Disciplined Disciples" class="not-found-logo">
@@ -212,6 +254,7 @@
         </div>
     </div>
 
+    <!-- Footer -->
     <footer class="footer">
         <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
             <div class="footer-col">
@@ -259,13 +302,22 @@
     </footer>
 
     <!-- WhatsApp Floating Button -->
-    <a href="https://wa.me/27692060618?text=Hi%20Disciplined%20Disciples!%20I%20have%20a%20question%20about%20your%20products."
-       class="whatsapp-float"
-       target="_blank"
-       rel="noopener noreferrer"
-       aria-label="Chat on WhatsApp">
+    <a href="https://wa.me/27692060618?text=Hi%20Disciplined%20Disciples!%20I%20have%20a%20question%20about%20your%20products." class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp">
         <i class="fab fa-whatsapp"></i>
     </a>
+    <!-- Cookie Consent Banner (POPIA Compliance) -->
+    <div id="cookie-consent-banner" class="cookie-consent-banner">
+        <div class="cookie-consent-content">
+            <div class="cookie-consent-text">
+                <h3>🍪 We Value Your Privacy</h3>
+                <p>We use cookies to improve your experience and analyze site traffic. By clicking "Accept", you consent to our use of cookies. <a href="privacy-policy.html">Learn more</a></p>
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept">Accept</button>
+                <button id="cookie-decline-btn" class="cookie-btn cookie-btn-decline">Decline</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
 

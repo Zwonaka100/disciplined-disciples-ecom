@@ -27,8 +27,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="styles.css?v=20261005b">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="styles.css?v=20261005c">
     <link rel="stylesheet" href="profile-avatar-fix.css">
     <link rel="icon" type="image/png" href="Assets/45.png">
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-2J1GWH59V4"></script>
@@ -171,13 +171,13 @@
 </head>
 <body>
 <header class="header bg-white shadow">
-    <div class="container flex justify-between items-center py-4">
-        <a href="index.html" class="logo flex items-center">
-            <img src="Assets/45.png" alt="Disciplined Disciples Logo" style="height:48px;width:auto;margin-right:10px;">
-            <span class="font-bold text-xl">Disciplined Disciples</span>
-        </a>
-        <nav class="nav-menu">
-            <ul class="flex space-x-6">
+        <div class="container flex justify-between items-center py-4">
+            <a href="index.html" class="logo flex items-center">
+                <img src="Assets/45.png" alt="Disciplined Disciples Logo" style="height:48px; width:auto; margin-right:10px;">
+                <span class="font-bold text-xl">Disciplined Disciples</span>
+            </a>
+    <nav class="nav-menu">
+    <ul class="flex space-x-6">
                     <li><a href="index.html" class="nav-link">Home</a></li>
                     <li class="nav-dropdown">
                         <a href="about.html" class="nav-link nav-dropdown-toggle" aria-haspopup="true">About <i class="fas fa-chevron-down"></i></a>
@@ -190,20 +190,39 @@
                     <li><a href="journal.html" class="nav-link">Journal</a></li>
                     <li><a href="academy.html" class="nav-link">Academy</a></li>
                     <li><a href="shop.html" class="nav-link">Shop</a></li>
+                    <li><a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a></li>
                     <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a></li>
                     <li><a href="cart.html" class="nav-link" aria-label="Cart"><i class="fas fa-shopping-cart"></i></a></li>
                 </ul>
-            <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
-            <div id="profile-ribbon" style="display:none;position:relative;">
-                <button id="profile-btn" style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;font-weight:600;font-size:14px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 15px rgba(102,126,234,0.4);transition:all 0.3s ease;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
-                    <span id="profile-ribbon-initials">U</span>
-                </button>
-            </div>
-        </nav>
-        <button class="menu-toggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+    <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
+    <!-- Modern Profile Button -->
+    <div id="profile-ribbon" style="display: none; position: relative;">
+        <button id="profile-btn" style="
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+        " onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.5)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)';">
+            <span id="profile-ribbon-initials" style="letter-spacing: 1px;">U</span>
+        </button>
     </div>
-    <nav class="mobile-menu">
-        <ul class="py-4">
+</nav>
+            <button class="menu-toggle" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <nav class="mobile-menu">
+            <ul class="py-4">
                 <li><a href="index.html" class="nav-link-mobile">Home</a></li>
                 <li><a href="about.html" class="nav-link-mobile">About</a></li>
                 <li><a href="speaking.html" class="nav-link-mobile nav-sub">Speaking</a></li>
@@ -211,26 +230,56 @@
                 <li><a href="journal.html" class="nav-link-mobile">Journal</a></li>
                 <li><a href="academy.html" class="nav-link-mobile">Academy</a></li>
                 <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
+                <li><a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-linkedin"></i> LinkedIn</a></li>
                 <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
                 <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
             </ul>
-        <a href="login-signup.html" id="login-signup-link-mobile" class="nav-link-mobile"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
-    </nav>
-</header>
+            <a href="login-signup.html" id="login-signup-link-mobile" class="nav-link-mobile"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
+        </nav>
+    </header>
 
-<div id="profile-dropdown" class="hidden" style="position:fixed;right:16px;top:70px;background:#fff;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.15);min-width:220px;z-index:9999;overflow:hidden;border:1px solid rgba(0,0,0,0.05);">
-    <div style="padding:16px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;">
-        <p id="dropdown-user-name" style="font-weight:600;font-size:15px;margin:0;">Welcome!</p>
-        <p id="dropdown-user-email" style="font-size:12px;opacity:0.85;margin:4px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></p>
+    <!-- Modern Profile Dropdown -->
+    <div id="profile-dropdown" class="hidden" style="
+        position: fixed;
+        right: 16px;
+        top: 70px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        min-width: 220px;
+        z-index: 9999;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.05);
+    ">
+        <div style="padding: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <p id="dropdown-user-name" style="font-weight: 600; font-size: 15px; margin: 0;">Welcome!</p>
+            <p id="dropdown-user-email" style="font-size: 12px; opacity: 0.85; margin: 4px 0 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></p>
+        </div>
+        <div style="padding: 8px 0;">
+            <a href="profile.html" style="display: flex; align-items: center; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f3e8ff'; this.style.color='#7c3aed';" onmouseout="this.style.background='transparent'; this.style.color='#374151';">
+                <i class="fas fa-user-circle" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
+                My Profile
+            </a>
+            <a href="profile.html#orders" style="display: flex; align-items: center; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f3e8ff'; this.style.color='#7c3aed';" onmouseout="this.style.background='transparent'; this.style.color='#374151';">
+                <i class="fas fa-box" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
+                My Orders
+            </a>
+            <a href="journal.html" style="display: flex; align-items: center; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f3e8ff'; this.style.color='#7c3aed';" onmouseout="this.style.background='transparent'; this.style.color='#374151';">
+                <i class="fas fa-pen-nib" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
+                My Journal
+            </a>
+            <a href="profile.html#account" style="display: flex; align-items: center; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f3e8ff'; this.style.color='#7c3aed';" onmouseout="this.style.background='transparent'; this.style.color='#374151';">
+                <i class="fas fa-cog" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
+                Settings
+            </a>
+            <div style="height: 1px; background: #e5e7eb; margin: 8px 0;"></div>
+            <button id="dropdown-logout-btn" style="display: flex; align-items: center; width: 100%; padding: 12px 16px; color: #dc2626; background: none; border: none; font-size: 14px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#fef2f2';" onmouseout="this.style.background='transparent';">
+                <i class="fas fa-sign-out-alt" style="margin-right: 12px; width: 16px;"></i>
+                Logout
+            </button>
+        </div>
     </div>
-    <div style="padding:8px 0;">
-        <a href="profile.html" style="display:flex;align-items:center;padding:12px 16px;color:#374151;text-decoration:none;font-size:14px;" onmouseover="this.style.background='#f0f4ff';this.style.color='#007bff';" onmouseout="this.style.background='transparent';this.style.color='#374151';"><i class="fas fa-user-circle" style="margin-right:12px;color:#9ca3af;width:16px;"></i>My Profile</a>
-        <a href="profile.html#orders" style="display:flex;align-items:center;padding:12px 16px;color:#374151;text-decoration:none;font-size:14px;" onmouseover="this.style.background='#f0f4ff';this.style.color='#007bff';" onmouseout="this.style.background='transparent';this.style.color='#374151';"><i class="fas fa-box" style="margin-right:12px;color:#9ca3af;width:16px;"></i>My Orders</a>
-        <a href="journal.html" style="display:flex;align-items:center;padding:12px 16px;color:#374151;text-decoration:none;font-size:14px;" onmouseover="this.style.background='#f0f4ff';this.style.color='#007bff';" onmouseout="this.style.background='transparent';this.style.color='#374151';"><i class="fas fa-pen-nib" style="margin-right:12px;color:#9ca3af;width:16px;"></i>My Journal</a>
-        <div style="height:1px;background:#e5e7eb;margin:8px 0;"></div>
-        <button id="dropdown-logout-btn" style="display:flex;align-items:center;width:100%;padding:12px 16px;color:#dc2626;background:none;border:none;font-size:14px;cursor:pointer;" onmouseover="this.style.background='#fef2f2';" onmouseout="this.style.background='transparent';"><i class="fas fa-sign-out-alt" style="margin-right:12px;width:16px;"></i>Logout</button>
-    </div>
-</div>
+
 
 <section class="blog-hero">
     <div class="blog-hero-bg"></div>
@@ -262,38 +311,57 @@
 
 <div class="blog-toast" id="blog-toast"></div>
 
-<footer class="footer bg-gray-800 text-white py-8 mt-12">
-    <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
-        <div class="footer-col">
-            <h3 class="footer-heading">Disciplined Disciples</h3>
-            <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
-            <div class="social-links">
-                <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="social-link"><i class="fab fa-instagram"></i></a>
-                <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
-                <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="footer-col">
+                <h3 class="footer-heading">Disciplined Disciples</h3>
+                <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
+                <div class="social-links">
+                    <a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Follow Zolile on LinkedIn"><i class="fab fa-linkedin"></i></a>
+                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link" aria-label="Follow us on Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-link" aria-label="Follow us on Twitter"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Quick Links</h3>
+                <ul>
+                    <li><a href="index.html" class="footer-link">Home</a></li>
+                    <li><a href="shop.html" class="footer-link">Shop</a></li>
+                    <li><a href="academy.html" class="footer-link">Academy</a></li>
+                    <li><a href="journal.html" class="footer-link">30-Day Journal</a></li>
+                    <li><a href="speaking.html" class="footer-link">Speaking</a></li>
+                    <li><a href="blog.html" class="footer-link">Blog</a></li>
+                    <li><a href="contact.html" class="footer-link">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Support</h3>
+                <ul>
+                    <li><a href="faq.html" class="footer-link">FAQs</a></li>
+                    <li><a href="shipping-returns.html" class="footer-link">Shipping & Returns</a></li>
+                    <li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li>
+                    <li><a href="terms-of-service.html" class="footer-link">Terms of Service</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading text-lg font-semibold mb-4">Contact Us</h3>
+                <p class="footer-text text-gray-300 text-sm mb-2">Email: nomaqhizazolile@gmail.com</p>
+                <p class="footer-text text-gray-300 text-sm mb-2">Phone: +27 69 206 0618</p>
+                <p class="footer-text text-gray-300 text-sm">Johannesburg, South Africa</p>
             </div>
         </div>
-        <div class="footer-col"><h3 class="footer-heading">Quick Links</h3><ul><li><a href="index.html" class="footer-link">Home</a></li><li><a href="shop.html" class="footer-link">Shop</a></li>
-<li><a href="academy.html" class="footer-link">Academy</a></li>
-<li><a href="journal.html" class="footer-link">30-Day Journal</a></li>
-<li><a href="speaking.html" class="footer-link">Speaking</a></li><li><a href="blog.html" class="footer-link active">Blog</a></li><li><a href="contact.html" class="footer-link">Contact</a></li></ul></div>
-        <div class="footer-col"><h3 class="footer-heading">Support</h3><ul><li><a href="faq.html" class="footer-link">FAQs</a></li><li><a href="shipping-returns.html" class="footer-link">Shipping &amp; Returns</a></li><li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li><li><a href="terms-of-service.html" class="footer-link">Terms of Service</a></li></ul></div>
-        <div class="footer-col"><h3 class="footer-heading">Contact Us</h3><p class="footer-text">Email: nomaqhizazolile@gmail.com</p><p class="footer-text">Phone: +27 69 206 0618</p><p class="footer-text">Johannesburg, South Africa</p></div>
-    </div>
-    <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
-        <p>&copy; 2026 Disciplined Disciples. All rights reserved.</p>
-        <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color:#007bff;">Zande Technologies</a></p>
-    </div>
-</footer>
+        <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
+            <p>&copy; 2026 Disciplined Disciples. All rights reserved.</p>
+            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> 💜</p>
+        </div>
+    </footer>
 
-<a href="https://wa.me/27692060618?text=Hi%20Disciplined%20Disciples!%20I%20have%20a%20question." class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp"><i class="fab fa-whatsapp"></i></a>
+<a href="https://wa.me/27692060618?text=Hi%20Disciplined%20Disciples!%20I%20have%20a%20question." class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
 
-<div id="cookie-consent-banner" class="cookie-consent-banner">
-    <div class="cookie-consent-content">
-        <div class="cookie-consent-text"><h3>We Value Your Privacy</h3><p>We use cookies to improve your experience. <a href="privacy-policy.html">Learn more</a></p></div>
-        <div class="cookie-consent-actions"><button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept">Accept</button><button id="cookie-decline-btn" class="cookie-btn cookie-btn-decline">Decline</button></div>
-    </div>
-</div>
 
 <script>
 if(window.location.hostname==='disciplineddisciples.co.za'){window.location.href=window.location.href.replace('disciplineddisciples.co.za','www.disciplineddisciples.co.za');}
@@ -485,5 +553,18 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 </script>
 <script src="script.js?v=20261005a"></script>
+    <!-- Cookie Consent Banner (POPIA Compliance) -->
+    <div id="cookie-consent-banner" class="cookie-consent-banner">
+        <div class="cookie-consent-content">
+            <div class="cookie-consent-text">
+                <h3>🍪 We Value Your Privacy</h3>
+                <p>We use cookies to improve your experience and analyze site traffic. By clicking "Accept", you consent to our use of cookies. <a href="privacy-policy.html">Learn more</a></p>
+            </div>
+            <div class="cookie-consent-actions">
+                <button id="cookie-accept-btn" class="cookie-btn cookie-btn-accept">Accept</button>
+                <button id="cookie-decline-btn" class="cookie-btn cookie-btn-decline">Decline</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
