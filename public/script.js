@@ -811,6 +811,72 @@ window.getAllProducts = () => window.products || products;
 // Expose initial products for manual re-upload of originals with options
 window.getInitialProducts = () => products;
 
+// --- 30-Day Journal price ---
+// Standalone price unless an admin sets another in Admin > Book (siteContent/journal).
+// Keep in step with JOURNAL_DEFAULT_PRICE in functions/index.js.
+window.JOURNAL_DEFAULT_PRICE = 99;
+window.resolveJournalPrice = function(data) {
+    data = data || {};
+    if (data.active === false) return null; // Academy-only
+    const price = Number(data.price);
+    return Number.isFinite(price) && price > 0 ? price : window.JOURNAL_DEFAULT_PRICE;
+};
+
+// --- Physical book stock ---
+// Controlled from Admin > Book (siteContent/book.physicalStock + physicalRestockDate).
+// "auto" (the default) means: out of stock until the restock date, then back in stock.
+window.PHYSICAL_BOOK_DEFAULT_RESTOCK = '2026-10-07'; // Wednesday 7 October 2026
+
+function sastDateKey(date) {
+    const d = new Date((date || new Date()).getTime() + 2 * 60 * 60 * 1000);
+    return d.toISOString().slice(0, 10);
+}
+
+function formatRestockDate(dateKey) {
+    const d = new Date(`${dateKey}T12:00:00Z`);
+    if (Number.isNaN(d.getTime())) return dateKey;
+    return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+}
+
+function physicalStockFrom(data) {
+    const mode = String(data.physicalStock || 'auto').toLowerCase();
+    const restock = String(data.physicalRestockDate || window.PHYSICAL_BOOK_DEFAULT_RESTOCK || '').trim();
+    const today = sastDateKey(new Date());
+    const futureRestock = /^\d{4}-\d{2}-\d{2}$/.test(restock) && restock > today ? restock : null;
+
+    if (mode === 'in_stock') return { inStock: true };
+    if (mode === 'out_of_stock' || (mode === 'auto' && futureRestock)) {
+        const backLabel = futureRestock ? formatRestockDate(futureRestock) : null;
+        return {
+            inStock: false,
+            restockDate: futureRestock,
+            label: backLabel ? `Back in stock ${backLabel}` : 'Back in stock soon',
+            message: backLabel
+                ? `The physical book is out of stock until ${backLabel}. The eBook is available instantly.`
+                : 'The physical book is out of stock right now. The eBook is available instantly.'
+        };
+    }
+    return { inStock: true };
+}
+
+// Instant answer from the built-in default (no network), used before Firestore responds.
+window.getDefaultPhysicalBookStock = function() {
+    return physicalStockFrom({});
+};
+
+window.getPhysicalBookStock = async function() {
+    let data = {};
+    try {
+        if (window.db) {
+            const snap = await window.db.collection('siteContent').doc('book').get();
+            if (snap.exists) data = snap.data() || {};
+        }
+    } catch (err) {
+        console.warn('Book stock lookup failed, using default:', err && err.message ? err.message : err);
+    }
+    return physicalStockFrom(data);
+};
+
 // --- Constants ---
 const VAT_RATE = 0; // Temporarily zero-rated for testing
 const SHIPPING_COST = 0.00; // Shipping is selected at checkout, so cart stays zero
@@ -1269,87 +1335,47 @@ window.initiatePayfastPayment = async (orderItems, totalAmount, deliveryAddress)
 };
 
 // --- Payment Completion Handler ---
+// Runs when a customer comes back from PayFast. Payment status is NEVER set here:
+// only the PayFast webhook (after verifying the payment with PayFast) or an admin
+// can mark an order paid. The browser just records that the customer returned,
+// which admin sees as a hint if PayFast's confirmation is ever slow.
 window.handlePaymentCompletion = async () => {
     await waitForFirebaseReady();
 
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get('payment');
-    const payfastPaymentId = urlParams.get('pf_payment_id');
     const orderDocId = localStorage.getItem('pendingOrderDocId') || urlParams.get('order') || localStorage.getItem('pendingOrderId');
-    const successViaThankYou = isOnPage('thank-you');
-    const isSuccessful = paymentStatus === 'success' || !!payfastPaymentId || successViaThankYou;
+    const returnedFromPayfast = isOnPage('thank-you') || paymentStatus === 'success' || !!urlParams.get('pf_payment_id');
 
     if (!window.db || typeof window.db.collection !== 'function') {
         console.warn('Payment completion skipped: Firestore is not ready yet.');
         return;
     }
 
-    console.log('handlePaymentCompletion invoked', {
-        paymentStatus,
-        payfastPaymentId,
-        orderDocId,
-        successViaThankYou,
-        isSuccessful
-    });
-
-    if (isSuccessful && orderDocId) {
+    if (returnedFromPayfast && orderDocId) {
         try {
-            const ordersCollection = window.db.collection('artifacts').doc('default-app-id').collection('orders');
-            const orderRef = ordersCollection.doc(orderDocId);
+            const orderRef = window.db.collection('artifacts').doc('default-app-id').collection('orders').doc(orderDocId);
             const snapshot = await orderRef.get();
-
-            if (!snapshot.exists) {
-                console.warn('Order not found for payment completion:', orderDocId);
-            } else {
-                const orderData = snapshot.data() || {};
-                const alreadyCompleted = (orderData.paymentStatus || '').toLowerCase() === 'paid';
-                const template = window.ORDER_STATUS_TEMPLATES?.orderPlaced || {
-                    key: 'order_placed',
-                    status: 'Order Placed',
-                    label: 'Order placed',
-                    icon: '🎉',
-                    message: '🎉 Thank you! Your Disciplined Disciples order is officially locked in.'
-                };
-
-                if (!alreadyCompleted) {
-                    const context = Object.assign({}, orderData, {
-                        customerName: orderData.customerName || orderData.deliveryAddress?.name,
-                        deliveryAddress: orderData.deliveryAddress || {}
-                    });
-                    const { payload } = buildStatusUpdatePayload(template, context, {}, { email: 'system@disciplineddisciples.co.za', uid: 'system' });
-                    payload.paymentGateway = 'PayFast';
-                    payload.paymentReference = payfastPaymentId || payload.paymentReference || null;
-                    payload.paymentStatus = 'Paid';
-
-                    await orderRef.set(payload, { merge: true });
-                }
+            const orderData = snapshot.exists ? (snapshot.data() || {}) : null;
+            if (orderData && !orderData.customerReturnedAt && isAwaitingPaymentOrder(orderData)) {
+                await orderRef.update({ customerReturnedAt: window.serverTimestamp ? window.serverTimestamp() : new Date() });
             }
+        } catch (error) {
+            // Not critical: the webhook confirms the payment either way.
+            console.warn('Could not record PayFast return for order:', error && error.message ? error.message : error);
+        }
 
-            localStorage.removeItem('disciplinedDisciplesCart');
-            localStorage.removeItem('cart');
-            localStorage.removeItem('pendingOrderId');
-            localStorage.removeItem('pendingOrderDocId');
-            window.cart = [];
-            if (typeof renderCartIcon === 'function') {
-                renderCartIcon();
-            }
-            showMessage('Payment successful! Your order is being processed.', 'success');
+        localStorage.removeItem('disciplinedDisciplesCart');
+        localStorage.removeItem('cart');
+        window.cart = [];
+        if (typeof renderCartIcon === 'function') {
+            renderCartIcon();
+        }
 
-            if (isOnPage('profile')) {
-                setTimeout(() => {
-                    const ordersTab = document.querySelector('[data-tab="orders"]');
-                    if (ordersTab) {
-                        ordersTab.click();
-                    }
-                }, 1000);
-            }
-
+        if (!isOnPage('thank-you')) {
+            showMessage('Thanks! We are confirming your payment with PayFast. Your order will update automatically.', 'info');
             const newUrl = window.location.pathname;
             window.history.replaceState({}, document.title, newUrl);
-
-        } catch (error) {
-            console.error('Error updating order status:', error);
-            showMessage('Payment received, but there was an issue updating your order. Please contact support.', 'warning');
         }
     } else if (paymentStatus === 'cancelled') {
         showMessage('Payment was cancelled. Your order is still pending.', 'info');
@@ -1357,7 +1383,6 @@ window.handlePaymentCompletion = async () => {
         const newUrl = window.location.pathname;
         window.history.replaceState({}, document.title, newUrl);
     }
-
 };
 
 // --- Ebook entitlement and download helpers ---
@@ -1404,15 +1429,50 @@ window.getDigitalItems = function(items) {
     });
 };
 
+// eBook detection is strict (product id or name) so other digital products such as
+// the 30-Day Journal never show up as the eBook.
+function isEbookLineItem(item) {
+    if (!item) return false;
+    const productId = (item.productId || item.id || '').toString().toLowerCase();
+    const name = (item.name || '').toString().toLowerCase();
+    return productId === 'ebook' || name.includes('ebook');
+}
+
+// Journal access: paid Academy packages and journal purchases unlock it. If there is
+// no access record yet, ask the server to check (this is what unlocks the journal
+// automatically for people who were already mentees before the journal existed).
+window.getJournalAccess = async function(options = {}) {
+    if (!window.db || !window.currentUserId) return false;
+    try {
+        const snap = await window.db.collection('journalAccess').doc(window.currentUserId).get();
+        if (snap.exists && snap.data() && snap.data().granted === true) return true;
+    } catch (err) {
+        console.warn('[Journal] access lookup failed:', err && err.message ? err.message : err);
+    }
+    if (options.claim === false) return false;
+    const claimKey = 'journalClaimChecked_' + window.currentUserId;
+    try {
+        if (sessionStorage.getItem(claimKey) && !options.force) return false;
+    } catch (e) { /* storage unavailable */ }
+    try {
+        if (typeof firebase === 'undefined' || !firebase.functions) return false;
+        const claim = firebase.functions().httpsCallable('claimJournalAccess');
+        const result = await claim({});
+        try { sessionStorage.setItem(claimKey, '1'); } catch (e) { /* ignore */ }
+        return !!(result && result.data && result.data.granted);
+    } catch (err) {
+        console.warn('[Journal] access claim failed:', err && err.message ? err.message : err);
+        return false;
+    }
+};
+
 window.checkEbookEntitlementAndShow = async function() {
     try {
         if (!window.db || !window.currentUserId) {
-            console.log('[MyLibrary] Skipped - db or currentUserId not ready yet.', { hasDb: !!window.db, currentUserId: window.currentUserId });
             return;
         }
         const db = window.db;
         const userId = window.currentUserId;
-        console.log('[MyLibrary] Checking ebook entitlement for userId:', userId);
 
         // Prefer explicit entitlement records, then fall back to paid-order scan for legacy data.
         let hasEntitlement = false;
@@ -1428,94 +1488,109 @@ window.checkEbookEntitlementAndShow = async function() {
                 (entTopSnap.exists && entTopSnap.data() && entTopSnap.data().hasEbook === true) ||
                 (entItemsSnap && !entItemsSnap.empty)
             );
-            console.log('[MyLibrary] Entitlement doc check:', { topExists: entTopSnap.exists, topData: entTopSnap.exists ? entTopSnap.data() : null, itemsEmpty: entItemsSnap.empty, hasEntitlement });
         } catch (entErr) {
             console.warn('[MyLibrary] Entitlement lookup failed, falling back to order scan:', entErr && entErr.message ? entErr.message : entErr);
         }
 
-        const ordersRef = db.collection('artifacts').doc('default-app-id').collection('orders');
-        const ordersSnap = await ordersRef.where('userId', '==', userId).get();
-        console.log(`[MyLibrary] Order scan found ${ordersSnap.size} order(s) for userId ${userId}.`);
-
         let hasEbookFromOrders = false;
         let earliestPurchase = null;
-        ordersSnap.forEach(doc => {
-            const data = doc.data() || {};
-            const paid = ['paid', 'complete', 'completed', 'success'].includes((data.paymentStatus || '').toString().toLowerCase());
-            const items = Array.isArray(data.items) ? data.items : [];
-            const matchesEbook = items.some(i => {
-                const productId = (i.productId || i.id || '').toString().toLowerCase();
-                const name = (i.name || '').toString().toLowerCase();
-                const ft = (i.fulfillmentType || '').toString().toLowerCase();
-                return ft === 'digital' || productId === 'ebook' || name.includes('ebook');
-            });
-            console.log(`[MyLibrary] Order ${doc.id}: paymentStatus="${data.paymentStatus}" paid=${paid} matchesEbook=${matchesEbook}`, items);
-            if (paid && matchesEbook) {
-                hasEbookFromOrders = true;
-                const orderDate = data.orderDate && data.orderDate.toDate ? data.orderDate.toDate() : (data.orderDate ? new Date(data.orderDate) : null);
-                if (orderDate && (!earliestPurchase || orderDate < earliestPurchase)) {
-                    earliestPurchase = orderDate;
+        try {
+            const ordersSnap = await db.collection('artifacts').doc('default-app-id').collection('orders')
+                .where('userId', '==', userId).get();
+            ordersSnap.forEach(doc => {
+                const data = doc.data() || {};
+                const paid = ['paid', 'complete', 'completed', 'success'].includes((data.paymentStatus || '').toString().toLowerCase());
+                const items = Array.isArray(data.items) ? data.items : [];
+                if (paid && items.some(isEbookLineItem)) {
+                    hasEbookFromOrders = true;
+                    const orderDate = data.orderDate && data.orderDate.toDate ? data.orderDate.toDate() : (data.orderDate ? new Date(data.orderDate) : null);
+                    if (orderDate && (!earliestPurchase || orderDate < earliestPurchase)) {
+                        earliestPurchase = orderDate;
+                    }
                 }
-            }
-        });
+            });
+        } catch (orderErr) {
+            console.warn('[MyLibrary] Order scan failed:', orderErr && orderErr.message ? orderErr.message : orderErr);
+        }
 
         const hasEbook = hasEntitlement || hasEbookFromOrders;
-        console.log('[MyLibrary] Final decision:', { hasEntitlement, hasEbookFromOrders, hasEbook });
+        const hasJournal = await window.getJournalAccess();
 
+        const librarySection = document.getElementById('my-library-section');
+        const libraryItems = document.getElementById('my-library-items');
+        if (!librarySection || !libraryItems || (!hasEbook && !hasJournal)) {
+            return;
+        }
+
+        const cards = [];
         if (hasEbook) {
-            // Populate the dedicated "My Library" card if it exists on this page.
-            const librarySection = document.getElementById('my-library-section');
-            const libraryItems = document.getElementById('my-library-items');
-            if (librarySection && libraryItems) {
-                const purchasedOn = earliestPurchase ? earliestPurchase.toLocaleDateString('en-ZA', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
-                libraryItems.innerHTML = `
-                    <div class="flex gap-4 p-4 bg-white border border-indigo-100 rounded-lg">
-                        <img src="Assets/book.png" alt="Relentlessly Disciplined eBook cover" class="w-20 h-28 object-cover rounded shadow-sm flex-shrink-0" onerror="this.style.display='none'" />
-                        <div class="flex flex-col justify-between flex-1 min-w-0">
-                            <div>
-                                <h3 class="font-semibold text-gray-900 truncate">Relentlessly Disciplined eBook</h3>
-                                <p class="text-xs text-gray-500 mt-1">PDF • Permanent access</p>
-                                ${purchasedOn ? `<p class="text-xs text-gray-400 mt-1">Purchased ${purchasedOn}</p>` : ''}
-                            </div>
-                            <button id="library-download-ebook" type="button" class="mt-3 inline-flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 self-start">
-                                <i class="fas fa-download"></i>
-                                Download eBook
-                            </button>
+            const purchasedOn = earliestPurchase ? earliestPurchase.toLocaleDateString('en-ZA', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+            cards.push(`
+                <div class="flex gap-4 p-4 bg-white border border-indigo-100 rounded-lg">
+                    <img src="Assets/book.png" alt="Relentlessly Disciplined eBook cover" class="w-20 h-28 object-cover rounded shadow-sm flex-shrink-0" onerror="this.style.display='none'" />
+                    <div class="flex flex-col justify-between flex-1 min-w-0">
+                        <div>
+                            <h3 class="font-semibold text-gray-900 truncate">Relentlessly Disciplined eBook</h3>
+                            <p class="text-xs text-gray-500 mt-1">PDF • Permanent access</p>
+                            ${purchasedOn ? `<p class="text-xs text-gray-400 mt-1">Purchased ${purchasedOn}</p>` : ''}
                         </div>
-                    </div>`;
-                librarySection.classList.remove('hidden');
+                        <button id="library-download-ebook" type="button" class="mt-3 inline-flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 self-start">
+                            <i class="fas fa-download"></i>
+                            Download eBook
+                        </button>
+                    </div>
+                </div>`);
+        }
+        if (hasJournal) {
+            cards.push(`
+                <div class="flex gap-4 p-4 bg-white border border-violet-100 rounded-lg">
+                    <div class="w-20 h-28 rounded shadow-sm flex-shrink-0 flex flex-col items-center justify-center text-white text-center" style="background: linear-gradient(135deg, #4f46e5, #7c3aed);">
+                        <i class="fas fa-book-open text-xl"></i>
+                        <span class="text-[10px] font-bold mt-2 leading-tight px-1">30-DAY<br>JOURNAL</span>
+                    </div>
+                    <div class="flex flex-col justify-between flex-1 min-w-0">
+                        <div>
+                            <h3 class="font-semibold text-gray-900 truncate">30-Day Discipline Journal</h3>
+                            <p class="text-xs text-gray-500 mt-1">Online journal • Printable version • Permanent access</p>
+                            <p class="text-xs text-gray-400 mt-1">Your entries are private to you.</p>
+                        </div>
+                        <a href="journal.html" class="mt-3 inline-flex items-center justify-center gap-2 rounded-md bg-violet-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-violet-700 self-start">
+                            <i class="fas fa-pen-nib"></i>
+                            Open Journal
+                        </a>
+                    </div>
+                </div>`);
+        }
+        libraryItems.innerHTML = cards.join('');
+        librarySection.classList.remove('hidden');
 
-                const libBtn = document.getElementById('library-download-ebook');
-                if (libBtn && !libBtn.dataset.bound) {
-                    libBtn.dataset.bound = 'true';
-                    libBtn.addEventListener('click', async () => {
-                        libBtn.setAttribute('disabled', 'true');
-                        const originalHtml = libBtn.innerHTML;
-                        libBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
-                        try {
-                            if (typeof firebase === 'undefined' || !firebase.functions) {
-                                throw new Error('Firebase Functions client not available');
-                            }
-                            const getLink = firebase.functions().httpsCallable('getEbookDownloadLink');
-                            const result = await getLink({});
-                            const url = result && result.data && result.data.url;
-                            if (!url) throw new Error('No download URL returned');
-                            window.open(url, '_blank', 'noopener');
-                        } catch (error) {
-                            console.error('Library ebook download failed:', error);
-                            alert('Unable to prepare your eBook download. Please try again or contact support.');
-                        } finally {
-                            libBtn.removeAttribute('disabled');
-                            libBtn.innerHTML = originalHtml;
-                        }
-                    });
+        const libBtn = document.getElementById('library-download-ebook');
+        if (libBtn && !libBtn.dataset.bound) {
+            libBtn.dataset.bound = 'true';
+            libBtn.addEventListener('click', async () => {
+                libBtn.setAttribute('disabled', 'true');
+                const originalHtml = libBtn.innerHTML;
+                libBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
+                try {
+                    if (typeof firebase === 'undefined' || !firebase.functions) {
+                        throw new Error('Firebase Functions client not available');
+                    }
+                    const getLink = firebase.functions().httpsCallable('getEbookDownloadLink');
+                    const result = await getLink({});
+                    const url = result && result.data && result.data.url;
+                    if (!url) throw new Error('No download URL returned');
+                    window.open(url, '_blank', 'noopener');
+                } catch (error) {
+                    console.error('Library ebook download failed:', error);
+                    alert('Unable to prepare your eBook download. Please try again or contact support.');
+                } finally {
+                    libBtn.removeAttribute('disabled');
+                    libBtn.innerHTML = originalHtml;
                 }
-            }
-        } else {
-            console.log('[MyLibrary] User is not entitled to the ebook - section stays hidden.');
+            });
         }
     } catch (err) {
-        console.error('[MyLibrary] Failed to check ebook entitlement:', err);
+        console.error('[MyLibrary] Failed to load library:', err);
     }
 };
 
@@ -3163,20 +3238,41 @@ window.ProfileApp = (function() {
         }
 
         empty.classList.add('hidden');
+        const PACKAGE_NAMES = {
+            discovery: 'Discovery Call',
+            single: 'Single Session',
+            focus: 'Focus Pack',
+            transformation: 'Transformation Path',
+            'apc-programme': 'APC Programme'
+        };
+        const STATUS_LABELS = {
+            new: 'Received', contacted: 'Contacted', accepted: 'Accepted', paid: 'Confirmed',
+            active: 'In progress', completed: 'Completed'
+        };
         list.innerHTML = apps.map(app => {
             const statusRaw = String(app.status || 'new').toLowerCase();
             const paymentRaw = String(app.paymentStatus || 'pending').toLowerCase();
             const statusClass = statusRaw === 'active' || statusRaw === 'completed'
                 ? 'bg-emerald-100 text-emerald-700'
-                : (statusRaw === 'accepted' || statusRaw === 'contacted'
+                : (statusRaw === 'accepted' || statusRaw === 'contacted' || statusRaw === 'paid'
                     ? 'bg-indigo-100 text-indigo-700'
                     : 'bg-amber-100 text-amber-700');
             const paymentClass = paymentRaw === 'paid' || paymentRaw === 'complete' || paymentRaw === 'completed' || paymentRaw === 'n/a'
                 ? 'bg-emerald-100 text-emerald-700'
                 : 'bg-amber-100 text-amber-700';
+            const paymentLabel = paymentRaw === 'n/a' ? 'Free'
+                : paymentRaw === 'under review' ? 'Payment under review'
+                : (['paid', 'complete', 'completed'].includes(paymentRaw) ? 'Paid' : 'Payment pending');
+            const statusLabel = STATUS_LABELS[statusRaw] || statusRaw;
             const date = coerceToDate(app.createdAt);
-            const packageName = app.packageName || app.package || 'Mentorship';
+            const packageName = app.packageName || PACKAGE_NAMES[String(app.package || '').toLowerCase()] || app.package || 'Academy';
             const isPaid = ['paid', 'complete', 'completed'].includes(paymentRaw);
+            const journalButton = isPaid
+                ? `<a href="journal.html" class="inline-flex items-center gap-2 rounded-md border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 hover:bg-violet-100 transition">
+                        <i class="fas fa-pen-nib"></i>
+                        Open your Journal
+                   </a>`
+                : '';
             const invoiceButton = isPaid
                 ? `<button type="button" class="inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition" data-action="download-mentorship-invoice" data-app-id="${escapeHtml(app.id)}">
                         <i class="fas fa-file-invoice"></i>
@@ -3188,17 +3284,18 @@ window.ProfileApp = (function() {
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <h3 class="font-semibold text-slate-900">${escapeHtml(packageName)}</h3>
                     <div class="flex items-center gap-2 text-xs">
-                        <span class="inline-flex rounded-full px-2.5 py-1 font-semibold ${statusClass}">${escapeHtml(statusRaw)}</span>
-                        <span class="inline-flex rounded-full px-2.5 py-1 font-semibold ${paymentClass}">${escapeHtml(paymentRaw)}</span>
+                        <span class="inline-flex rounded-full px-2.5 py-1 font-semibold ${statusClass}">${escapeHtml(statusLabel)}</span>
+                        <span class="inline-flex rounded-full px-2.5 py-1 font-semibold ${paymentClass}">${escapeHtml(paymentLabel)}</span>
                     </div>
                 </div>
-                <p class="mt-2 text-sm text-slate-600">Submitted ${escapeHtml(date ? formatDate(date, { day: '2-digit', month: 'short', year: 'numeric' }) : 'recently')}.</p>
+                <p class="mt-2 text-sm text-slate-600">Submitted ${escapeHtml(date ? formatDate(date, { day: '2-digit', month: 'short', year: 'numeric' }) : 'recently')}.${isPaid ? ' Your 30-Day Journal is included.' : ''}</p>
                 <div class="mt-3 flex flex-wrap gap-2">
-                    <a href="mentorship.html" class="inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition">
+                    ${journalButton}
+                    <a href="academy.html" class="inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition">
                         <i class="fas fa-arrow-up-right-from-square"></i>
-                        Manage Package
+                        View Academy
                     </a>
-                    <a href="https://wa.me/27692060618?text=Hi%20Zolile%2C%20I%20need%20an%20update%20on%20my%20mentorship%20application." target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100 transition">
+                    <a href="https://wa.me/27692060618?text=Hi%20Zolile%2C%20I%20need%20an%20update%20on%20my%20Academy%20application." target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100 transition">
                         <i class="fab fa-whatsapp"></i>
                         Message Mentor
                     </a>
@@ -3813,7 +3910,7 @@ window.ProfileApp = (function() {
             paymentStatus: app.paymentStatus || 'Paid',
             status: 'Paid',
             items: [{
-                name: `Mentorship — ${app.packageName || app.package || 'Programme'}`,
+                name: `Academy — ${app.packageName || app.package || 'Programme'}`,
                 quantity: 1,
                 price: amount
             }],
@@ -3957,7 +4054,7 @@ window.ProfileApp = (function() {
 window.AdminApp = (function() {
     const STATUS_OPTIONS = ['Awaiting Payment', 'Order Placed', 'Out for Delivery', 'Arriving Soon', 'Delivered', 'Cancelled'];
     const DIGITAL_STATUS_OPTIONS = ['Awaiting Payment', 'Order Placed', 'Delivered (Digital)', 'Refund Requested', 'Refunded', 'Cancelled'];
-    const PAYMENT_OPTIONS = ['Pending Payment', 'Paid', 'Refunded', 'Failed', 'Cancelled'];
+    const PAYMENT_OPTIONS = ['Pending Payment', 'Paid', 'Under Review', 'Refunded', 'Failed', 'Cancelled'];
 
     // Determine fulfillment type for an order. Delegates to the global helper
     // so the customer profile and admin dashboard share one source of truth.
@@ -4905,7 +5002,9 @@ window.AdminApp = (function() {
                     customerEmail: data.customerEmail || (data.customer && data.customer.email) || '',
                     customerPhone: data.customerPhone || data.deliveryAddress?.phone || data.deliveryAddress?.phoneNumber || '',
                     deliveryAddress: data.deliveryAddress || data.shippingAddress || null,
-                    lastCustomerMessage: data.lastCustomerMessage || data.statusMessage || ''
+                    lastCustomerMessage: data.lastCustomerMessage || data.statusMessage || '',
+                    paymentReview: data.paymentReview || null,
+                    customerReturnedAt: coerceToDate(data.customerReturnedAt)
                 };
 
                 order.isAwaitingPaymentExpired = isAwaitingPaymentExpired(order);
@@ -5654,6 +5753,22 @@ window.AdminApp = (function() {
                              lastUpdatedBy ? 'Admin' : '';
         const adminBadge = lastAdminName ? `<div class="text-[10px] text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full inline-block mt-1">Last updated by ${lastAdminName}</div>` : '';
 
+        // PayFast confirmed a payment that did not cover the catalogue price: nothing was fulfilled.
+        const review = order.paymentReview;
+        const paymentReviewNote = (review && String(order.paymentStatus || '').toLowerCase() === 'under review') ? `
+            <div class="mt-2 rounded border border-amber-300 bg-amber-50 px-2 py-1.5 text-[11px] text-amber-800" style="min-width:180px;">
+                <div class="font-semibold uppercase tracking-wide text-[10px]"><i class="fas fa-triangle-exclamation mr-1"></i>Payment needs review</div>
+                <div class="mt-1">Received ${escapeHtml(formatCurrency(review.received))}, catalogue price ${escapeHtml(formatCurrency(review.expected))}.</div>
+                ${Array.isArray(review.reasons) && review.reasons.length ? `<div class="mt-1 text-amber-700">${escapeHtml(review.reasons.join('; '))}</div>` : ''}
+                <div class="mt-1 text-amber-700">Check PayFast, then use <strong>Order placed</strong> to approve, or cancel and refund.</div>
+            </div>` : '';
+
+        // Customer came back from PayFast but no verified confirmation has arrived yet.
+        const returnHint = (order.customerReturnedAt && isAwaitingPaymentOrder(order)) ? `
+            <div class="mt-2 rounded border border-sky-200 bg-sky-50 px-2 py-1.5 text-[11px] text-sky-800" style="min-width:180px;">
+                <i class="fas fa-circle-info mr-1"></i>Customer returned from PayFast ${escapeHtml(formatDate(order.customerReturnedAt))} but PayFast has not confirmed yet. Check the PayFast dashboard if this persists.
+            </div>` : '';
+
         row.innerHTML = `
             <td class="px-4 py-3 text-sm font-semibold text-gray-800">
                 <div>${safeOrderId}</div>
@@ -5668,7 +5783,7 @@ window.AdminApp = (function() {
                 ${isDigitalOnly ? `
                     <div class="mt-3 rounded border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs text-indigo-700">
                         <div class="font-semibold uppercase tracking-wide text-[10px]">Digital delivery</div>
-                        <div class="mt-1">No shipping required — eBook delivered to the customer's profile library.</div>
+                        <div class="mt-1">No shipping required — digital items are delivered to the customer's profile library.</div>
                     </div>` : (shippingAddress ? `
                     <div class="mt-3 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
                         <div class="font-semibold text-slate-700 uppercase tracking-wide text-[10px]">Shipping to</div>
@@ -5677,7 +5792,11 @@ window.AdminApp = (function() {
                         <div class="mt-1 leading-relaxed">${safeShippingAddress}</div>
                     </div>` : '')}
             </td>
-            <td class="px-4 py-3 text-sm text-gray-700">${formatCurrency(order.totalAmount)}</td>
+            <td class="px-4 py-3 text-sm text-gray-700">
+                ${formatCurrency(order.totalAmount)}
+                ${paymentReviewNote}
+                ${returnHint}
+            </td>
             <td class="px-4 py-3 text-sm">
                 <select class="border rounded px-2 py-1 text-sm" data-doc-id="${safeDocId}" data-field="status">
                     ${statusOptions}

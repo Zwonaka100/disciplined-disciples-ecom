@@ -12,7 +12,7 @@
     { id: 'dashboard',      label: 'Dashboard',      icon: 'fa-chart-line',     href: 'admin-dashboard.html' },
     { id: 'orders',         label: 'Orders',         icon: 'fa-shopping-bag',   href: 'admin-orders.html' },
     { id: 'products',       label: 'Products',       icon: 'fa-box',            href: 'admin-products.html' },
-    { id: 'mentorship',     label: 'Mentorship',     icon: 'fa-user-graduate',  href: 'admin-mentorship.html' },
+    { id: 'mentorship',     label: 'Academy',        icon: 'fa-user-graduate',  href: 'admin-mentorship.html' },
     { id: 'blogs',          label: 'Blog',           icon: 'fa-newspaper',      href: 'admin-blogs.html' },
     { id: 'communications', label: 'Communications', icon: 'fa-comments',       href: 'admin-communications.html' },
     { id: 'analytics',      label: 'Analytics',      icon: 'fa-chart-pie',      href: 'admin-analytics.html' },

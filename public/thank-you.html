@@ -19,6 +19,7 @@
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
+      try{if(localStorage.getItem('cookie_consent')!=='accepted'){gtag('consent','default',{analytics_storage:'denied',ad_storage:'denied'});}}catch(e){gtag('consent','default',{analytics_storage:'denied',ad_storage:'denied'});}
       gtag('js', new Date());
       gtag('config', 'G-2J1GWH59V4');
     </script>
@@ -33,11 +34,19 @@
             </a>
     <nav class="nav-menu">
     <ul class="flex space-x-6">
-                    <li><a href="index.html" class="nav-link active">Home</a></li>
-                    <li><a href="about.html" class="nav-link">About</a></li>
-                    <li><a href="shop.html" class="nav-link">Shop</a></li>
+                    <li><a href="index.html" class="nav-link">Home</a></li>
                     <li><a href="book.html" class="nav-link">Book</a></li>
-                    <li><a href="mentorship.html" class="nav-link">Mentorship</a></li>
+                    <li><a href="journal.html" class="nav-link">Journal</a></li>
+                    <li><a href="academy.html" class="nav-link">Academy</a></li>
+                    <li><a href="shop.html" class="nav-link">Shop</a></li>
+                    <li class="nav-dropdown">
+                        <a href="about.html" class="nav-link nav-dropdown-toggle" aria-haspopup="true">About <i class="fas fa-chevron-down"></i></a>
+                        <ul class="nav-dropdown-menu">
+                            <li><a href="about.html">Zolile&rsquo;s Story</a></li>
+                            <li><a href="speaking.html">Speaking</a></li>
+                            <li><a href="book.html#featured">As Featured In</a></li>
+                        </ul>
+                    </li>
                     <li><a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a></li>
                     <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a></li>
                     <li><a href="cart.html" class="nav-link" aria-label="Cart"><i class="fas fa-shopping-cart"></i></a></li>
@@ -71,11 +80,14 @@
         </div>
         <nav class="mobile-menu">
             <ul class="py-4">
-                <li><a href="index.html" class="nav-link-mobile active">Home</a></li>
-                <li><a href="about.html" class="nav-link-mobile">About</a></li>
-                <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
+                <li><a href="index.html" class="nav-link-mobile">Home</a></li>
                 <li><a href="book.html" class="nav-link-mobile">Book</a></li>
-                <li><a href="mentorship.html" class="nav-link-mobile">Mentorship</a></li>
+                <li><a href="journal.html" class="nav-link-mobile">Journal</a></li>
+                <li><a href="academy.html" class="nav-link-mobile">Academy</a></li>
+                <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
+                <li><a href="about.html" class="nav-link-mobile">About</a></li>
+                <li><a href="speaking.html" class="nav-link-mobile nav-sub">Speaking</a></li>
+                <li><a href="book.html#featured" class="nav-link-mobile nav-sub">As Featured In</a></li>
                 <li><a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-linkedin"></i> LinkedIn</a></li>
                 <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
                 <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
@@ -110,6 +122,10 @@
                 <i class="fas fa-box" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
                 My Orders
             </a>
+            <a href="journal.html" style="display: flex; align-items: center; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f3e8ff'; this.style.color='#7c3aed';" onmouseout="this.style.background='transparent'; this.style.color='#374151';">
+                <i class="fas fa-pen-nib" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
+                My Journal
+            </a>
             <a href="profile.html#account" style="display: flex; align-items: center; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f3e8ff'; this.style.color='#7c3aed';" onmouseout="this.style.background='transparent'; this.style.color='#374151';">
                 <i class="fas fa-cog" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
                 Settings
@@ -125,9 +141,24 @@
     <main class="container mx-auto py-16">
         <div class="max-w-2xl mx-auto text-center">
             <div class="mb-8">
-                <i class="fas fa-check-circle text-6xl text-green-500 mb-4"></i>
+                <i id="ty-status-icon" class="fas fa-circle-notch fa-spin text-6xl text-indigo-500 mb-4"></i>
                 <h1 class="text-4xl font-bold text-gray-800 mb-4">Thank You for Your Order!</h1>
-                <p class="text-xl text-gray-600 mb-8">Your payment has been processed successfully.</p>
+                <p id="ty-status-text" class="text-xl text-gray-600 mb-8">Confirming your payment with PayFast&hellip; this usually takes a few seconds.</p>
+            </div>
+
+            <!-- JOURNAL SECTION (shown when the order includes the 30-Day Journal) -->
+            <div id="journal-order-section" class="bg-white rounded-lg shadow-lg p-8 mb-8 border-2 border-indigo-400" style="display:none;">
+                <div class="mb-6 text-center">
+                    <i class="fas fa-pen-nib text-5xl text-indigo-600 mb-3"></i>
+                    <h2 class="text-2xl font-bold text-indigo-700 mb-2">Your 30-Day Journal is Unlocked</h2>
+                    <p class="text-gray-600">Start with Day 0 tonight. Your entries are private to you.</p>
+                </div>
+                <div class="mt-6 text-center">
+                    <a href="journal.html" class="inline-block px-8 py-4 text-lg font-bold text-white rounded-lg shadow-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="fas fa-book-open mr-2"></i>
+                        Open My Journal
+                    </a>
+                </div>
             </div>
 
             <!-- DIGITAL ORDER SECTION (shown for ebook/digital purchases) -->
@@ -243,6 +274,9 @@
                 <ul>
                     <li><a href="index.html" class="footer-link">Home</a></li>
                     <li><a href="shop.html" class="footer-link">Shop</a></li>
+                    <li><a href="academy.html" class="footer-link">Academy</a></li>
+                    <li><a href="journal.html" class="footer-link">30-Day Journal</a></li>
+                    <li><a href="speaking.html" class="footer-link">Speaking</a></li>
                     <li><a href="blog.html" class="footer-link">Blog</a></li>
                     <li><a href="contact.html" class="footer-link">Contact</a></li>
                 </ul>
@@ -269,52 +303,80 @@
         </div>
     </footer>
 
+    <script src="script.js?v=20261005a"></script>
     <script>
-        // Detect order type from localStorage cart
-        (function detectOrderType() {
-            let isDigital = false;
-            try {
-                const cartJson = localStorage.getItem('disciplinedDisciplesCart');
-                if (cartJson) {
-                    const cart = JSON.parse(cartJson);
-                    if (Array.isArray(cart)) {
-                        isDigital = cart.some(item =>
-                            item.fulfillmentType === 'digital' ||
-                            item.productId === 'ebook' ||
-                            (item.name && item.name.toLowerCase().includes('ebook'))
-                        );
-                    }
-                }
-            } catch (e) { /* ignore parse errors */ }
+    // Watches the order until PayFast's verified confirmation arrives (the webhook sets it).
+    // Nothing on this page changes payment status.
+    (function () {
+        var statusText = document.getElementById('ty-status-text');
+        var statusIcon = document.getElementById('ty-status-icon');
+        var digitalSection = document.getElementById('digital-order-section');
+        var journalSection = document.getElementById('journal-order-section');
+        var physicalSection = document.getElementById('physical-order-section');
+        var profileBtn = document.getElementById('profile-cta-btn');
+        var orderDocId = null;
+        try { orderDocId = localStorage.getItem('pendingOrderDocId') || localStorage.getItem('pendingOrderId'); } catch (e) {}
 
-            const digitalSection = document.getElementById('digital-order-section');
-            const physicalSection = document.getElementById('physical-order-section');
-            const profileBtn = document.getElementById('profile-cta-btn');
+        function setStatus(kind, text) {
+            statusText.textContent = text;
+            if (kind === 'ok') statusIcon.className = 'fas fa-check-circle text-6xl text-green-500 mb-4';
+            else if (kind === 'wait') statusIcon.className = 'fas fa-circle-notch fa-spin text-6xl text-indigo-500 mb-4';
+            else statusIcon.className = 'fas fa-hourglass-half text-6xl text-amber-500 mb-4';
+        }
 
-            if (isDigital) {
-                digitalSection.style.display = 'block';
-                physicalSection.style.display = 'none';
-                // Update the profile button for digital orders
+        function showSections(items) {
+            var hasEbook = items.some(function (i) { var id = String(i.productId || '').toLowerCase(); return id === 'ebook' || String(i.name || '').toLowerCase().indexOf('ebook') !== -1; });
+            var hasJournal = items.some(function (i) { return String(i.productId || '').toLowerCase() === 'journal'; });
+            var hasPhysical = items.some(function (i) { return i.fulfillmentType !== 'digital' && String(i.productId || '').toLowerCase() !== 'ebook' && String(i.productId || '').toLowerCase() !== 'journal'; });
+            digitalSection.style.display = hasEbook ? 'block' : 'none';
+            journalSection.style.display = hasJournal ? 'block' : 'none';
+            physicalSection.style.display = hasPhysical ? 'block' : 'none';
+            if (!hasPhysical && (hasEbook || hasJournal)) {
                 profileBtn.innerHTML = '<i class="fas fa-book-reader mr-2"></i> Go to My Library';
                 profileBtn.href = 'profile.html';
             }
-        })();
+        }
 
-        // Auto-redirect to profile after 10 seconds
-        setTimeout(() => {
-            window.location.href = 'profile.html?payment=success';
-        }, 10000);
-        
-        // Show countdown
-        let countdown = 10;
-        const countdownInterval = setInterval(() => {
-            countdown--;
-            if (countdown <= 0) {
-                clearInterval(countdownInterval);
-            }
-        }, 1000);
+        if (!orderDocId) {
+            setStatus('ok', 'Your payment was submitted. You will receive a confirmation email once PayFast confirms it.');
+            return;
+        }
+
+        var confirmedTimer = setTimeout(function () {
+            setStatus('slow', 'PayFast is taking a little longer than usual to confirm. You will get an email as soon as it does, and your order will update in My Orders. If you were charged and nothing updates within 15 minutes, WhatsApp us on +27 69 206 0618.');
+        }, 60000);
+
+        (window.firebaseInitialized || Promise.resolve()).then(function () {
+            if (!window.auth) return;
+            window.auth.onAuthStateChanged(function (user) {
+                if (!user) {
+                    setStatus('slow', 'Sign in to see your order status. You will also receive a confirmation email once PayFast confirms your payment.');
+                    return;
+                }
+                window.db.collection('artifacts').doc('default-app-id').collection('orders').doc(orderDocId)
+                    .onSnapshot(function (snap) {
+                        if (!snap.exists) return;
+                        var data = snap.data() || {};
+                        showSections(Array.isArray(data.items) ? data.items : []);
+                        var pay = String(data.paymentStatus || '').toLowerCase();
+                        if (pay === 'paid') {
+                            clearTimeout(confirmedTimer);
+                            setStatus('ok', 'Your payment has been confirmed. A confirmation email is on its way.');
+                            try {
+                                localStorage.removeItem('pendingOrderId');
+                                localStorage.removeItem('pendingOrderDocId');
+                            } catch (e) {}
+                        } else if (pay === 'under review') {
+                            clearTimeout(confirmedTimer);
+                            setStatus('slow', 'We received your payment and are double-checking it. We will update you shortly. No action is needed from you.');
+                        }
+                    }, function (err) {
+                        console.warn('Order status listener failed:', err);
+                    });
+            });
+        });
+    })();
     </script>
-    <script src="script.js?v=20260826a"></script>
 
     <!-- WhatsApp Floating Button -->
     <a href="https://wa.me/27692060618?text=Hi%20Disciplined%20Disciples!%20I%20have%20a%20question%20about%20your%20products." 
@@ -329,7 +391,7 @@
     <div id="cookie-consent-banner" class="cookie-consent-banner">
         <div class="cookie-consent-content">
             <div class="cookie-consent-text">
-                <h3>?? We Value Your Privacy</h3>
+                <h3>🍪 We Value Your Privacy</h3>
                 <p>We use cookies to improve your experience and analyze site traffic. By clicking "Accept", you consent to our use of cookies. <a href="privacy-policy.html">Learn more</a></p>
             </div>
             <div class="cookie-consent-actions">

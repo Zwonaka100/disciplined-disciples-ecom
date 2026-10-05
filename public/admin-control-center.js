@@ -102,11 +102,58 @@
         const testimonialsEl = document.getElementById('book-testimonials');
         const printLinkEl = document.getElementById('book-print-link');
         const ebookLinkEl = document.getElementById('book-ebook-link');
+        const physicalStockEl = document.getElementById('book-physical-stock');
+        const physicalRestockEl = document.getElementById('book-physical-restock');
+        const journalPriceEl = document.getElementById('journal-price');
+        const journalActiveEl = document.getElementById('journal-active');
+        const journalSaveBtn = document.getElementById('journal-save-btn');
+        const DEFAULT_RESTOCK = window.PHYSICAL_BOOK_DEFAULT_RESTOCK || '2026-10-07';
+
+        if (physicalRestockEl && !physicalRestockEl.value) physicalRestockEl.value = DEFAULT_RESTOCK;
+
+        async function loadJournalSettings() {
+            if (!journalPriceEl) return;
+            const snap = await db.collection('siteContent').doc('journal').get();
+            const data = snap.exists ? (snap.data() || {}) : {};
+            journalPriceEl.value = Number(data.price) > 0 ? Number(data.price) : '';
+            journalActiveEl.value = data.active === false ? 'false' : 'true';
+        }
+
+        if (journalSaveBtn) {
+            journalSaveBtn.addEventListener('click', async () => {
+                const price = Number(journalPriceEl.value);
+                if (journalPriceEl.value !== '' && (!Number.isFinite(price) || price < 0 || price > 100000)) {
+                    showAlert('journal-alert', 'error', 'Please enter a valid price.');
+                    return;
+                }
+                const payload = {
+                    price: Number.isFinite(price) && price > 0 ? Math.round(price * 100) / 100 : null,
+                    active: journalActiveEl.value === 'true',
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedBy: sessionStorage.getItem('userEmail') || 'admin'
+                };
+                setButtonLoading(journalSaveBtn, 'Saving...', true);
+                try {
+                    await db.collection('siteContent').doc('journal').set(payload, { merge: true });
+                    await logAdminActivity('update', 'siteContent', 'journal', { price: payload.price, active: payload.active });
+                    const livePrice = payload.price || window.JOURNAL_DEFAULT_PRICE || 99;
+                    showAlert('journal-alert', 'success', payload.active
+                        ? `Saved. The journal is on sale for R${livePrice}.`
+                        : 'Saved. The journal is Academy-only for now.');
+                } catch (error) {
+                    showAlert('journal-alert', 'error', 'Failed to save journal settings.');
+                } finally {
+                    setButtonLoading(journalSaveBtn, 'Saving...', false);
+                }
+            });
+        }
 
         async function loadBook() {
             const snap = await db.collection('siteContent').doc('book').get();
             if (!snap.exists) return;
             const data = snap.data() || {};
+            if (physicalStockEl) physicalStockEl.value = data.physicalStock || 'auto';
+            if (physicalRestockEl) physicalRestockEl.value = data.physicalRestockDate || DEFAULT_RESTOCK;
             titleEl.value = data.title || titleEl.value;
             synopsisEl.value = data.synopsis || synopsisEl.value;
             const rawStatus = (data.status || 'available').toString().toLowerCase().trim();
@@ -143,6 +190,8 @@
                 testimonials: testimonialsEl.value.split('\n').map(t => t.trim()).filter(Boolean),
                 printLink: printLinkEl.value.trim(),
                 ebookLink: ebookLinkEl.value.trim(),
+                physicalStock: physicalStockEl ? physicalStockEl.value : 'auto',
+                physicalRestockDate: physicalRestockEl ? physicalRestockEl.value : DEFAULT_RESTOCK,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedBy: sessionStorage.getItem('userEmail') || 'admin'
             };
@@ -180,6 +229,11 @@
             await loadBook();
         } catch (error) {
             showAlert('book-alert', 'error', 'Could not load existing book data.');
+        }
+        try {
+            await loadJournalSettings();
+        } catch (error) {
+            showAlert('journal-alert', 'error', 'Could not load journal settings.');
         }
     }
 

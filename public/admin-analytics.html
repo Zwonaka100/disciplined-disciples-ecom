@@ -108,13 +108,13 @@
             <!-- MISSION -->
             <section data-tab-panel="mission" class="hidden space-y-6">
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="kpi"><p class="kpi-label">Mentorship leads</p><p id="m-leads" class="kpi-value skeleton">—</p><p class="kpi-sub">Applications in range</p></div>
+                    <div class="kpi"><p class="kpi-label">Academy leads</p><p id="m-leads" class="kpi-value skeleton">—</p><p class="kpi-sub">Applications in range</p></div>
                     <div class="kpi"><p class="kpi-label">Active mentees</p><p id="m-active" class="kpi-value skeleton">—</p><p class="kpi-sub">Currently engaged</p></div>
                     <div class="kpi"><p class="kpi-label">Acceptance rate</p><p id="m-accept" class="kpi-value skeleton">—</p><p class="kpi-sub">Accepted ÷ leads</p></div>
                     <div class="kpi"><p class="kpi-label">Broadcasts sent</p><p id="m-broadcasts" class="kpi-value skeleton">—</p><p class="kpi-sub">In selected range</p></div>
                 </div>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="card"><h3><i class="fas fa-stairs text-indigo-500"></i>Mentorship funnel</h3><div id="m-funnel" class="mt-2"><p class="text-sm text-slate-400">Loading…</p></div></div>
+                    <div class="card"><h3><i class="fas fa-stairs text-indigo-500"></i>Academy funnel</h3><div id="m-funnel" class="mt-2"><p class="text-sm text-slate-400">Loading…</p></div></div>
                     <div class="card"><h3><i class="fas fa-layer-group text-violet-500"></i>Package mix</h3><div id="m-packages" class="mt-2 space-y-1"><p class="text-sm text-slate-400">Loading…</p></div></div>
                 </div>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -126,7 +126,7 @@
     </div>
 
     <script src="firebase-config.js?v=20260601c"></script>
-    <script src="js/admin-sidebar.js?v=20260601c" defer></script>
+    <script src="js/admin-sidebar.js?v=20261005a" defer></script>
     <script>
     (function(){
         'use strict';
@@ -408,7 +408,7 @@
                 const c = statusGroups[s.key]||0;
                 const w = Math.round((c/maxCt)*100);
                 return `<div class="funnel-step"><span class="dot" style="background:${s.color}"></span><span class="name">${s.label}</span><div class="fbar"><span style="display:block;height:100%;width:${w}%;background:${s.color};border-radius:4px;"></span></div><span class="ct">${c}</span><span class="pct">${pct(c,totalLeads)}</span></div>`;
-            }).join('') : '<p class="text-sm text-slate-400">No mentorship applications in range.</p>';
+            }).join('') : '<p class="text-sm text-slate-400">No Academy applications in range.</p>';
 
             const PKG_LABELS = { discovery:'Discovery', single:'Single', focus:'Focus', transformation:'Transformation', unspecified:'Unspecified' };
             const pkgMap = new Map();

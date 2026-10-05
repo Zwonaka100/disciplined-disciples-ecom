@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+    <script>if(/^(disciplined-disciples-1\.(web\.app|firebaseapp\.com))$/.test(location.hostname)){location.replace('https://disciplineddisciples.co.za'+location.pathname+location.search+location.hash);}</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>30-Day Discipline Journal | Disciplined Disciples</title>
+    <meta name="description" content="The Relentlessly Disciplined 30-Day Journal by Zolile Nomaqhiza CA(SA): one short daily entry built on stillness, movement, reading and writing. Try the first days free. Included with every paid Disciplined Disciples Academy package.">
+    <link rel="canonical" href="https://disciplineddisciples.co.za/journal">
+    <meta property="og:title" content="30-Day Discipline Journal | Disciplined Disciples">
+    <meta property="og:description" content="From intention to embodied practice. One short daily entry for 30 days. Try the first days free.">
+    <meta property="og:url" content="https://disciplineddisciples.co.za/journal">
+    <meta property="og:image" content="https://disciplineddisciples.co.za/Assets/book.png">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="profile-avatar-fix.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" type="image/png" href="Assets/45.png">
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2J1GWH59V4"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      try{if(localStorage.getItem('cookie_consent')!=='accepted'){gtag('consent','default',{analytics_storage:'denied',ad_storage:'denied'});}}catch(e){gtag('consent','default',{analytics_storage:'denied',ad_storage:'denied'});}
+      gtag('js', new Date());
+      gtag('config', 'G-2J1GWH59V4');
+    </script>
+    <style>
+        /* Landing (matches the Book page hero and card styles) */
+        .jl-hero { position: relative; background: #ffffff; padding: 5rem 1rem 4rem; color: #222; overflow: hidden; border-bottom: 1px solid #ececec; }
+        .jl-hero-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 260px 1fr; gap: 3.5rem; align-items: center; }
+        @media (max-width: 768px) { .jl-hero-inner { grid-template-columns: 1fr; text-align: center; } .jl-mark { margin: 0 auto; } }
+        .jl-mark { width: 220px; height: 300px; border-radius: 14px; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-weight: 800; letter-spacing: 1px; box-shadow: 0 30px 70px rgba(79,70,229,0.35); padding: 1.5rem; }
+        .jl-mark i { font-size: 2.6rem; margin-bottom: 1rem; }
+        .jl-mark .jl-mark-title { font-size: 1.25rem; line-height: 1.2; }
+        .jl-mark .jl-mark-sub { font-size: 0.72rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; opacity: 0.85; margin-top: 0.8rem; }
+        .jl-kicker { font-size: 0.78rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #555; margin-bottom: 1rem; }
+        .jl-hero h1 { font-size: 2.6rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.75rem; }
+        .jl-tagline { font-size: 1.15rem; color: #555; margin-bottom: 1.8rem; line-height: 1.7; }
+        .jl-cta-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+        @media (max-width: 768px) { .jl-cta-row { justify-content: center; } }
+        .jl-section { padding: 4rem 1rem; background: #fff; }
+        .jl-section.alt { background: #f7f8fc; }
+        .jl-inner { max-width: 1000px; margin: 0 auto; }
+        .jl-inner h2 { font-size: 1.8rem; font-weight: 800; color: #1a202c; text-align: center; margin-bottom: 0.6rem; }
+        .jl-intro { text-align: center; color: #6b7280; max-width: 700px; margin: 0 auto 2rem; line-height: 1.7; }
+        .jl-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+        .jl-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 1.3rem; box-shadow: 0 10px 25px rgba(15,23,42,0.06); }
+        .jl-card i { color: #4f46e5; font-size: 1.3rem; margin-bottom: 0.7rem; display: block; }
+        .jl-card h4 { margin: 0 0 0.4rem; font-size: 1rem; font-weight: 800; color: #111827; }
+        .jl-card p { margin: 0; color: #4b5563; font-size: 0.92rem; line-height: 1.6; }
+        .jl-rules { max-width: 760px; margin: 0 auto; display: grid; gap: 0.7rem; }
+        .jl-rule { display: flex; gap: 0.8rem; align-items: flex-start; background: #fff; border: 1px solid #e5e7eb; border-left: 4px solid #222; border-radius: 10px; padding: 0.9rem 1rem; color: #374151; }
+        .jl-rule span { font-weight: 800; color: #4f46e5; }
+        .jl-sample { max-width: 760px; margin: 0 auto; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 1.5rem; box-shadow: 0 10px 25px rgba(15,23,42,0.06); }
+        .jl-sample h4 { margin: 0 0 0.3rem; font-weight: 800; }
+        .jl-sample .jl-line { height: 1px; background: #e5e7eb; margin: 1.1rem 0 0; }
+        .jl-price-box { max-width: 760px; margin: 0 auto; background: #fff; border: 2px solid #4f46e5; border-radius: 18px; padding: 2rem; text-align: center; box-shadow: 0 18px 38px rgba(79,70,229,0.18); }
+        .jl-price { font-size: 2.2rem; font-weight: 800; color: #0f172a; line-height: 1.1; margin-bottom: 1rem; }
+        .jl-price small { display: block; font-size: 0.9rem; color: #64748b; font-weight: 600; margin-top: 0.3rem; }
+        .jl-price-box ul { list-style: none; padding: 0; margin: 0 auto 1.4rem; max-width: 460px; text-align: left; }
+        .jl-price-box li { padding: 5px 0; color: #475569; display: flex; gap: 8px; }
+        .jl-price-box li i { color: #10b981; margin-top: 5px; }
+
+        /* App */
+        .jx-wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 1rem 4rem; }
+        .jx-head { text-align: center; margin-bottom: 1.5rem; }
+        .jx-head h1 { font-size: 2rem; font-weight: 800; margin: 0 0 0.3rem; }
+        .jx-head p { color: #6b7280; margin: 0; }
+        .jx-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 1.5rem; box-shadow: 0 10px 25px rgba(15,23,42,0.06); margin-bottom: 1.2rem; }
+        .jx-today { border: 2px solid #4f46e5; box-shadow: 0 18px 38px rgba(79,70,229,0.14); }
+        .jx-kicker { font-size: 0.75rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #6366f1; margin: 0 0 0.4rem; }
+        .jx-title { font-size: 1.5rem; font-weight: 800; color: #0f172a; margin: 0 0 0.6rem; }
+        .jx-subtitle { font-size: 1.05rem; font-weight: 800; color: #0f172a; margin: 1.4rem 0 0.6rem; }
+        .jx-prompt { font-size: 1.1rem; font-style: italic; color: #374151; line-height: 1.6; margin: 0 0 1.1rem; }
+        .jx-muted { color: #64748b; line-height: 1.65; margin: 0 0 0.8rem; }
+        .jx-small { font-size: 0.82rem; margin-top: 0.9rem; }
+        .jx-center { text-align: center; }
+        .jx-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+        @media (max-width: 640px) { .jx-grid-2 { grid-template-columns: 1fr; } }
+        .jx-field { display: block; margin-bottom: 0.9rem; }
+        .jx-field > span { display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 4px; }
+        .jx-field > small { display: block; font-size: 0.8rem; color: #94a3b8; margin: -2px 0 6px; }
+        .jx-field input[type="text"], .jx-field input[type="date"], .jx-field select, .jx-field textarea {
+            border: 1px solid #d1d9e6; border-radius: 10px; padding: 10px 12px; font-size: 0.95rem; width: 100%; box-sizing: border-box; font-family: inherit; transition: all 0.2s ease; background: #fff;
+        }
+        .jx-field input:focus, .jx-field select:focus, .jx-field textarea:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,0.15); }
+        .jx-toggles { display: grid; gap: 0.6rem; margin: 1rem 0; }
+        .jx-toggle { display: flex; gap: 0.6rem; align-items: flex-start; color: #475569; font-size: 0.9rem; line-height: 1.5; cursor: pointer; }
+        .jx-toggle input { margin-top: 4px; accent-color: #4f46e5; width: 16px; height: 16px; flex-shrink: 0; }
+        .jx-actions { display: flex; gap: 0.7rem; flex-wrap: wrap; margin-top: 1rem; }
+        .jx-banner { background: linear-gradient(135deg, #eef2ff 0%, #ede9fe 100%); border: 1px solid #c7d2fe; border-radius: 14px; padding: 1.1rem 1.3rem; margin-bottom: 1.2rem; color: #3730a3; line-height: 1.6; }
+        .jx-banner-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.8rem; }
+        .jx-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; text-align: center; margin-bottom: 1.2rem; }
+        .jx-stat { display: block; font-size: 1.8rem; font-weight: 800; color: #0f172a; }
+        .jx-stat-label { font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; }
+        .jx-grid { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px; }
+        @media (max-width: 520px) { .jx-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+        .jx-cell { aspect-ratio: 1 / 1; border-radius: 8px; border: 1px solid #e2e8f0; background: #f8fafc; color: #64748b; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.15s ease; font-family: inherit; }
+        .jx-cell:hover:not(:disabled) { border-color: #4f46e5; color: #4f46e5; }
+        .jx-cell.done { background: linear-gradient(135deg, #4f46e5, #7c3aed); border-color: transparent; color: #fff; }
+        .jx-cell.missed { background: #fffbeb; border-color: #fde68a; color: #b45309; }
+        .jx-cell.today { outline: 3px solid #4f46e5; outline-offset: 1px; }
+        .jx-cell.future, .jx-cell:disabled { opacity: 0.45; cursor: default; }
+        .jx-cell.locked { font-size: 0.7rem; }
+        .jx-legend { font-size: 0.8rem; color: #64748b; margin: 0.9rem 0 0.4rem; display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center; justify-content: center; }
+        .jx-dot { display: inline-block; width: 12px; height: 12px; border-radius: 4px; margin-right: 4px; vertical-align: -1px; border: 1px solid #e2e8f0; }
+        .jx-dot.done { background: #6366f1; border-color: #6366f1; }
+        .jx-dot.missed { background: #fffbeb; border-color: #fde68a; }
+        .jx-dot.today { background: #fff; outline: 2px solid #4f46e5; }
+        .jx-list { display: grid; gap: 0.5rem; }
+        .jx-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; text-align: left; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.85rem 1rem; cursor: pointer; font-family: inherit; color: #0f172a; transition: all 0.15s ease; }
+        .jx-row small { color: #64748b; }
+        .jx-row:hover:not(:disabled) { border-color: #4f46e5; background: #fff; }
+        .jx-row.muted, .jx-row:disabled { opacity: 0.6; cursor: default; }
+        .jx-row i { color: #94a3b8; }
+        .jx-row i.jx-ok { color: #10b981; }
+        .jx-practices { display: grid; gap: 0.5rem; margin-bottom: 1rem; }
+        .jx-practice { display: grid; grid-template-columns: 1fr 80px auto auto; gap: 0.6rem; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.6rem 0.8rem; }
+        @media (max-width: 560px) { .jx-practice { grid-template-columns: 1fr 70px auto; } .jx-practice .jx-unit { display: none; } }
+        .jx-practice strong { font-size: 0.9rem; color: #0f172a; }
+        .jx-practice small { display: block; font-size: 0.75rem; color: #6366f1; }
+        .jx-practice input[type="number"] { border: 1px solid #d1d9e6; border-radius: 8px; padding: 6px 8px; width: 100%; box-sizing: border-box; font-family: inherit; }
+        .jx-unit { font-size: 0.78rem; color: #64748b; white-space: nowrap; }
+        .jx-check { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #334155; cursor: pointer; }
+        .jx-check input { accent-color: #10b981; width: 18px; height: 18px; }
+        .jx-check-row { display: flex; margin-bottom: 0.5rem; }
+        .jx-range { display: flex; align-items: center; gap: 0.6rem; }
+        .jx-range input { flex: 1; accent-color: #4f46e5; }
+        .jx-range small { color: #64748b; font-size: 0.8rem; }
+        .jx-commitment { background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #222; border-radius: 10px; padding: 1rem; margin: 0.5rem 0 1rem; color: #334155; }
+        .jx-commitment p { margin: 0.4rem 0 0; font-style: italic; }
+
+        /* Editor modal */
+        .je-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.55); z-index: 10001; display: none; align-items: flex-start; justify-content: center; padding: 2rem 1rem; overflow-y: auto; }
+        .je-modal { background: #fff; border-radius: 18px; width: 100%; max-width: 720px; box-shadow: 0 30px 80px rgba(15,23,42,0.35); }
+        .je-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: 1.3rem 1.5rem 0.6rem; border-bottom: 1px solid #f1f5f9; }
+        .je-head h2 { margin: 0; font-size: 1.35rem; font-weight: 800; color: #0f172a; }
+        .je-head p { margin: 0.2rem 0 0.6rem; color: #6366f1; font-size: 0.85rem; font-weight: 600; }
+        .je-close { background: none; border: none; font-size: 1.3rem; color: #94a3b8; cursor: pointer; }
+        .je-body { padding: 1.2rem 1.5rem; }
+        .je-foot { display: flex; justify-content: flex-end; align-items: center; gap: 0.7rem; padding: 0 1.5rem 1.4rem; flex-wrap: wrap; }
+        .je-status { margin-right: auto; color: #b45309; font-size: 0.85rem; }
+
+        /* Print (blank or filled journal) */
+        #journal-print { display: none; }
+        @media print {
+            body.printing-journal > * { display: none !important; }
+            body.printing-journal #journal-print { display: block !important; }
+            body.printing-journal { background: #fff; }
+            @page { size: A4; margin: 16mm 16mm 18mm; }
+            .jp-page { page-break-after: always; break-after: page; position: relative; min-height: 250mm; font-family: Inter, Arial, sans-serif; color: #111; font-size: 10.5pt; line-height: 1.5; }
+            .jp-page h1 { font-size: 30pt; font-weight: 800; text-align: center; margin: 60mm 0 6mm; line-height: 1.1; }
+            .jp-page h2 { font-size: 16pt; font-weight: 800; margin: 0 0 4mm; }
+            .jp-page h3 { font-size: 11.5pt; font-weight: 800; margin: 5mm 0 2mm; }
+            .jp-cover { text-align: center; }
+            .jp-sub { font-size: 14pt; }
+            .jp-strong { font-weight: 800; }
+            .jp-meta { margin: 25mm auto 0; text-align: left; border-collapse: collapse; width: 80%; }
+            .jp-meta td { padding: 3mm 2mm; border-bottom: 1px solid #999; }
+            .jp-q { font-weight: 700; margin: 4mm 0 1mm; }
+            .jp-hint { color: #444; font-size: 9.5pt; margin: 1mm 0; }
+            .jp-line { border-bottom: 1px solid #aaa; height: 8mm; }
+            .jp-answer { border-left: 3px solid #4f46e5; padding: 1mm 0 1mm 3mm; margin: 1mm 0 3mm; white-space: normal; }
+            .jp-table { border-collapse: collapse; width: 100%; }
+            .jp-table td { border: 1px solid #999; padding: 2mm; }
+            .jp-checks { list-style: none; padding: 0; }
+            .jp-footer { position: absolute; bottom: 0; left: 0; right: 0; font-size: 8pt; color: #666; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header bg-white shadow">
+        <div class="container flex justify-between items-center py-4">
+            <a href="index.html" class="logo flex items-center">
+                <img src="Assets/45.png" alt="Disciplined Disciples Logo" style="height:48px; width:auto; margin-right:10px;">
+                <span class="font-bold text-xl">Disciplined Disciples</span>
+            </a>
+    <nav class="nav-menu">
+    <ul class="flex space-x-6">
+                    <li><a href="index.html" class="nav-link">Home</a></li>
+                    <li><a href="book.html" class="nav-link">Book</a></li>
+                    <li><a href="journal.html" class="nav-link active">Journal</a></li>
+                    <li><a href="academy.html" class="nav-link">Academy</a></li>
+                    <li><a href="shop.html" class="nav-link">Shop</a></li>
+                    <li class="nav-dropdown">
+                        <a href="about.html" class="nav-link nav-dropdown-toggle" aria-haspopup="true">About <i class="fas fa-chevron-down"></i></a>
+                        <ul class="nav-dropdown-menu">
+                            <li><a href="about.html">Zolile&rsquo;s Story</a></li>
+                            <li><a href="speaking.html">Speaking</a></li>
+                            <li><a href="book.html#featured">As Featured In</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a></li>
+                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a></li>
+                    <li><a href="cart.html" class="nav-link" aria-label="Cart"><i class="fas fa-shopping-cart"></i></a></li>
+                </ul>
+    <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
+    <!-- Modern Profile Button -->
+    <div id="profile-ribbon" style="display: none; position: relative;">
+        <button id="profile-btn" style="
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+        " onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.5)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)';">
+            <span id="profile-ribbon-initials" style="letter-spacing: 1px;">U</span>
+        </button>
+    </div>
+</nav>
+            <button class="menu-toggle" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <nav class="mobile-menu">
+            <ul class="py-4">
+                <li><a href="index.html" class="nav-link-mobile">Home</a></li>
+                <li><a href="book.html" class="nav-link-mobile">Book</a></li>
+                <li><a href="journal.html" class="nav-link-mobile active">Journal</a></li>
+                <li><a href="academy.html" class="nav-link-mobile">Academy</a></li>
+                <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
+                <li><a href="about.html" class="nav-link-mobile">About</a></li>
+                <li><a href="speaking.html" class="nav-link-mobile nav-sub">Speaking</a></li>
+                <li><a href="book.html#featured" class="nav-link-mobile nav-sub">As Featured In</a></li>
+                <li><a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-linkedin"></i> LinkedIn</a></li>
+                <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
+                <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
+            </ul>
+            <a href="login-signup.html" id="login-signup-link-mobile" class="nav-link-mobile"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
+        </nav>
+    </header>
+
+    <div id="profile-dropdown" class="hidden" style="position:fixed;right:16px;top:70px;background:white;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.15);min-width:220px;z-index:9999;overflow:hidden;border:1px solid rgba(0,0,0,0.05);">
+        <div style="padding:16px;background:#f5f5f5;color:#222;border-bottom:1px solid #ececec;">
+            <p id="dropdown-user-name" style="font-weight:600;font-size:15px;margin:0;">Welcome!</p>
+            <p id="dropdown-user-email" style="font-size:12px;opacity:0.85;margin:4px 0 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></p>
+        </div>
+        <div style="padding:8px 0;">
+            <a href="profile.html" style="display:flex;align-items:center;padding:12px 16px;color:#374151;text-decoration:none;font-size:14px;"><i class="fas fa-user-circle" style="margin-right:12px;color:#9ca3af;width:16px;"></i>My Profile</a>
+            <a href="profile.html#orders" style="display:flex;align-items:center;padding:12px 16px;color:#374151;text-decoration:none;font-size:14px;"><i class="fas fa-box" style="margin-right:12px;color:#9ca3af;width:16px;"></i>My Orders</a>
+            <a href="journal.html" style="display:flex;align-items:center;padding:12px 16px;color:#374151;text-decoration:none;font-size:14px;"><i class="fas fa-pen-nib" style="margin-right:12px;color:#9ca3af;width:16px;"></i>My Journal</a>
+            <div style="height:1px;background:#e5e7eb;margin:8px 0;"></div>
+            <button id="dropdown-logout-btn" style="display:flex;align-items:center;width:100%;padding:12px 16px;color:#dc2626;background:none;border:none;font-size:14px;cursor:pointer;"><i class="fas fa-sign-out-alt" style="margin-right:12px;width:16px;"></i>Logout</button>
+        </div>
+    </div>
+
+    <main>
+        <!-- Landing (signed-out visitors) -->
+        <div id="journal-landing">
+            <section class="jl-hero">
+                <div class="jl-hero-inner">
+                    <div class="jl-mark">
+                        <i class="fas fa-book-open"></i>
+                        <span class="jl-mark-title">RELENTLESSLY<br>DISCIPLINED</span>
+                        <span class="jl-mark-sub">30-Day Practice Journal</span>
+                    </div>
+                    <div>
+                        <p class="jl-kicker">Disciplined Disciples Academy</p>
+                        <h1>The 30-Day Discipline Journal</h1>
+                        <p class="jl-tagline">From intention to embodied practice. One short daily entry built on the four practices from <em>Relentlessly Disciplined</em>: stillness, movement, reading and writing. Private, online, and printable.</p>
+                        <div class="jl-cta-row">
+                            <a id="journal-start-btn" href="login-signup.html?redirect=journal.html" class="btn btn-primary">Start free: Days 0&ndash;3</a>
+                            <a href="#journal-pricing" class="btn btn-secondary">See full access</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="jl-section">
+                <div class="jl-inner">
+                    <h2>How it works</h2>
+                    <p class="jl-intro">The aim is not perfection. The aim is formation: repeated, embodied practice in the direction of the person you are becoming.</p>
+                    <div class="jl-grid">
+                        <article class="jl-card"><i class="fas fa-seedling"></i><h4>Day 0: build your architecture</h4><p>Five honest questions and the smallest version of each practice that still counts on a difficult day.</p></article>
+                        <article class="jl-card"><i class="fas fa-pen-nib"></i><h4>One short daily entry</h4><p>Tick your practices, name one meaningful action, reflect, and review your evening. Five minutes is enough.</p></article>
+                        <article class="jl-card"><i class="fas fa-rotate-left"></i><h4>Return, don&rsquo;t retreat</h4><p>Missed a day? The journal counts your returns, not just your streaks. One missed day is never a collapsed identity.</p></article>
+                        <article class="jl-card"><i class="fas fa-lock"></i><h4>Private by default</h4><p>Only you can read your entries. Academy mentees can choose to share their progress (never their writing) with their mentor.</p></article>
+                    </div>
+                </div>
+            </section>
+
+            <section class="jl-section alt">
+                <div class="jl-inner">
+                    <h2>The four rules</h2>
+                    <p class="jl-intro">Written into the first page of the journal, and into how the app works.</p>
+                    <div class="jl-rules">
+                        <div class="jl-rule"><span>1</span>Keep the commitments small enough to survive difficult days.</div>
+                        <div class="jl-rule"><span>2</span>Record what actually happened, not what you wish had happened.</div>
+                        <div class="jl-rule"><span>3</span>When you miss, return. Do not turn one missed day into a collapsed identity.</div>
+                        <div class="jl-rule"><span>4</span>Review your direction regularly: formation over performance; devotion over self-condemnation.</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="jl-section">
+                <div class="jl-inner">
+                    <h2>A look inside: Day 8 &middot; Attention</h2>
+                    <p class="jl-intro">Every day has its own theme across four weeks: Purpose, Practice, Resilience and Integration.</p>
+                    <div class="jl-sample">
+                        <p class="jx-prompt">&ldquo;What repeatedly captures your attention when you intended to focus?&rdquo;</p>
+                        <h4>Today&rsquo;s commitment</h4>
+                        <p class="jx-muted">Meditation &middot; Exercise &middot; Reading &middot; Writing &middot; Study or deep work, with minutes and a tick for each.</p>
+                        <h4>One meaningful action</h4><div class="jl-line"></div>
+                        <h4 style="margin-top:1rem;">Professional reflection</h4><div class="jl-line"></div>
+                        <h4 style="margin-top:1rem;">Return, don&rsquo;t retreat</h4><div class="jl-line"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="jl-section alt" id="journal-pricing">
+                <div class="jl-inner">
+                    <div class="jl-price-box">
+                        <p class="jl-kicker" style="margin-bottom:0.5rem;">Full access</p>
+                        <div class="jl-price" id="journal-price-text">Included<small>with every paid Academy package</small></div>
+                        <ul>
+                            <li><i class="fas fa-check-circle"></i> All 30 days, weekly reviews, 30-day review and your 90-day plan</li>
+                            <li><i class="fas fa-check-circle"></i> Versions for APC and IAC candidates, students, trainees and professionals</li>
+                            <li><i class="fas fa-check-circle"></i> Printable version: a blank copy or your own filled journal</li>
+                            <li><i class="fas fa-check-circle"></i> Optional daily reminder email</li>
+                            <li><i class="fas fa-check-circle"></i> Restart for a new 30 days whenever you&rsquo;re ready</li>
+                        </ul>
+                        <div class="jl-cta-row" style="justify-content:center;">
+                            <a id="journal-buy-btn" href="checkout.html?product=journal" class="btn btn-primary" style="display:none;">Get full access</a>
+                            <a href="academy.html" class="btn btn-secondary">Included with the Academy</a>
+                        </div>
+                        <p class="jx-muted jx-small" style="margin-bottom:0;">Days 0&ndash;3 are free with an account. Already an Academy mentee? Sign in with the email you applied with and your journal unlocks automatically.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- App (signed-in users) -->
+        <div id="journal-app" style="display:none;">
+            <div class="jx-wrap">
+                <div class="jx-head">
+                    <p class="jl-kicker" style="margin-bottom:0.4rem;">Relentlessly Disciplined &middot; 30-Day Practice Journal</p>
+                    <h1>My Journal</h1>
+                    <p>From intention to embodied practice.</p>
+                </div>
+                <div id="journal-setup" style="display:none;"></div>
+                <div id="journal-dashboard"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Entry editor -->
+    <div id="journal-editor" class="je-overlay" role="dialog" aria-modal="true" aria-labelledby="je-title">
+        <div class="je-modal">
+            <div class="je-head">
+                <div>
+                    <h2 id="je-title">Entry</h2>
+                    <p id="je-subtitle"></p>
+                </div>
+                <button type="button" class="je-close" id="je-close" aria-label="Close"><i class="fas fa-xmark"></i></button>
+            </div>
+            <div class="je-body" id="je-body"></div>
+            <div class="je-foot">
+                <span class="je-status" id="je-status"></span>
+                <button type="button" class="btn btn-secondary" id="je-cancel">Cancel</button>
+                <button type="button" class="btn btn-primary" id="je-save">Save entry</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Printable journal (built on demand) -->
+    <div id="journal-print"></div>
+
+    <footer class="footer">
+        <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="footer-col">
+                <h3 class="footer-heading">Disciplined Disciples</h3>
+                <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
+                <div class="social-links">
+                    <a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Follow Zolile on LinkedIn"><i class="fab fa-linkedin"></i></a>
+                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link" aria-label="Follow us on Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-link" aria-label="Follow us on Twitter"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Quick Links</h3>
+                <ul>
+                    <li><a href="index.html" class="footer-link">Home</a></li>
+                    <li><a href="shop.html" class="footer-link">Shop</a></li>
+                    <li><a href="academy.html" class="footer-link">Academy</a></li>
+                    <li><a href="journal.html" class="footer-link">30-Day Journal</a></li>
+                    <li><a href="speaking.html" class="footer-link">Speaking</a></li>
+                    <li><a href="blog.html" class="footer-link">Blog</a></li>
+                    <li><a href="contact.html" class="footer-link">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Support</h3>
+                <ul>
+                    <li><a href="faq.html" class="footer-link">FAQs</a></li>
+                    <li><a href="shipping-returns.html" class="footer-link">Shipping & Returns</a></li>
+                    <li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li>
+                    <li><a href="terms-of-service.html" class="footer-link">Terms of Service</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading text-lg font-semibold mb-4">Contact Us</h3>
+                <p class="footer-text text-gray-300 text-sm mb-2">Email: nomaqhizazolile@gmail.com</p>
+                <p class="footer-text text-gray-300 text-sm mb-2">Phone: +27 69 206 0618</p>
+                <p class="footer-text text-gray-300 text-sm">Johannesburg, South Africa</p>
+            </div>
+        </div>
+        <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
+            <p>&copy; 2026 Disciplined Disciples. All rights reserved.</p>
+            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> 💜</p>
+        </div>
+    </footer>
+
+    <a href="https://wa.me/27692060618?text=Hi%20Zolile%21%20I%20have%20a%20question%20about%20the%2030-Day%20Journal." class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <script src="script.js?v=20261005a"></script>
+    <script src="js/journal-content.js?v=20261005a"></script>
+    <script src="js/journal-app.js?v=20261005a"></script>
+</body>
+</html>

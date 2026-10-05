@@ -97,7 +97,7 @@ h1, h2, h3, h4, h5, h6 {
     position: relative;
 }
 
-@media (min-width: 769px) and (max-width: 1180px) {
+@media (min-width: 769px) and (max-width: 1360px) {
     .nav-menu ul {
         gap: 0.75rem;
     }
@@ -109,6 +109,25 @@ h1, h2, h3, h4, h5, h6 {
     #login-signup-link {
         font-size: 0.9rem;
         margin-left: 0.5rem;
+    }
+
+    .logo span {
+        font-size: 1.3rem !important;
+        white-space: nowrap;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1100px) {
+    .nav-menu ul {
+        gap: 0.55rem;
+    }
+
+    .nav-link {
+        font-size: 0.88rem;
+    }
+
+    .logo span {
+        display: none;
     }
 }
 
@@ -788,6 +807,7 @@ h1, h2, h3, h4, h5, h6 {
     .btn {
         width: 100%;
         max-width: 300px;
+        box-sizing: border-box; /* keep padding inside the width so buttons don't overflow small screens */
     }
 
     .add-to-cart-btn, .buy-now-btn {
@@ -2126,5 +2146,158 @@ h1, h2, h3, h4, h5, h6 {
 
     .valley-moment-copy {
         font-size: 1rem;
+    }
+}
+
+
+/* ============================================
+   NAV: About dropdown (Zolile's story, Speaking, Featured)
+   ============================================ */
+.nav-dropdown {
+    position: relative;
+}
+
+.nav-dropdown-toggle {
+    cursor: pointer;
+}
+
+.nav-dropdown-toggle .fa-chevron-down {
+    font-size: 0.7rem;
+    margin-left: 4px;
+    transition: transform 0.2s ease;
+}
+
+.nav-menu .nav-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 210px;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    padding: 0.5rem 0;
+    margin: 0;
+    list-style: none;
+    z-index: 1001;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* Small hover bridge so the menu doesn't close while moving the pointer onto it */
+.nav-dropdown-menu::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: 0;
+    right: 0;
+    height: 10px;
+}
+
+.nav-menu .nav-dropdown:hover .nav-dropdown-menu,
+.nav-menu .nav-dropdown:focus-within .nav-dropdown-menu,
+.nav-menu .nav-dropdown.open .nav-dropdown-menu {
+    display: flex;
+}
+
+.nav-dropdown:hover .fa-chevron-down,
+.nav-dropdown.open .fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+.nav-dropdown-menu a {
+    display: block;
+    padding: 0.6rem 1.1rem;
+    color: #555;
+    text-decoration: none;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.nav-dropdown-menu a:hover,
+.nav-dropdown-menu a.active {
+    background: #f5f5f5;
+    color: #007bff;
+}
+
+.nav-link-mobile.nav-sub {
+    padding-left: 2.5rem;
+    font-size: 0.95rem;
+    color: #555;
+}
+
+/* ============================================
+   HOMEPAGE: Accountancy SA strip + readers
+   ============================================ */
+.home-featured-strip {
+    background: #f7f8fc;
+    border-bottom: 1px solid #ececec;
+    padding: 2.5rem 0;
+    text-align: center;
+}
+
+.home-featured-label {
+    margin: 0 0 0.8rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #555;
+    font-weight: 700;
+}
+
+.home-featured-quote {
+    margin: 0 auto 0.9rem;
+    max-width: 820px;
+    font-size: 1.35rem;
+    font-style: italic;
+    line-height: 1.5;
+    color: #222;
+}
+
+.home-featured-link {
+    color: #007bff;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.home-featured-link:hover {
+    text-decoration: underline;
+}
+
+.home-readers-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.home-reader-photo {
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+    background: #e5e7eb;
+    aspect-ratio: 3 / 4;
+}
+
+.home-reader-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+}
+
+.home-reader-photo:hover img {
+    transform: scale(1.04);
+}
+
+@media (max-width: 900px) {
+    .home-readers-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-featured-quote {
+        font-size: 1.15rem;
     }
 }

@@ -73,6 +73,22 @@
                     <label class="block text-sm font-medium mb-1">Testimonials (one per line)</label>
                     <textarea id="book-testimonials" rows="4" class="w-full border border-slate-200 rounded-lg px-3 py-2" placeholder="This is the kind of motivation I needed."></textarea>
                 </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Physical book stock</label>
+                        <select id="book-physical-stock" class="w-full border border-slate-200 rounded-lg px-3 py-2 bg-white">
+                            <option value="auto">Automatic: out of stock until the restock date</option>
+                            <option value="in_stock">In stock</option>
+                            <option value="out_of_stock">Out of stock (until I change it)</option>
+                        </select>
+                        <p class="text-xs text-slate-500 mt-1">The eBook stays available either way.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Back-in-stock date</label>
+                        <input id="book-physical-restock" type="date" class="w-full border border-slate-200 rounded-lg px-3 py-2 bg-white">
+                        <p class="text-xs text-slate-500 mt-1">Shown to customers. In Automatic mode the book becomes available again on this date.</p>
+                    </div>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">Print Edition Link</label>
@@ -85,10 +101,36 @@
                     </div>
                 </div>
             </section>
+
+            <section class="bg-white rounded-xl shadow p-6 space-y-5">
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-lg font-semibold">30-Day Discipline Journal</h2>
+                        <p class="text-sm text-slate-500">Paid Academy packages always include the journal. Set a price here to also sell it on its own.</p>
+                    </div>
+                    <button id="journal-save-btn" class="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition">Save Journal Settings</button>
+                </div>
+                <div id="journal-alert" class="hidden rounded-lg border px-4 py-3 text-sm"></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Standalone price (R)</label>
+                        <input id="journal-price" type="number" min="0" step="1" placeholder="99 (default)" class="w-full border border-slate-200 rounded-lg px-3 py-2">
+                        <p class="text-xs text-slate-500 mt-1">Leave empty to use the default R99. Includes the printable version. To stop selling it on its own, choose &ldquo;No&rdquo; on the right.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Sell on its own</label>
+                        <select id="journal-active" class="w-full border border-slate-200 rounded-lg px-3 py-2">
+                            <option value="true">Yes, show the buy button</option>
+                            <option value="false">No, Academy-only</option>
+                        </select>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-500">Days 0&ndash;3 are always free with an account. Mentees&rsquo; journal entries are private; you can see progress only for mentees who choose to share it (Academy page).</p>
+            </section>
         </main>
     </div>
-    <script src="script.js?v=20260826a"></script>
-    <script src="admin-control-center.js?v=20260514a"></script>
-    <script src="js/admin-sidebar.js?v=20260601c" defer></script>
+    <script src="script.js?v=20261005a"></script>
+    <script src="admin-control-center.js?v=20261005a"></script>
+    <script src="js/admin-sidebar.js?v=20261005a" defer></script>
 </body>
 </html>

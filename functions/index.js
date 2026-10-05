@@ -15,7 +15,13 @@ admin.initializeApp({
 
 // === EMAIL IDENTITY (single source of truth) ===
 // All outbound mail comes from Zolile (Founder). Reply-to also goes to him.
-const emailConfig = functions.config().email || {};
+// functions.config() is deprecated; the password now comes from the EMAIL_PASSWORD secret.
+let emailConfig = {};
+try {
+  emailConfig = functions.config().email || {};
+} catch (err) {
+  emailConfig = {};
+}
 const SENDER_EMAIL = (emailConfig.user || 'nomaqhizazolile@gmail.com').toString();
 const SENDER_PASSWORD = (process.env.EMAIL_PASSWORD || emailConfig.password || '').toString();
 
@@ -29,6 +35,29 @@ const OWNER_EMAIL = SENDER_EMAIL;
 const ADMIN_NOTIFY_EMAILS = [SENDER_EMAIL]; // Notifications go ONLY to Zolile
 const SUPPORT_PHONE = '+27 69 206 0618';
 const SITE_URL = 'https://disciplineddisciples.co.za';
+
+// === Commerce constants: the server's source of truth when checking payments ===
+// Keep these in step with the prices shown in checkout.html / academy.html.
+const PAYFAST_MERCHANT_ID = '15069294';
+const PAYFAST_VALIDATE_URL = 'https://www.payfast.co.za/eng/query/validate';
+// Optional: if a passphrase is set on the PayFast account, add PAYFAST_PASSPHRASE to
+// functions/.env so signatures are enforced. Without it, PayFast's server-side
+// confirmation (query/validate) is still required for every payment.
+const PAYFAST_PASSPHRASE = (process.env.PAYFAST_PASSPHRASE || '').toString().trim();
+const FIXED_PRICES = { ebook: 119, 'book-physical': 249 };
+const DELIVERY_PRICES = { paxi_standard: 59.95, paxi_express: 109.95, collection_sandton: 0, collection_benoni: 0 };
+const ACADEMY_PACKAGE_PRICES = { discovery: 0, single: 249, focus: 799, transformation: 1499 };
+const ACADEMY_PACKAGE_NAMES = {
+  discovery: 'Discovery Call',
+  single: 'Single Session',
+  focus: 'Focus Pack',
+  transformation: 'Transformation Path',
+  'apc-programme': 'APC Programme'
+};
+const JOURNAL_PRODUCT_ID = 'journal';
+// Standalone journal price unless an admin sets another in Admin > Book (siteContent/journal).
+// Keep in step with JOURNAL_DEFAULT_PRICE in public/script.js.
+const JOURNAL_DEFAULT_PRICE = 99;
 const FOUNDER_SIGNATURE = `
   <p style="margin: 22px 0 6px 0; color: #1f2937; font-weight: 600;">Warm regards,</p>
   <p style="margin: 0; color: #4f46e5; font-weight: 700;">Zolile Nomaqhiza</p>
@@ -84,15 +113,26 @@ function isPaidStatus(status) {
   return ['paid', 'complete', 'completed', 'success'].includes(normalized);
 }
 
+// The eBook check is deliberately strict (product id or name), so other digital
+// products such as the 30-Day Journal never unlock the eBook by accident.
 function isEbookItem(item) {
   const productId = (item?.productId || item?.id || '').toString().toLowerCase();
   const name = (item?.name || '').toString().toLowerCase();
+  return productId === 'ebook' || name.includes('ebook');
+}
+
+function isJournalItem(item) {
+  const productId = (item?.productId || item?.id || '').toString().toLowerCase();
+  return productId === JOURNAL_PRODUCT_ID;
+}
+
+function isDigitalItem(item) {
   const fulfillment = (item?.fulfillmentType || '').toString().toLowerCase();
-  return productId === 'ebook' || name.includes('ebook') || fulfillment === 'digital';
+  return fulfillment === 'digital' || isEbookItem(item) || isJournalItem(item);
 }
 
 function isPhysicalItem(item) {
-  return !isEbookItem(item);
+  return !isDigitalItem(item);
 }
 
 function orderContainsEbook(order) {
@@ -100,10 +140,15 @@ function orderContainsEbook(order) {
   return items.some(isEbookItem);
 }
 
+function orderContainsJournal(order) {
+  const items = Array.isArray(order?.items) ? order.items : [];
+  return items.some(isJournalItem);
+}
+
 function deriveOrderType(order) {
   const items = Array.isArray(order?.items) ? order.items : [];
   if (!items.length) return 'physical';
-  const hasDigital = items.some(isEbookItem);
+  const hasDigital = items.some(isDigitalItem);
   const hasPhysical = items.some(isPhysicalItem);
   if (hasDigital && hasPhysical) return 'mixed';
   if (hasDigital) return 'digital';
@@ -251,6 +296,242 @@ async function grantEbookEntitlement(userId, orderId, source = 'order') {
   }, { merge: true });
 }
 
+// eBook links are short-lived. Firebase download tokens never expire on their own,
+// so each request mints a fresh token, records when it expires, and rewrites the
+// file's token list to only the still-valid ones. That drops any older or leaked
+// link. Buyers are unaffected: they always download through My Library.
+const EBOOK_TOKENS = 'ebookDownloadTokens';
+
+async function activeEbookTokens(fileName, extraToken) {
+  const db = admin.firestore();
+  const now = admin.firestore.Timestamp.now();
+  const snap = await db.collection(EBOOK_TOKENS).where('expiresAt', '>', now).get();
+  const active = new Set(extraToken ? [extraToken] : []);
+  snap.forEach((doc) => {
+    if (doc.data()?.file === fileName) active.add(doc.id);
+  });
+  return Array.from(active);
+}
+
+async function writeEbookTokens(file, tokens) {
+  await file.setMetadata({
+    metadata: { firebaseStorageDownloadTokens: tokens.length ? tokens.join(',') : null }
+  });
+}
+
+async function issueEbookDownloadUrl(file, userId, expirySeconds) {
+  const db = admin.firestore();
+  const token = crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(16).toString('hex');
+  await db.collection(EBOOK_TOKENS).doc(token).set({
+    uid: userId || null,
+    file: file.name,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    expiresAt: admin.firestore.Timestamp.fromMillis(Date.now() + expirySeconds * 1000)
+  });
+  const tokens = await activeEbookTokens(file.name, token);
+  await writeEbookTokens(file, tokens);
+  const encodedPath = encodeURIComponent(file.name);
+  return `https://firebasestorage.googleapis.com/v0/b/${file.bucket.name}/o/${encodedPath}?alt=media&token=${token}`;
+}
+
+// === 30-Day Journal access ===
+// journalAccess/{uid} is written only by the server (or an admin). Paid Academy
+// packages and journal purchases both unlock it.
+async function grantJournalAccess(uid, source, ref) {
+  if (!uid) return;
+  const db = admin.firestore();
+  const docRef = db.collection('journalAccess').doc(uid);
+  const existing = await docRef.get();
+  const update = {
+    granted: true,
+    sources: admin.firestore.FieldValue.arrayUnion({ source, ref: ref || null, at: new Date().toISOString() }),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+  };
+  if (!existing.exists || !existing.data()?.grantedAt) {
+    update.grantedAt = admin.firestore.FieldValue.serverTimestamp();
+  }
+  await docRef.set(update, { merge: true });
+}
+
+async function grantJournalAccessByEmail(email, source, ref) {
+  const normalized = (email || '').toString().trim().toLowerCase();
+  if (!normalized) return false;
+  try {
+    const user = await admin.auth().getUserByEmail(normalized);
+    await grantJournalAccess(user.uid, source, ref);
+    return true;
+  } catch (err) {
+    // No account yet: access is claimed automatically when they sign up with this email.
+    if (err && err.code === 'auth/user-not-found') return false;
+    throw err;
+  }
+}
+
+async function getJournalSettings() {
+  try {
+    const snap = await admin.firestore().collection('siteContent').doc('journal').get();
+    const data = snap.exists ? (snap.data() || {}) : {};
+    const price = Number(data.price);
+    return {
+      price: Number.isFinite(price) && price > 0 ? price : JOURNAL_DEFAULT_PRICE,
+      active: data.active !== false
+    };
+  } catch (err) {
+    console.error('[journal settings] read failed:', err.message);
+    return { price: JOURNAL_DEFAULT_PRICE, active: true };
+  }
+}
+
+async function getAcademyPackagePrice(packageKey) {
+  const key = (packageKey || '').toString().trim().toLowerCase();
+  if (Object.prototype.hasOwnProperty.call(ACADEMY_PACKAGE_PRICES, key)) {
+    return ACADEMY_PACKAGE_PRICES[key];
+  }
+  if (key === 'apc-programme') {
+    const snap = await admin.firestore().collection('siteContent').doc('academy').get();
+    const price = Number(snap.exists ? snap.data()?.apcProgrammePrice : NaN);
+    return Number.isFinite(price) && price > 0 ? price : null;
+  }
+  return null;
+}
+
+// === Server-side order pricing ===
+// Customers' carts live in the browser, so the server re-prices every order from the
+// real catalogue before it is treated as paid.
+let manifestCache = { at: 0, prices: null };
+async function getManifestPrice(productId) {
+  const stale = Date.now() - manifestCache.at > 10 * 60 * 1000;
+  if (!manifestCache.prices || stale) {
+    try {
+      const res = await fetch(`${SITE_URL}/products-manifest.json`);
+      const list = res.ok ? await res.json() : [];
+      const prices = {};
+      (Array.isArray(list) ? list : (list.products || [])).forEach((p) => {
+        if (p && p.id != null && Number.isFinite(Number(p.price))) prices[String(p.id)] = Number(p.price);
+      });
+      manifestCache = { at: Date.now(), prices };
+    } catch (err) {
+      console.error('[pricing] manifest fetch failed:', err.message);
+      if (!manifestCache.prices) manifestCache = { at: Date.now(), prices: {} };
+    }
+  }
+  const price = manifestCache.prices[String(productId)];
+  return Number.isFinite(price) ? price : null;
+}
+
+function expectedShipping(order) {
+  if (deriveOrderType(order) === 'digital') return { amount: 0 };
+  const key = (order.deliveryMethodKey || '').toString();
+  if (Object.prototype.hasOwnProperty.call(DELIVERY_PRICES, key)) return { amount: DELIVERY_PRICES[key] };
+  // Orders placed before deliveryMethodKey existed: read the stored label.
+  const label = `${order.deliveryMethod || ''} ${order.deliveryAddress?.type || ''}`.toLowerCase();
+  if (label.includes('collection')) return { amount: 0 };
+  if (label.includes('express')) return { amount: DELIVERY_PRICES.paxi_express };
+  if (label.includes('paxi')) return { amount: DELIVERY_PRICES.paxi_standard };
+  return { amount: null, problem: 'Unknown delivery method' };
+}
+
+async function priceOrderServerSide(order) {
+  const db = admin.firestore();
+  const items = Array.isArray(order?.items) ? order.items : [];
+  const problems = [];
+  let subtotal = 0;
+  let journalSettings = null;
+  for (const item of items) {
+    const quantity = Math.max(1, parseInt(item?.quantity, 10) || 1);
+    const productId = (item?.productId || item?.id || '').toString().trim();
+    let unit = null;
+    if (isEbookItem(item)) {
+      unit = FIXED_PRICES.ebook;
+    } else if (productId === 'book-physical') {
+      unit = FIXED_PRICES['book-physical'];
+    } else if (isJournalItem(item)) {
+      journalSettings = journalSettings || await getJournalSettings();
+      unit = journalSettings.price;
+    } else if (productId) {
+      const snap = await db.collection('products').doc(productId).get();
+      const firestorePrice = snap.exists ? Number(snap.data()?.price) : NaN;
+      unit = Number.isFinite(firestorePrice) ? firestorePrice : await getManifestPrice(productId);
+    }
+    if (unit == null) {
+      problems.push(`No catalogue price for "${item?.name || productId || 'item'}"`);
+      continue;
+    }
+    subtotal += unit * quantity;
+  }
+  if (!items.length) problems.push('Order has no items');
+  const shipping = expectedShipping(order || {});
+  if (shipping.problem) problems.push(shipping.problem);
+  const expected = Math.round((subtotal + (shipping.amount || 0)) * 100) / 100;
+  return { expected, subtotal, shipping: shipping.amount || 0, problems };
+}
+
+// === PayFast ITN verification ===
+// PayFast signs the exact key=value pairs it posted, in order, up to "signature".
+function payfastParamString(rawBody) {
+  const parts = [];
+  for (const segment of String(rawBody || '').split('&')) {
+    if (!segment) continue;
+    if (segment.split('=')[0] === 'signature') break;
+    parts.push(segment);
+  }
+  return parts.join('&');
+}
+
+function phpUrlEncode(value) {
+  return encodeURIComponent(String(value))
+    .replace(/%20/g, '+')
+    .replace(/[!'()*]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+}
+
+function checkPayfastSignature(paramString, signature) {
+  if (!signature) return { checked: false, valid: false };
+  const base = PAYFAST_PASSPHRASE ? `${paramString}&passphrase=${phpUrlEncode(PAYFAST_PASSPHRASE)}` : paramString;
+  const expected = crypto.createHash('md5').update(base).digest('hex');
+  return { checked: true, valid: expected === String(signature).toLowerCase() };
+}
+
+async function confirmWithPayfast(paramString) {
+  const res = await fetch(PAYFAST_VALIDATE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: paramString
+  });
+  const text = (await res.text()).trim().toUpperCase();
+  return text.startsWith('VALID');
+}
+
+async function logPaymentNotification(entry) {
+  try {
+    await admin.firestore().collection('paymentNotifications').add(Object.assign({
+      receivedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, entry));
+  } catch (err) {
+    console.error('[payfast] failed to write paymentNotifications log:', err.message);
+  }
+}
+
+async function alertOwnerPaymentReview(kind, ref, details) {
+  try {
+    const rows = Object.entries(details || {})
+      .map(([k, v]) => `<tr><td style="padding:4px 10px 4px 0;color:#64748b;">${escapeHtmlForBroadcast(k)}</td><td style="padding:4px 0;color:#0f172a;">${escapeHtmlForBroadcast(Array.isArray(v) ? v.join('; ') : v)}</td></tr>`)
+      .join('');
+    await sendMailReliable({
+      to: OWNER_EMAIL,
+      subject: `⚠️ Payment needs review — ${kind} ${String(ref).substring(0, 12)}`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;">
+          <h2 style="color:#b45309;">A payment needs your review</h2>
+          <p style="color:#475569;">PayFast confirmed a payment, but it did not match what the ${kind} should cost, so nothing has been fulfilled yet. Check the PayFast dashboard, then either mark it paid in admin or refund the customer.</p>
+          <table style="font-size:14px;">${rows}</table>
+          <p><a href="${SITE_URL}/${kind === 'order' ? 'admin-orders.html' : 'admin-mentorship.html'}" style="display:inline-block;background:#4f46e5;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">Open admin</a></p>
+        </div>`
+    }, { type: 'payment_review', orderId: ref });
+  } catch (err) {
+    console.error('[payfast] review alert email failed:', err.message);
+  }
+}
+
 async function userHasEbookEntitlement(userId) {
   if (!userId) return false;
   const db = admin.firestore();
@@ -311,7 +592,7 @@ exports.getEbookDownloadLink = withSecrets.https.onCall(async (data, context) =>
   }
 
   const file = await resolveEbookFile();
-  const url = await getSignedReadUrl(file, LINK_EXPIRY_SECONDS);
+  const url = await issueEbookDownloadUrl(file, userId, LINK_EXPIRY_SECONDS);
 
   await logRef.set({
     windowStart: inWindow ? logData.windowStart : admin.firestore.FieldValue.serverTimestamp(),
@@ -409,8 +690,8 @@ async function generateInvoicePDF(orderId, order, userProfile) {
           const price = Number(item.price) || 0;
           const quantity = Number(item.quantity) || 1;
           doc.text(item.name || 'Item', 56, yPosition, { width: 155 });
-          doc.text(item.size || (isEbookItem(item) ? 'Digital' : 'N/A'), 220, yPosition);
-          doc.text(item.color || (isEbookItem(item) ? 'PDF' : 'N/A'), 270, yPosition);
+          doc.text(item.size || (isDigitalItem(item) ? 'Digital' : 'N/A'), 220, yPosition);
+          doc.text(item.color || (isEbookItem(item) ? 'PDF' : (isJournalItem(item) ? 'Online' : 'N/A')), 270, yPosition);
           doc.text(quantity.toString(), 330, yPosition);
           doc.text(`R${price.toFixed(2)}`, 380, yPosition);
           doc.text(`R${(price * quantity).toFixed(2)}`, 470, yPosition);
@@ -482,11 +763,17 @@ async function sendOrderPlacedEmails(orderId, order, docRef) {
     // Signed URL good for 24 hours; profile page can request a fresh one anytime
     const invoiceUrl = await getSignedReadUrl(invoiceFile, 24 * 60 * 60);
 
-    // Grant ebook entitlement (idempotent)
+    // Grant digital access (idempotent)
     if (hasEbookItem && order.userId) {
         try { await grantEbookEntitlement(order.userId, orderId, 'order'); }
         catch (e) { console.error('grantEbookEntitlement failed:', e.message); }
     }
+    const hasJournalItem = orderContainsJournal(order);
+    if (hasJournalItem && order.userId) {
+        try { await grantJournalAccess(order.userId, 'order', orderId); }
+        catch (e) { console.error('grantJournalAccess failed:', e.message); }
+    }
+    const journalOnly = digitalOnly && hasJournalItem && !hasEbookItem;
 
     const orderDateRaw = order && order.orderDate;
     const orderDateValue = orderDateRaw && typeof orderDateRaw.toDate === 'function'
@@ -501,16 +788,19 @@ async function sendOrderPlacedEmails(orderId, order, docRef) {
         ? 'Delivered (Digital)'
         : (order.status || 'Order Placed');
     const statusMessage = digitalOnly
-        ? 'Your eBook is ready and permanently saved to your profile. Sign in any time to download it.'
+        ? (journalOnly
+            ? 'Your 30-Day Journal is unlocked and saved to your account. Sign in any time to write today’s entry.'
+            : 'Your eBook is ready and permanently saved to your profile. Sign in any time to download it.')
         : (order.statusMessage || order.lastCustomerMessage || 'Your order is confirmed and being prepared with care!');
     const totalAmount = Number(order.totalAmount) || 0;
     const itemsList = Array.isArray(order.items) ? order.items : [];
 
     const styledItems = itemsList.map(item => {
-        const digital = isEbookItem(item);
-        const meta = digital
+        const meta = isEbookItem(item)
             ? 'Format: Digital PDF (lifetime access)'
-            : `Size: ${item.size || 'N/A'} | Qty: ${item.quantity || 1}`;
+            : (isJournalItem(item)
+                ? 'Format: Online journal + printable version (lifetime access)'
+                : `Size: ${item.size || 'N/A'} | Qty: ${item.quantity || 1}`);
         return `
         <div style="border-bottom: 1px solid #eee; padding: 10px 0;">
             <p style="margin: 5px 0; font-weight: bold;">${item.name || 'Item'}</p>
@@ -537,6 +827,18 @@ async function sendOrderPlacedEmails(orderId, order, docRef) {
       </div>
     ` : '';
 
+    const journalSection = hasJournalItem ? `
+      <div style="background: linear-gradient(135deg,#eef2ff 0%,#f5f3ff 100%); padding: 22px; border-radius: 10px; margin-bottom: 22px; border-left: 4px solid #7c3aed;">
+        <h3 style="margin: 0 0 10px 0; color: #1f2937;">\u{1F4D3} Your 30-Day Journal is unlocked</h3>
+        <p style="margin: 0 0 12px 0; color: #4b5563; line-height: 1.6;">
+          Start with Day 0 tonight: five honest questions and the smallest version of each practice. Your entries are private to you, and you can print a copy any time.
+        </p>
+        <p style="margin: 14px 0 0 0;">
+          <a href="${SITE_URL}/journal.html" style="background:#7c3aed;color:white;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">Open My Journal</a>
+        </p>
+      </div>
+    ` : '';
+
     const shippingSection = addressBlock ? `
       <div style="background: white; padding: 18px; border-radius: 8px; margin-bottom: 20px;">
         <h3 style="margin: 0 0 10px 0; color: #333;">Delivering to</h3>
@@ -545,7 +847,9 @@ async function sendOrderPlacedEmails(orderId, order, docRef) {
       </div>
     ` : '';
 
-    const founderNote = digitalOnly
+    const founderNote = journalOnly
+      ? `<p style="color: #4b5563; line-height: 1.7;">${firstName}, the aim isn't perfection \u2014 it's formation. Keep the commitments small enough to survive difficult days, and when you miss one, return. Don't turn one missed day into a collapsed identity.</p>`
+      : digitalOnly
       ? `<p style="color: #4b5563; line-height: 1.7;">${firstName}, this isn't just a PDF \u2014 it's a promise to yourself. Read it slowly. Underline what convicts you. Come back to the chapters that hurt. Discipline is built one quiet decision at a time, and you just made one of them.</p>`
       : (orderType === 'mixed'
           ? `<p style="color: #4b5563; line-height: 1.7;">${firstName}, you grabbed something to wear <em>and</em> something to read \u2014 outer and inner discipline. That's the whole point. The physical pieces are on their way, and your eBook is already waiting in your profile.</p>`
@@ -566,13 +870,15 @@ async function sendOrderPlacedEmails(orderId, order, docRef) {
         <p style="margin: 0;"><a href="${SITE_URL}/book.html" style="color: #4f46e5; font-weight: 600;">Read \u201CRelentlessly Disciplined\u201D \u2192</a></p>
       </div>`;
 
-    const subjectPrefix = digitalOnly ? '\u{1F4D6} Your eBook is ready' : (orderType === 'mixed' ? '\u{1F4E6} Order confirmed (parcel + eBook)' : '\u{1F4E6} Order confirmed');
+    const subjectPrefix = journalOnly
+      ? '\u{1F4D3} Your 30-Day Journal is unlocked'
+      : digitalOnly ? '\u{1F4D6} Your eBook is ready' : (orderType === 'mixed' ? '\u{1F4E6} Order confirmed (parcel + digital)' : '\u{1F4E6} Order confirmed');
 
     const customerHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center;">
               <h1 style="margin: 0; font-size: 28px;">Thank you, ${firstName}!</h1>
-              <p style="margin: 10px 0 0 0; font-size: 16px;">${digitalOnly ? 'Your eBook is locked in and saved to your profile.' : 'Your Disciplined Disciples order is confirmed.'}</p>
+              <p style="margin: 10px 0 0 0; font-size: 16px;">${journalOnly ? 'Your journal is unlocked and saved to your account.' : (digitalOnly ? 'Your eBook is locked in and saved to your profile.' : 'Your Disciplined Disciples order is confirmed.')}</p>
             </div>
             <div style="padding: 30px; background: #f8f9fa;">
               <h2 style="color: #333; margin-bottom: 10px;">Order ${trimmedOrderId}</h2>
@@ -589,6 +895,7 @@ async function sendOrderPlacedEmails(orderId, order, docRef) {
               </div>
               ${shippingSection}
               ${ebookSection}
+              ${journalSection}
               <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                 <h3 style="margin: 0 0 10px 0; color: #111827;">A note from the founder</h3>
                 ${founderNote}
@@ -622,7 +929,7 @@ async function sendOrderPlacedEmails(orderId, order, docRef) {
     const adminEmailHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: #28a745; color: white; padding: 26px; text-align: center;">
-              <h1 style="margin: 0; font-size: 24px;">\u{1F389} New ${orderType === 'digital' ? 'eBook' : orderType === 'mixed' ? 'Mixed' : 'Physical'} Order</h1>
+              <h1 style="margin: 0; font-size: 24px;">\u{1F389} New ${journalOnly ? 'Journal' : orderType === 'digital' ? 'eBook' : orderType === 'mixed' ? 'Mixed' : 'Physical'} Order</h1>
               <p style="margin: 10px 0 0 0; font-size: 16px;">${digitalOnly ? 'No fulfilment needed \u2014 customer already has access.' : 'Action: prepare and ship.'}</p>
             </div>
             <div style="padding: 25px; background: #f8f9fa;">
@@ -638,7 +945,7 @@ async function sendOrderPlacedEmails(orderId, order, docRef) {
               <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                 <h3 style="margin: 0 0 12px 0; color: #333;">Items</h3>
                 <ul style="margin: 0; padding-left: 20px;">
-                  ${itemsList.map(item => `<li style="margin: 6px 0;">${item.name || 'Item'} x${item.quantity || 1} \u2014 <strong>R${((Number(item.price) || 0) * (Number(item.quantity) || 1)).toFixed(2)}</strong>${isEbookItem(item) ? ' <span style="color:#4f46e5;">(digital)</span>' : ''}</li>`).join('')}
+                  ${itemsList.map(item => `<li style="margin: 6px 0;">${item.name || 'Item'} x${item.quantity || 1} \u2014 <strong>R${((Number(item.price) || 0) * (Number(item.quantity) || 1)).toFixed(2)}</strong>${isDigitalItem(item) ? ' <span style="color:#4f46e5;">(digital)</span>' : ''}</li>`).join('')}
                 </ul>
               </div>
               ${addressBlock ? `<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;"><h3 style="margin:0 0 12px 0;color:#333;">Delivery Address</h3><p style="margin:0;line-height:1.6;color:#555;">${addressBlock}</p></div>` : ''}
@@ -674,6 +981,7 @@ async function sendOrderPlacedEmails(orderId, order, docRef) {
             invoiceGeneratedAt: admin.firestore.FieldValue.serverTimestamp(),
             confirmationEmailSentAt: admin.firestore.FieldValue.serverTimestamp(),
             hasEbookItem,
+            hasJournalItem,
             orderType
         };
         // Normalise status/message for digital-only so admin views & future emails are consistent.
@@ -696,7 +1004,7 @@ async function sendMentorshipInvoiceEmail(applicationId, appData, amount) {
         orderId: applicationId,
         orderDate: new Date(),
         items: [{
-            name: `Mentorship — ${appData.packageName || appData.package || 'Programme'}`,
+            name: `Academy — ${appData.packageName || ACADEMY_PACKAGE_NAMES[appData.package] || appData.package || 'Programme'}`,
             price: Number(amount) || 0,
             quantity: 1,
             fulfillmentType: 'service'
@@ -719,18 +1027,23 @@ async function sendMentorshipInvoiceEmail(applicationId, appData, amount) {
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
             <div style="background: #ffffff; border-bottom: 3px solid #4f46e5; padding: 30px; text-align: center;">
               <h1 style="margin: 0; font-size: 26px; color: #1f2937;">Payment received, ${firstName}!</h1>
-              <p style="margin: 10px 0 0 0; font-size: 15px; color: #4b5563;">Your mentorship spot is confirmed.</p>
+              <p style="margin: 10px 0 0 0; font-size: 15px; color: #4b5563;">Your Disciplined Disciples Academy spot is confirmed.</p>
             </div>
             <div style="padding: 28px; background: #f9fafb;">
               <div style="background: white; padding: 18px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #4f46e5;">
-                <p style="margin: 5px 0; color: #4b5563;">Programme: <strong>${appData.packageName || appData.package || 'Mentorship'}</strong></p>
+                <p style="margin: 5px 0; color: #4b5563;">Programme: <strong>${escapeHtmlForBroadcast(appData.packageName || ACADEMY_PACKAGE_NAMES[appData.package] || appData.package || 'Academy')}</strong></p>
                 <p style="margin: 5px 0; color: #4b5563;">Amount: <strong>R${(Number(amount) || 0).toFixed(2)}</strong></p>
                 <p style="margin: 5px 0; color: #4b5563;">Reference: ${trimmedId}</p>
               </div>
               <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                 <h3 style="margin: 0 0 10px 0; color: #111827;">A note from Zolile</h3>
-                <p style="color: #4b5563; line-height: 1.7;">${firstName}, thank you for trusting me with this season of your journey. I'll be reaching out personally within 5–7 business days to schedule your first session. This isn't a course — it's a relationship built on discipline.</p>
+                <p style="color: #4b5563; line-height: 1.7;">${escapeHtmlForBroadcast(firstName)}, thank you for trusting me with this season of your journey. I'll be reaching out personally within 5–7 business days to schedule your first session. This isn't a course — it's a relationship built on discipline.</p>
                 ${FOUNDER_SIGNATURE}
+              </div>
+              <div style="background: linear-gradient(135deg,#eef2ff 0%,#f5f3ff 100%); padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #7c3aed;">
+                <h3 style="margin: 0 0 8px 0; color: #1f2937;">\u{1F4D3} Your 30-Day Journal is included</h3>
+                <p style="margin: 0 0 12px 0; color: #4b5563; line-height: 1.6;">Start it before our first session. Sign in with <strong>${escapeHtmlForBroadcast(appData.email || 'the email you applied with')}</strong> and open your journal.</p>
+                <a href="${SITE_URL}/journal.html" style="background:#7c3aed;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">Open My Journal</a>
               </div>
               <p style="color: #6b7280; font-size: 13px;">Questions in the meantime? Reply to this email or WhatsApp ${SUPPORT_PHONE}.</p>
             </div>
@@ -738,7 +1051,7 @@ async function sendMentorshipInvoiceEmail(applicationId, appData, amount) {
         `;
         await sendMailReliable({
             to: appData.email,
-            subject: `✅ Mentorship payment confirmed — ${trimmedId}`,
+            subject: `✅ Academy payment confirmed — ${trimmedId}`,
             html,
             attachments: [{ filename: `Invoice-Mentorship-${trimmedId}.pdf`, content: invoiceBuffer, contentType: 'application/pdf' }]
         }, { type: 'mentorship_invoice_customer', applicationId, userId: appData.userId || null });
@@ -908,186 +1221,313 @@ exports.sendOrderStatusUpdate = withSecrets.firestore
     return null;
   });
 
-// PayFast Payment Verification
+// PayFast Payment Verification (ITN)
+// An order or Academy booking is only marked paid when all of these hold:
+//   1. merchant_id is ours
+//   2. the signature matches (enforced when PAYFAST_PASSPHRASE is configured)
+//   3. PayFast's own server confirms the notification (query/validate -> VALID)
+//   4. payment_status is COMPLETE
+//   5. the amount paid covers what the server prices the order/package at
+// Anything that fails 5 is held as "Under Review" for the owner instead of being fulfilled.
 exports.verifyPayfastPayment = withSecrets.https.onRequest(async (req, res) => {
-  // Enable CORS
-  res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'GET, POST');
-  res.set('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    res.status(204).send('');
+  if (req.method !== 'POST') {
+    res.status(405).send('Method not allowed');
     return;
   }
 
+  const rawBody = (req.rawBody || Buffer.from('')).toString('utf8');
+  const payload = querystring.parse(rawBody);
+  const paramString = payfastParamString(rawBody);
+  const ref = (payload.custom_str1 || payload.m_payment_id || '').toString().trim();
+  const scope = (payload.custom_str3 || '').toString().toLowerCase() === 'mentorship' ? 'academy' : 'order';
+  const payfastPaymentId = (payload.pf_payment_id || '').toString().trim() || null;
+  const paymentStatus = (payload.payment_status || '').toString().toUpperCase();
+  const amountGross = Number(payload.amount_gross);
+  const baseLog = { ref: ref || null, scope, payfastPaymentId, paymentStatus, amountGross: Number.isFinite(amountGross) ? amountGross : null };
+
   try {
-    const contentType = (req.get('content-type') || '').toLowerCase();
-    let payload = {};
-
-    if (contentType.includes('application/json')) {
-      payload = typeof req.body === 'object' && req.body !== null ? req.body : {};
-    } else if (contentType.includes('application/x-www-form-urlencoded')) {
-      const rawBody = (req.rawBody || Buffer.from('')).toString('utf8');
-      payload = querystring.parse(rawBody);
-    } else {
-      payload = typeof req.body === 'object' && req.body !== null ? req.body : {};
-    }
-
-    const orderId = (payload.orderId || payload.custom_str1 || payload.m_payment_id || '').toString().trim();
-    const rawStatus = (payload.paymentStatus || payload.payment_status || payload.status || '').toString().toLowerCase();
-    const payfastPaymentId = (payload.paymentId || payload.pf_payment_id || payload.token || '').toString().trim() || null;
-
-    if (!orderId) {
-      res.status(400).json({ success: false, message: 'Missing order identifier' });
+    if (!ref) {
+      await logPaymentNotification(Object.assign({ outcome: 'rejected', reasons: ['Missing reference'] }, baseLog));
+      res.status(400).send('Missing reference');
       return;
     }
 
-    const completeStatuses = ['complete', 'completed', 'success', 'paid'];
-    const isComplete = completeStatuses.includes(rawStatus);
-
-    if (!isComplete) {
-      console.log(`PayFast webhook for ${orderId} ignored with status ${rawStatus}`);
-      res.json({ success: false, message: `Payment status ${rawStatus || 'unknown'} not marked as complete`, orderId });
+    if (String(payload.merchant_id || '') !== PAYFAST_MERCHANT_ID) {
+      await logPaymentNotification(Object.assign({ outcome: 'rejected', reasons: ['Merchant id mismatch'] }, baseLog));
+      res.status(400).send('Invalid merchant');
       return;
     }
 
-    // D5: Mentorship package payments route to a different collection.
-    // The mentorship.html form sets custom_str3='mentorship' and uses the
-    // mentorshipApplications doc id as custom_str1.
-    const paymentScope = (payload.custom_str3 || '').toString().toLowerCase();
-    if (paymentScope === 'mentorship') {
-      const appRef = admin.firestore().collection('mentorshipApplications').doc(orderId);
-      const appSnap = await appRef.get();
-      if (!appSnap.exists) {
-        res.status(404).json({ success: false, message: `Mentorship application ${orderId} not found` });
-        return;
-      }
-      const appData = appSnap.data() || {};
-      if ((appData.paymentStatus || '').toLowerCase() === 'paid') {
-        res.json({ success: true, message: 'Mentorship already paid', orderId });
-        return;
-      }
-      const amount = Number(payload.amount_gross || payload.amount || 0) || appData.amount || 0;
-      await appRef.set({
-        paymentStatus: 'Paid',
-        paymentGateway: 'PayFast',
-        paymentReference: payfastPaymentId || null,
-        paymentCompletedAt: admin.firestore.FieldValue.serverTimestamp(),
-        amountPaid: amount,
-        status: appData.status === 'new' || !appData.status ? 'paid' : appData.status,
-        webhookReceivedAt: admin.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
+    const signature = checkPayfastSignature(paramString, payload.signature);
+    if (PAYFAST_PASSPHRASE && !signature.valid) {
+      await logPaymentNotification(Object.assign({ outcome: 'rejected', reasons: ['Signature mismatch'] }, baseLog));
+      res.status(400).send('Invalid signature');
+      return;
+    }
+    if (signature.checked && !signature.valid) {
+      console.warn(`[payfast] signature for ${ref} did not match without a passphrase; relying on server confirmation.`);
+    }
 
-      // Notify owner of the paid booking
-      try {
-        await sendMailReliable({
-          to: OWNER_EMAIL,
-          subject: `\u{1F4B8} Mentorship payment received \u2014 ${appData.name || 'Applicant'} \u00B7 R${amount}`,
-          html: `
-            <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;">
-              <h2 style="color:#1a202c;">Mentorship Booking Paid</h2>
-              <p><strong>Applicant:</strong> ${appData.name || '(unknown)'}<br>
-                 <strong>Email:</strong> ${appData.email || '(none)'}<br>
-                 <strong>Package:</strong> ${appData.packageName || appData.package || '(unspecified)'}<br>
-                 <strong>Amount:</strong> R${Number(amount).toFixed(2)}<br>
-                 <strong>Application ID:</strong> <code>${orderId}</code></p>
-              <p><a href="${SITE_URL}/admin-mentorship.html" style="display:inline-block;background:#4f46e5;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">Open Admin</a></p>
-            </div>`
-        }, { type: 'mentorship_paid', applicationId: orderId });
-      } catch (e) {
-        console.error('[mentorship-paid email] failed:', e.message);
-      }
-
-      // Customer-facing invoice email (separate from the owner notification above).
-      try {
-        const { invoicePath } = await sendMentorshipInvoiceEmail(orderId, appData, amount);
-        await appRef.set({
-          invoicePath,
-          invoiceGeneratedAt: admin.firestore.FieldValue.serverTimestamp(),
-          paymentConfirmationSentAt: admin.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-      } catch (e) {
-        console.error('[mentorship invoice email] failed:', e.message);
-      }
-
-      res.json({ success: true, message: 'Mentorship payment recorded', orderId });
+    let confirmed = false;
+    try {
+      confirmed = await confirmWithPayfast(paramString);
+    } catch (err) {
+      // Could not reach PayFast: answer with an error so PayFast retries the notification.
+      console.error('[payfast] validate call failed:', err.message);
+      await logPaymentNotification(Object.assign({ outcome: 'retry', reasons: ['PayFast validate unreachable: ' + err.message] }, baseLog));
+      res.status(500).send('Validation unavailable');
+      return;
+    }
+    if (!confirmed) {
+      await logPaymentNotification(Object.assign({ outcome: 'rejected', reasons: ['PayFast did not confirm this notification'] }, baseLog));
+      res.status(400).send('Not confirmed by PayFast');
       return;
     }
 
-    const ordersCollection = admin.firestore().collection('artifacts').doc('default-app-id').collection('orders');
-    const orderRef = ordersCollection.doc(orderId);
-    const orderSnap = await orderRef.get();
-
-    if (!orderSnap.exists) {
-      res.status(404).json({ success: false, message: `Order ${orderId} not found` });
+    if (paymentStatus !== 'COMPLETE') {
+      await logPaymentNotification(Object.assign({ outcome: 'ignored', reasons: [`Status ${paymentStatus || 'unknown'}`] }, baseLog));
+      res.status(200).send('OK');
       return;
     }
 
-    const orderData = orderSnap.data() || {};
-    const FieldValue = admin.firestore.FieldValue;
-    const existingPaymentStatus = (orderData.paymentStatus || '').toLowerCase();
-
-    if (existingPaymentStatus === 'paid') {
-      console.log(`Order ${orderId} already marked as paid. Skipping duplicate update.`);
-      res.json({ success: true, message: 'Order already processed', orderId });
-      return;
-    }
-
-    const customerName = orderData.customerName || orderData.deliveryAddress?.name || 'friend';
-    const firstName = customerName.trim().split(' ')[0] || 'friend';
-    const statusMessage = `🎉 Thank you, ${firstName}! Your Disciplined Disciples order is officially locked in.`;
-
-    const historyEntry = {
-      statusKey: 'order_placed',
-      status: 'Order Placed',
-      label: 'Order placed',
-      message: statusMessage,
-      icon: '🎉',
-      createdAt: new Date().toISOString(),
-      updatedBy: 'payfast-webhook',
-      meta: {
-        source: 'payfast',
-        paymentReference: payfastPaymentId || null
-      }
+    const verification = {
+      method: 'payfast-itn',
+      serverConfirmed: true,
+      signatureChecked: signature.checked,
+      signatureValid: signature.valid,
+      amountGross,
+      verifiedAt: new Date().toISOString()
     };
 
-    const statusNote = Object.assign({ type: 'status' }, historyEntry);
-
-    await orderRef.set({
-      statusKey: 'order_placed',
-      status: 'Order Placed',
-      statusLabel: 'Order placed',
-      statusIcon: '\u{1F389}',
-      statusMessage,
-      statusUpdatedAt: FieldValue.serverTimestamp(),
-      statusUpdatedBy: 'payfast-webhook',
-      lastCustomerMessage: statusMessage,
-      paymentStatus: 'Paid',
-      paymentGateway: 'PayFast',
-      paymentReference: payfastPaymentId || null,
-      paymentCompletedAt: FieldValue.serverTimestamp(),
-      payfastTxnId: payfastPaymentId || orderData.payfastTxnId || null,
-      webhookReceivedAt: FieldValue.serverTimestamp(),
-      orderType: deriveOrderType(orderData),
-      statusHistory: FieldValue.arrayUnion(historyEntry),
-      notes: FieldValue.arrayUnion(statusNote)
-    }, { merge: true });
-
-    // Grant ebook entitlement immediately on payment confirmation (idempotent)
-    if (orderContainsEbook(orderData) && (orderData.userId || payload.custom_str2)) {
-      try {
-        await grantEbookEntitlement(orderData.userId || payload.custom_str2, orderId, 'payfast');
-      } catch (e) {
-        console.error('Failed to grant ebook entitlement from webhook:', e.message);
-      }
+    if (scope === 'academy') {
+      await handleAcademyPayment(ref, payload, payfastPaymentId, amountGross, verification, baseLog);
+    } else {
+      await handleOrderPayment(ref, payload, payfastPaymentId, amountGross, verification, baseLog);
     }
-
-    res.json({ success: true, message: 'Payment verified and order updated', orderId });
+    res.status(200).send('OK');
   } catch (error) {
     console.error('Error verifying payment:', error);
-    res.status(500).json({ success: false, error: error.message });
+    await logPaymentNotification(Object.assign({ outcome: 'error', reasons: [error.message] }, baseLog));
+    res.status(500).send('Error');
   }
 });
+
+async function handleAcademyPayment(applicationId, payload, payfastPaymentId, amountGross, verification, baseLog) {
+  const appRef = admin.firestore().collection('mentorshipApplications').doc(applicationId);
+  const appSnap = await appRef.get();
+  if (!appSnap.exists) {
+    await logPaymentNotification(Object.assign({ outcome: 'rejected', reasons: ['Academy application not found'] }, baseLog));
+    return;
+  }
+  const appData = appSnap.data() || {};
+  if (isPaidStatus(appData.paymentStatus)) {
+    await logPaymentNotification(Object.assign({ outcome: 'duplicate' }, baseLog));
+    return;
+  }
+
+  const expectedPrice = await getAcademyPackagePrice(appData.package);
+  const reasons = [];
+  if (expectedPrice == null) reasons.push(`No server price for package "${appData.package || 'unknown'}"`);
+  else if (!(amountGross + 0.009 >= expectedPrice)) reasons.push(`Paid R${amountGross.toFixed(2)} but the package costs R${expectedPrice.toFixed(2)}`);
+
+  if (reasons.length) {
+    await appRef.set({
+      paymentStatus: 'Under Review',
+      paymentGateway: 'PayFast',
+      paymentReference: payfastPaymentId || null,
+      paymentReview: { reasons, expected: expectedPrice, received: amountGross, at: new Date().toISOString() },
+      paymentVerification: verification,
+      webhookReceivedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    await logPaymentNotification(Object.assign({ outcome: 'review', reasons }, baseLog));
+    await alertOwnerPaymentReview('Academy booking', applicationId, {
+      Applicant: `${appData.name || ''} (${appData.email || 'no email'})`,
+      Package: appData.packageName || appData.package || 'unknown',
+      'Amount received': `R${amountGross.toFixed(2)}`,
+      'Expected': expectedPrice == null ? 'unknown' : `R${expectedPrice.toFixed(2)}`,
+      Reasons: reasons
+    });
+    return;
+  }
+
+  const amount = amountGross;
+  await appRef.set({
+    paymentStatus: 'Paid',
+    paymentGateway: 'PayFast',
+    paymentReference: payfastPaymentId || null,
+    paymentCompletedAt: admin.firestore.FieldValue.serverTimestamp(),
+    amountPaid: amount,
+    paymentVerification: verification,
+    status: appData.status === 'new' || !appData.status ? 'paid' : appData.status,
+    webhookReceivedAt: admin.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+  await logPaymentNotification(Object.assign({ outcome: 'paid' }, baseLog));
+
+  // Every paid Academy package includes the 30-Day Journal.
+  try {
+    if (appData.userId) await grantJournalAccess(appData.userId, 'academy', applicationId);
+    else await grantJournalAccessByEmail(appData.email, 'academy', applicationId);
+  } catch (e) {
+    console.error('[academy-paid] journal access grant failed:', e.message);
+  }
+
+  // Notify owner of the paid booking
+  try {
+    await sendMailReliable({
+      to: OWNER_EMAIL,
+      subject: `\u{1F4B8} Academy payment received — ${appData.name || 'Applicant'} · R${amount}`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;">
+          <h2 style="color:#1a202c;">Academy Booking Paid</h2>
+          <p><strong>Applicant:</strong> ${escapeHtmlForBroadcast(appData.name || '(unknown)')}<br>
+             <strong>Email:</strong> ${escapeHtmlForBroadcast(appData.email || '(none)')}<br>
+             <strong>Package:</strong> ${escapeHtmlForBroadcast(appData.packageName || appData.package || '(unspecified)')}<br>
+             <strong>Amount:</strong> R${Number(amount).toFixed(2)}<br>
+             <strong>Application ID:</strong> <code>${escapeHtmlForBroadcast(applicationId)}</code></p>
+          <p style="color:#475569;">Their 30-Day Journal has been unlocked automatically.</p>
+          <p><a href="${SITE_URL}/admin-mentorship.html" style="display:inline-block;background:#4f46e5;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">Open Academy admin</a></p>
+        </div>`
+    }, { type: 'mentorship_paid', applicationId });
+  } catch (e) {
+    console.error('[academy-paid email] failed:', e.message);
+  }
+
+  // Customer-facing invoice email (separate from the owner notification above).
+  try {
+    const { invoicePath } = await sendMentorshipInvoiceEmail(applicationId, appData, amount);
+    await appRef.set({
+      invoicePath,
+      invoiceGeneratedAt: admin.firestore.FieldValue.serverTimestamp(),
+      paymentConfirmationSentAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+  } catch (e) {
+    console.error('[academy invoice email] failed:', e.message);
+  }
+}
+
+async function handleOrderPayment(orderId, payload, payfastPaymentId, amountGross, verification, baseLog) {
+  const orderRef = admin.firestore().collection('artifacts').doc('default-app-id').collection('orders').doc(orderId);
+  const orderSnap = await orderRef.get();
+  if (!orderSnap.exists) {
+    await logPaymentNotification(Object.assign({ outcome: 'rejected', reasons: ['Order not found'] }, baseLog));
+    return;
+  }
+
+  const orderData = orderSnap.data() || {};
+  const FieldValue = admin.firestore.FieldValue;
+  if (isPaidStatus(orderData.paymentStatus)) {
+    console.log(`Order ${orderId} already marked as paid. Skipping duplicate update.`);
+    await logPaymentNotification(Object.assign({ outcome: 'duplicate' }, baseLog));
+    return;
+  }
+
+  const pricing = await priceOrderServerSide(orderData);
+  const reasons = pricing.problems.slice();
+  if (!(amountGross + 0.009 >= pricing.expected)) {
+    reasons.push(`Paid R${amountGross.toFixed(2)} but the items cost R${pricing.expected.toFixed(2)}`);
+  }
+  verification.expectedAmount = pricing.expected;
+
+  if (reasons.length) {
+    const reviewMessage = 'We received your payment and are double-checking it. We will update you shortly — no action needed from you.';
+    const reviewEntry = {
+      statusKey: 'payment_review',
+      status: 'Payment Under Review',
+      label: 'Payment under review',
+      message: reviewMessage,
+      icon: '\u{1F50E}',
+      createdAt: new Date().toISOString(),
+      updatedBy: 'payfast-webhook'
+    };
+    await orderRef.set({
+      paymentStatus: 'Under Review',
+      paymentGateway: 'PayFast',
+      paymentReference: payfastPaymentId || null,
+      payfastTxnId: payfastPaymentId || orderData.payfastTxnId || null,
+      paymentReview: { reasons, expected: pricing.expected, received: amountGross, at: new Date().toISOString() },
+      paymentVerification: verification,
+      statusKey: 'payment_review',
+      status: 'Payment Under Review',
+      statusLabel: 'Payment under review',
+      statusIcon: '\u{1F50E}',
+      statusMessage: reviewMessage,
+      statusUpdatedAt: FieldValue.serverTimestamp(),
+      statusUpdatedBy: 'payfast-webhook',
+      webhookReceivedAt: FieldValue.serverTimestamp(),
+      statusHistory: FieldValue.arrayUnion(reviewEntry),
+      notes: FieldValue.arrayUnion(Object.assign({ type: 'status' }, reviewEntry))
+    }, { merge: true });
+    await logPaymentNotification(Object.assign({ outcome: 'review', reasons, expected: pricing.expected }, baseLog));
+    await alertOwnerPaymentReview('order', orderId, {
+      Customer: `${orderData.customerName || ''} (${orderData.customerEmail || 'no email'})`,
+      'Amount received': `R${amountGross.toFixed(2)}`,
+      'Catalogue price': `R${pricing.expected.toFixed(2)}`,
+      'Order total shown to customer': `R${(Number(orderData.totalAmount) || 0).toFixed(2)}`,
+      Reasons: reasons
+    });
+    return;
+  }
+
+  const customerName = orderData.customerName || orderData.deliveryAddress?.name || 'friend';
+  const firstName = customerName.trim().split(' ')[0] || 'friend';
+  const statusMessage = `\u{1F389} Thank you, ${firstName}! Your Disciplined Disciples order is officially locked in.`;
+
+  const historyEntry = {
+    statusKey: 'order_placed',
+    status: 'Order Placed',
+    label: 'Order placed',
+    message: statusMessage,
+    icon: '\u{1F389}',
+    createdAt: new Date().toISOString(),
+    updatedBy: 'payfast-webhook',
+    meta: {
+      source: 'payfast',
+      paymentReference: payfastPaymentId || null
+    }
+  };
+
+  const statusNote = Object.assign({ type: 'status' }, historyEntry);
+
+  await orderRef.set({
+    statusKey: 'order_placed',
+    status: 'Order Placed',
+    statusLabel: 'Order placed',
+    statusIcon: '\u{1F389}',
+    statusMessage,
+    statusUpdatedAt: FieldValue.serverTimestamp(),
+    statusUpdatedBy: 'payfast-webhook',
+    lastCustomerMessage: statusMessage,
+    paymentStatus: 'Paid',
+    paymentGateway: 'PayFast',
+    paymentReference: payfastPaymentId || null,
+    paymentCompletedAt: FieldValue.serverTimestamp(),
+    payfastTxnId: payfastPaymentId || orderData.payfastTxnId || null,
+    amountPaid: amountGross,
+    paymentVerification: verification,
+    webhookReceivedAt: FieldValue.serverTimestamp(),
+    orderType: deriveOrderType(orderData),
+    statusHistory: FieldValue.arrayUnion(historyEntry),
+    notes: FieldValue.arrayUnion(statusNote)
+  }, { merge: true });
+  await logPaymentNotification(Object.assign({ outcome: 'paid', expected: pricing.expected }, baseLog));
+
+  // Grant digital access immediately on payment confirmation (idempotent).
+  // The owner of the order is always the account that created it.
+  if (orderData.userId && orderContainsEbook(orderData)) {
+    try {
+      await grantEbookEntitlement(orderData.userId, orderId, 'payfast');
+    } catch (e) {
+      console.error('Failed to grant ebook entitlement from webhook:', e.message);
+    }
+  }
+  if (orderData.userId && orderContainsJournal(orderData)) {
+    try {
+      await grantJournalAccess(orderData.userId, 'order', orderId);
+    } catch (e) {
+      console.error('Failed to grant journal access from webhook:', e.message);
+    }
+  }
+}
 
 // Support Request Email
 exports.sendSupportRequest = withSecrets.firestore
@@ -1187,34 +1627,38 @@ exports.onMentorshipApplicationCreated = withSecrets.firestore
     const applicationId = context.params.applicationId;
     if (!app) return null;
 
+    const esc = escapeHtmlForBroadcast;
     const applicantName = app.name || 'Applicant';
     const applicantEmail = app.email || '';
     const applicantGoal = app.goal || '';
     const applicantTrack = app.track || '';
+    const packageLabel = app.packageName || ACADEMY_PACKAGE_NAMES[app.package] || app.package || '';
+    const firstName = applicantName.split(' ')[0] || 'friend';
     const submittedAt = new Date().toLocaleDateString('en-ZA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
     try {
       // Notify owner
       await sendMailReliable({
         to: OWNER_EMAIL,
-        subject: `\u{1F393} New Mentorship Application \u2014 ${applicantName}`,
+        subject: `\u{1F393} New Academy Application — ${applicantName}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 580px; margin: 0 auto;">
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 28px; text-align: center; border-radius: 8px 8px 0 0;">
-              <h1 style="margin: 0; font-size: 22px;">New Mentorship Application</h1>
+              <h1 style="margin: 0; font-size: 22px;">New Academy Application</h1>
               <p style="margin: 8px 0 0; opacity: 0.85; font-size: 14px;">${submittedAt}</p>
             </div>
             <div style="background: #f8f9fa; padding: 24px;">
               <table style="width: 100%; border-collapse: collapse;">
-                <tr><td style="padding: 8px 0; font-weight: 600; color: #555; width: 130px;">Name</td><td style="padding: 8px 0; color: #1a202c;">${applicantName}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Email</td><td style="padding: 8px 0;"><a href="mailto:${applicantEmail}" style="color: #667eea;">${applicantEmail}</a></td></tr>
-                ${applicantTrack ? `<tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Track</td><td style="padding: 8px 0; color: #1a202c;">${applicantTrack}</td></tr>` : ''}
-                <tr><td style="padding: 8px 0; font-weight: 600; color: #555; vertical-align: top;">Goal</td><td style="padding: 8px 0; color: #4a5568; line-height: 1.6;">${applicantGoal || '(not provided)'}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: 600; color: #555; width: 130px;">Name</td><td style="padding: 8px 0; color: #1a202c;">${esc(applicantName)}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Email</td><td style="padding: 8px 0;"><a href="mailto:${esc(applicantEmail)}" style="color: #667eea;">${esc(applicantEmail)}</a></td></tr>
+                ${packageLabel ? `<tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Package</td><td style="padding: 8px 0; color: #1a202c;">${esc(packageLabel)}</td></tr>` : ''}
+                ${applicantTrack ? `<tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Stage</td><td style="padding: 8px 0; color: #1a202c;">${esc(applicantTrack)}</td></tr>` : ''}
+                <tr><td style="padding: 8px 0; font-weight: 600; color: #555; vertical-align: top;">Goal</td><td style="padding: 8px 0; color: #4a5568; line-height: 1.6;">${esc(applicantGoal) || '(not provided)'}</td></tr>
               </table>
               <div style="margin-top: 20px; padding: 14px; background: white; border-radius: 8px; border-left: 4px solid #667eea;">
-                <p style="margin: 0; font-size: 13px; color: #6b7280;">Application ID: <code>${applicationId}</code></p>
+                <p style="margin: 0; font-size: 13px; color: #6b7280;">Application ID: <code>${esc(applicationId)}</code></p>
               </div>
-              <p style="margin: 20px 0 0; font-size: 13px; color: #9ca3af;">Review in <a href="https://disciplined-disciples-1.web.app/admin-mentorship.html" style="color: #667eea;">Mentorship Admin</a>.</p>
+              <p style="margin: 20px 0 0; font-size: 13px; color: #9ca3af;">Review in <a href="${SITE_URL}/admin-mentorship.html" style="color: #667eea;">Academy Admin</a>.</p>
             </div>
             <div style="background: #1a202c; color: rgba(255,255,255,0.6); padding: 16px; text-align: center; font-size: 12px; border-radius: 0 0 8px 8px;">
               Disciplined Disciples Admin Notification | ${SENDER_EMAIL}
@@ -1227,33 +1671,35 @@ exports.onMentorshipApplicationCreated = withSecrets.firestore
       if (applicantEmail) {
         await sendMailReliable({
           to: applicantEmail,
-          subject: `We received your mentorship application, ${applicantName.split(' ')[0] || 'friend'}`,
+          subject: `We received your Academy application, ${firstName}`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto;">
               <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 32px; text-align: center; border-radius: 8px 8px 0 0;">
                 <h1 style="margin: 0; font-size: 22px;">Application Received ✓</h1>
+                <p style="margin: 8px 0 0; opacity: 0.85; font-size: 14px;">Disciplined Disciples Academy</p>
               </div>
               <div style="padding: 28px; background: white;">
-                <p style="font-size: 16px; color: #1a202c; font-weight: 600;">Hi ${applicantName.split(' ')[0] || 'there'},</p>
-                <p style="color: #4a5568; line-height: 1.7;">Thank you for applying to Zolile's mentorship programme. Your application has been received and will be reviewed personally.</p>
+                <p style="font-size: 16px; color: #1a202c; font-weight: 600;">Hi ${esc(firstName)},</p>
+                <p style="color: #4a5568; line-height: 1.7;">Thank you for applying to the Disciplined Disciples Academy. Your application has been received and will be reviewed personally by Zolile.</p>
                 <p style="color: #4a5568; line-height: 1.7;">You can expect to hear back within <strong>5–7 business days</strong>. If you have any questions in the meantime, reply to this email or reach out on WhatsApp.</p>
                 <div style="margin: 24px 0; padding: 16px; background: #f5f3ff; border-radius: 8px; border-left: 4px solid #7c3aed;">
                   <p style="margin: 0; font-size: 14px; color: #5b21b6; font-style: italic;">"Discipline is the DNA of success. The fact that you applied means it is already in you."</p>
                   <p style="margin: 8px 0 0; font-size: 12px; color: #7c3aed; font-weight: 600;">— Zolile Nomaqhiza</p>
                 </div>
+                <p style="color: #4a5568; line-height: 1.7;">While you wait, try the first days of the <a href="${SITE_URL}/journal.html" style="color: #667eea; font-weight: 600;">30-Day Discipline Journal</a> free.</p>
                 <p style="color: #6b7280; font-size: 13px;">WhatsApp: <a href="https://wa.me/27692060618" style="color: #667eea;">+27 69 206 0618</a></p>
               </div>
               <div style="background: #1a202c; color: rgba(255,255,255,0.6); padding: 16px; text-align: center; font-size: 12px; border-radius: 0 0 8px 8px;">
-                Disciplined Disciples | disciplined-disciples-1.web.app
+                Disciplined Disciples Academy | disciplineddisciples.co.za
               </div>
             </div>
           `
         });
       }
 
-      console.log(`Mentorship application emails sent for ${applicationId}`);
+      console.log(`Academy application emails sent for ${applicationId}`);
     } catch (error) {
-      console.error('Error sending mentorship application emails:', error);
+      console.error('Error sending academy application emails:', error);
     }
     return null;
   });
@@ -1363,6 +1809,8 @@ exports.sendCustomerWelcome = withSecrets.auth.user().onCreate(async (user) => {
             </p>
             <ul style="color:#4b5563; line-height: 1.9;">
               <li><a href="${SITE_URL}/book.html" style="color:#4f46e5; font-weight:600;">Read &ldquo;Relentlessly Disciplined&rdquo;</a> &mdash; my book on building the inner game.</li>
+              <li><a href="${SITE_URL}/journal.html" style="color:#4f46e5; font-weight:600;">Start the 30-Day Discipline Journal</a> &mdash; the first days are free.</li>
+              <li><a href="${SITE_URL}/academy.html" style="color:#4f46e5; font-weight:600;">Explore the Academy</a> &mdash; mentorship for every stage of the CA journey and beyond.</li>
               <li><a href="${SITE_URL}/shop.html" style="color:#4f46e5; font-weight:600;">Explore the apparel</a> &mdash; pieces designed to make you unmistakable.</li>
               <li><a href="${SITE_URL}/profile.html" style="color:#4f46e5; font-weight:600;">Open your profile</a> &mdash; track orders, downloads, and entitlements.</li>
             </ul>
@@ -1533,8 +1981,9 @@ async function fetchYesterdayDigestData() {
   const mentorshipRef = db.collection('mentorshipApplications');
 
   // Pull recent docs; we filter client-side to handle missing/varied timestamp fields.
+  // Orders are stamped with orderDate (not createdAt) by checkout.
   const [ordersSnap, supportSnap, msgsSnap, mentorshipSnap] = await Promise.all([
-    ordersRef.orderBy('createdAt', 'desc').limit(200).get().catch(() => ({ docs: [] })),
+    ordersRef.orderBy('orderDate', 'desc').limit(300).get().catch(() => ({ docs: [] })),
     supportRef.orderBy('createdAt', 'desc').limit(50).get().catch(() => ({ docs: [] })),
     messagesRef.orderBy('createdAt', 'desc').limit(50).get().catch(() => ({ docs: [] })),
     mentorshipRef.orderBy('createdAt', 'desc').limit(50).get().catch(() => ({ docs: [] }))
@@ -1557,20 +2006,22 @@ async function fetchYesterdayDigestData() {
   let yesterdayPaidRevenue = 0;
   let yesterdayPaidCount = 0;
 
+  let paymentsUnderReview = 0;
   ordersSnap.docs.forEach((doc) => {
     const data = doc.data() || {};
-    const created = toDate(data.createdAt);
+    const created = toDate(data.orderDate || data.createdAt);
     const status = (data.paymentStatus || data.status || '').toLowerCase();
-    const total = Number(data.total || 0);
+    const total = Number(data.totalAmount || data.total || 0);
     if (isPaidStatus(status)) lifetimeRevenuePaid += total;
+    if (status === 'under review') paymentsUnderReview += 1;
     if (inWindow(created)) {
       yesterdayOrders.push({
         id: doc.id,
         total,
         status: data.status || 'unknown',
         paymentStatus: data.paymentStatus || 'pending',
-        customer: data.shippingAddress?.fullName || data.customerName || data.userEmail || 'Customer',
-        email: data.userEmail || data.shippingAddress?.email || ''
+        customer: data.customerName || data.shippingAddress?.fullName || data.customerEmail || data.userEmail || 'Customer',
+        email: data.customerEmail || data.userEmail || data.shippingAddress?.email || ''
       });
       if (isPaidStatus(status)) {
         yesterdayPaidRevenue += total;
@@ -1591,6 +2042,7 @@ async function fetchYesterdayDigestData() {
     yesterdayPaidRevenue,
     yesterdayPaidCount,
     lifetimeRevenuePaid,
+    paymentsUnderReview,
     newSupportCount: newSupport.length,
     newMessagesCount: newMessages.length,
     openMessagesCount: openMessages.length,
@@ -1669,7 +2121,8 @@ function renderDigestHtml(data) {
 
         <div style="margin-top:22px;padding:14px 16px;background:#f8fafc;border-radius:10px;border-left:4px solid #4f46e5;">
           <p style="margin:0;font-size:13px;color:#334155;">
-            <strong style="color:#1e1b4b;">Mentorship applications:</strong> ${data.newMentorshipCount} new yesterday.
+            ${data.paymentsUnderReview ? '<strong style="color:#b45309;">Payments needing review:</strong> ' + data.paymentsUnderReview + ' (see Orders in admin).<br>' : ''}
+            <strong style="color:#1e1b4b;">Academy applications:</strong> ${data.newMentorshipCount} new yesterday.
             ${data.newSupportCount ? '<br><strong style="color:#1e1b4b;">Support requests:</strong> ' + data.newSupportCount + ' new yesterday.' : ''}
           </p>
           ${mentorshipList}
@@ -1697,7 +2150,7 @@ exports.dailyOwnerDigest = functions
       const dateLabel = data.windowStartSast.toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short' });
       const subject = `Daily digest \u00B7 ${dateLabel} \u00B7 ${formatRandRange(data.yesterdayPaidRevenue)} paid \u00B7 ${data.yesterdayOrders.length} orders`;
       const html = renderDigestHtml(data);
-      const text = `Good morning, Zolile.\n\nYesterday: ${formatRandRange(data.yesterdayPaidRevenue)} paid revenue across ${data.yesterdayPaidCount} paid orders (${data.yesterdayOrders.length} total).\nOpen messages: ${data.openMessagesCount} (${data.newMessagesCount} new).\nNew mentorship applications: ${data.newMentorshipCount}.\n\nOpen the dashboard: ${SITE_URL}/admin-dashboard.html`;
+      const text = `Good morning, Zolile.\n\nYesterday: ${formatRandRange(data.yesterdayPaidRevenue)} paid revenue across ${data.yesterdayPaidCount} paid orders (${data.yesterdayOrders.length} total).\nOpen messages: ${data.openMessagesCount} (${data.newMessagesCount} new).\nNew Academy applications: ${data.newMentorshipCount}.${data.paymentsUnderReview ? `\nPayments needing review: ${data.paymentsUnderReview}.` : ''}\n\nOpen the dashboard: ${SITE_URL}/admin-dashboard.html`;
       await sendMailReliable({
         to: OWNER_EMAIL,
         subject,
@@ -1724,7 +2177,9 @@ const INBOX_SOURCES = {
   CONTACT: 'contact',
   MENTORSHIP: 'mentorship',
   COLLABORATION: 'collaboration',
-  COMMUNITY: 'community'
+  COMMUNITY: 'community',
+  SPEAKING: 'speaking',
+  CHAPTER: 'chapter'
 };
 
 function shortSummary(text, max = 220) {
@@ -1848,9 +2303,9 @@ exports.onMentorshipApplicationInbox = withSecrets.firestore
       participantName: data.name,
       participantEmail: data.email,
       participantPhone: data.phone,
-      subject: data.track ? `Mentorship \u2014 ${data.track}` : 'Mentorship application',
+      subject: `Academy \u2014 ${data.packageName || ACADEMY_PACKAGE_NAMES[data.package] || data.track || 'application'}`,
       body: data.goal || data.message || '',
-      metadata: { track: data.track || null }
+      metadata: { track: data.track || null, package: data.package || null }
     });
     return null;
   });
@@ -1922,3 +2377,324 @@ exports.replyToInboxThread = withSecrets.https.onCall(async (data, context) => {
 
   return { ok: true, threadId };
 });
+
+// =====================================================================
+// SPEAKING ENQUIRIES
+// Public form on speaking.html -> speakingEnquiries/{id}. Mirrored into the
+// inbox, the owner is alerted, and the organiser gets an acknowledgement.
+// =====================================================================
+exports.onSpeakingEnquiryCreated = withSecrets.firestore
+  .document('speakingEnquiries/{enquiryId}')
+  .onCreate(async (snap, context) => {
+    const d = snap.data() || {};
+    const esc = escapeHtmlForBroadcast;
+    const org = d.organisation || d.name || 'Organiser';
+    const details = [
+      ['Organisation', d.organisation],
+      ['Contact', d.name],
+      ['Email', d.email],
+      ['Phone', d.phone],
+      ['Event date', d.eventDate],
+      ['Event type', d.eventType],
+      ['Format', d.format],
+      ['Location', d.location],
+      ['Audience size', d.audienceSize],
+      ['Topic', d.topic],
+      ['Budget', d.budget]
+    ].filter(([, v]) => v);
+    const bodyText = details.map(([k, v]) => `${k}: ${v}`).join('\n') + (d.message ? `\n\n${d.message}` : '');
+
+    await createInboxThread({
+      source: INBOX_SOURCES.SPEAKING,
+      sourceDocPath: snap.ref.path,
+      sourceDocId: context.params.enquiryId,
+      participantName: d.name || org,
+      participantEmail: d.email,
+      participantPhone: d.phone,
+      subject: `Speaking — ${org}${d.eventDate ? ' · ' + d.eventDate : ''}`,
+      body: bodyText,
+      metadata: {
+        organisation: d.organisation || null,
+        eventDate: d.eventDate || null,
+        eventType: d.eventType || null,
+        audienceSize: d.audienceSize || null,
+        topic: d.topic || null
+      }
+    });
+
+    try {
+      await sendMailReliable({
+        to: OWNER_EMAIL,
+        subject: `\u{1F3A4} Speaking enquiry — ${org}`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:580px;margin:0 auto;">
+            <h2 style="color:#1a202c;">New speaking enquiry</h2>
+            <table style="font-size:14px;border-collapse:collapse;">
+              ${details.map(([k, v]) => `<tr><td style="padding:6px 12px 6px 0;color:#64748b;vertical-align:top;">${esc(k)}</td><td style="padding:6px 0;color:#0f172a;">${esc(v)}</td></tr>`).join('')}
+            </table>
+            ${d.message ? `<div style="margin-top:14px;padding:12px;background:#f8fafc;border-left:4px solid #4f46e5;color:#334155;white-space:pre-wrap;">${esc(d.message)}</div>` : ''}
+            <p style="margin-top:18px;"><a href="${SITE_URL}/admin-communications.html" style="display:inline-block;background:#4f46e5;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">Reply from the inbox</a></p>
+          </div>`
+      }, { type: 'speaking_enquiry' });
+    } catch (e) {
+      console.error('[speaking] owner email failed:', e.message);
+    }
+
+    if (d.email) {
+      try {
+        await sendMailReliable({
+          to: d.email,
+          subject: 'Thank you for inviting Zolile to speak',
+          html: `
+            <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;">
+              <div style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:28px;text-align:center;border-radius:8px 8px 0 0;">
+                <h1 style="margin:0;font-size:22px;">Enquiry received ✓</h1>
+              </div>
+              <div style="padding:26px;background:white;">
+                <p style="color:#1a202c;font-weight:600;">Hi ${esc((d.name || 'there').split(' ')[0])},</p>
+                <p style="color:#4a5568;line-height:1.7;">Thank you for thinking of me for ${esc(d.organisation || 'your event')}${d.eventDate ? ' on ' + esc(d.eventDate) : ''}. I read every invitation personally and will come back to you within 3 business days to talk about your audience and what would serve them best.</p>
+                ${FOUNDER_SIGNATURE}
+              </div>
+            </div>`
+        }, { type: 'speaking_ack' });
+      } catch (e) {
+        console.error('[speaking] acknowledgement email failed:', e.message);
+      }
+    }
+    return null;
+  });
+
+// Free Chapter 1 requests from the homepage land in the inbox so Zolile can
+// reply with the chapter straight from admin.
+exports.onChapterLeadCreated = withSecrets.firestore
+  .document('chapterLeads/{leadId}')
+  .onCreate(async (snap, context) => {
+    const d = snap.data() || {};
+    await createInboxThread({
+      source: INBOX_SOURCES.CHAPTER,
+      sourceDocPath: snap.ref.path,
+      sourceDocId: context.params.leadId,
+      participantName: d.email || 'Reader',
+      participantEmail: d.email,
+      subject: 'Free Chapter 1 request',
+      body: `${d.email || 'A reader'} asked for Chapter 1 of Relentlessly Disciplined (${d.source || 'website'}).`,
+      metadata: { source: d.source || null }
+    });
+    return null;
+  });
+
+// =====================================================================
+// 30-DAY JOURNAL
+// =====================================================================
+
+// Called by journal.html when a signed-in user has no access record yet.
+// Unlocks existing Academy mentees and journal buyers automatically, so nobody
+// who already paid has to ask for access.
+exports.claimJournalAccess = withSecrets.https.onCall(async (data, context) => {
+  if (!context.auth || !context.auth.uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'Please sign in.');
+  }
+  const uid = context.auth.uid;
+  const email = (context.auth.token.email || '').toString().trim().toLowerCase();
+  const db = admin.firestore();
+
+  const accessSnap = await db.collection('journalAccess').doc(uid).get();
+  if (accessSnap.exists && accessSnap.data()?.granted === true) {
+    return { granted: true, source: 'existing' };
+  }
+
+  // 1) Paid Academy (mentorship) applications, matched by account or email.
+  const appQueries = [db.collection('mentorshipApplications').where('userId', '==', uid).get()];
+  if (email) appQueries.push(db.collection('mentorshipApplications').where('email', '==', email).get());
+  const appSnaps = await Promise.all(appQueries);
+  for (const snap of appSnaps) {
+    for (const doc of snap.docs) {
+      const app = doc.data() || {};
+      const paidAmount = Number(app.amountPaid || app.amount || 0);
+      if (isPaidStatus(app.paymentStatus) && paidAmount > 0) {
+        await grantJournalAccess(uid, 'academy', doc.id);
+        return { granted: true, source: 'academy' };
+      }
+    }
+  }
+
+  // 2) Paid orders that include the journal.
+  const ordersSnap = await db.collection('artifacts').doc('default-app-id').collection('orders')
+    .where('userId', '==', uid).get();
+  for (const doc of ordersSnap.docs) {
+    const order = doc.data() || {};
+    if (isPaidStatus(order.paymentStatus) && orderContainsJournal(order)) {
+      await grantJournalAccess(uid, 'order', doc.id);
+      return { granted: true, source: 'order' };
+    }
+  }
+
+  return { granted: false };
+});
+
+const JOURNAL_DAY_THEMES = [
+  ['Vision', 'Write the future you are willing to work for.'],
+  ['Why', 'What makes this season of discipline worth the cost?'],
+  ['Control', 'Separate what is within your control from what is not. Act on what is yours.'],
+  ['Environment', 'What in your environment makes discipline harder? What can you change?'],
+  ['Minimum', "What is the smallest version of today's practice that still counts?"],
+  ['Identity', 'Who are you becoming through what you repeatedly do?'],
+  ['Review', 'What did the first week teach you about yourself?'],
+  ['Attention', 'What repeatedly captures your attention when you intended to focus?'],
+  ['Meditation', 'Practise stillness. What became visible when the noise reduced?'],
+  ['Exercise', 'Treat movement as stewardship rather than comparison.'],
+  ['Reading', 'What idea challenged or expanded your current thinking?'],
+  ['Writing', 'What does honest writing reveal about the direction of your life?'],
+  ['Research', 'Before searching for an answer, define the problem and the question.'],
+  ['Depth', 'Where are you tempted to accept a quick answer without sufficient context?'],
+  ['Community', 'Who helps you remain accountable to what you said you would do?'],
+  ['Setback', 'What recent failure can become information rather than identity?'],
+  ['Return', 'If you missed yesterday, what does returning today look like?'],
+  ['Devotion', 'Ask: why am I doing this, and for whom?'],
+  ['Discipline', 'Where are you relying on motivation when you could design a better system?'],
+  ['Focus', 'What deserves your deepest attention today?'],
+  ['Courage', 'What difficult task are you avoiding that would move your work forward?'],
+  ['Patience', 'What result are you demanding too quickly?'],
+  ['Marginal gains', 'What small improvement can compound if repeated?'],
+  ['Consistency', 'What does an ordinary, faithful day look like?'],
+  ['Professional formation', 'What kind of professional are your current habits forming?'],
+  ['Service', 'How will your development eventually benefit people beyond yourself?'],
+  ['Legacy', "What are you building that could outlast today's exam or season?"],
+  ['AI era', 'What human capacities do you need to deepen rather than outsource?'],
+  ['Recommitment', 'What are you choosing to continue after these 30 days?'],
+  ['Manifesto', 'Write the commitments you intend to carry into the next season.']
+];
+
+// YYYY-MM-DD in South African time (UTC+2, no DST).
+function sastDateKey(date) {
+  const d = new Date(date.getTime() + 2 * 60 * 60 * 1000);
+  return d.toISOString().slice(0, 10);
+}
+
+function journalDayNumber(startDateKey, todayKey) {
+  const start = Date.parse(`${startDateKey}T00:00:00Z`);
+  const today = Date.parse(`${todayKey}T00:00:00Z`);
+  if (!Number.isFinite(start) || !Number.isFinite(today)) return null;
+  return Math.floor((today - start) / 86400000) + 1;
+}
+
+const JOURNAL_REMINDER_DAILY_CAP = 250; // keeps Gmail quota free for order emails
+const JOURNAL_FREE_DAYS = 3;
+
+exports.journalDailyReminder = functions
+  .runWith({ secrets: ['EMAIL_PASSWORD'], timeoutSeconds: 300, memory: '256MB' })
+  .pubsub.schedule('30 18 * * *')
+  .timeZone('Africa/Johannesburg')
+  .onRun(async () => {
+    const db = admin.firestore();
+    const today = sastDateKey(new Date());
+    const snap = await db.collection('journals').where('reminders.enabled', '==', true).limit(2000).get();
+    let sent = 0;
+    let skipped = 0;
+    for (const doc of snap.docs) {
+      if (sent >= JOURNAL_REMINDER_DAILY_CAP) break;
+      const journal = doc.data() || {};
+      const uid = doc.id;
+      if (!journal.startDate || journal.lastEntryDate === today) { skipped++; continue; }
+      const dayNo = journalDayNumber(journal.startDate, today);
+      if (!dayNo || dayNo < 1 || dayNo > 30) { skipped++; continue; }
+
+      const accessSnap = await db.collection('journalAccess').doc(uid).get();
+      const hasAccess = accessSnap.exists && accessSnap.data()?.granted === true;
+      if (!hasAccess && dayNo > JOURNAL_FREE_DAYS) { skipped++; continue; }
+
+      let user = null;
+      try { user = await admin.auth().getUser(uid); } catch (e) { user = null; }
+      if (!user || !user.email) { skipped++; continue; }
+
+      const [theme, prompt] = JOURNAL_DAY_THEMES[dayNo - 1];
+      const firstName = (user.displayName || user.email.split('@')[0] || 'friend').split(' ')[0];
+      const unsubscribeUrl = `https://us-central1-disciplined-disciples-1.cloudfunctions.net/journalReminderUnsubscribe?u=${encodeURIComponent(uid)}&t=${encodeURIComponent(journal.reminders?.token || '')}`;
+      const missedYesterday = journal.lastEntryDate && journalDayNumber(journal.lastEntryDate, today) > 2;
+      try {
+        await sendMailReliable({
+          to: user.email,
+          subject: `Day ${dayNo} · ${theme} — your journal is waiting`,
+          html: `
+            <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#ffffff;">
+              <div style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:26px;text-align:center;">
+                <p style="margin:0;font-size:12px;letter-spacing:2px;text-transform:uppercase;opacity:0.85;">30-Day Discipline Journal</p>
+                <h1 style="margin:8px 0 0;font-size:24px;">Day ${dayNo} · ${escapeHtmlForBroadcast(theme)}</h1>
+              </div>
+              <div style="padding:26px;background:#f8f9fa;">
+                <p style="color:#1f2937;font-size:16px;">Hi ${escapeHtmlForBroadcast(firstName)},</p>
+                <p style="color:#4b5563;line-height:1.7;font-style:italic;">“${escapeHtmlForBroadcast(prompt)}”</p>
+                <p style="color:#4b5563;line-height:1.7;">${missedYesterday
+                  ? 'Missed a few days? Return, don’t retreat. The smallest entry still counts.'
+                  : 'Five minutes is enough. Keep the commitment small enough to survive a difficult day.'}</p>
+                <p style="text-align:center;margin:26px 0;">
+                  <a href="${SITE_URL}/journal.html" style="background:#7c3aed;color:white;padding:12px 26px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">Write today’s entry</a>
+                </p>
+                <p style="color:#9ca3af;font-size:12px;text-align:center;">You asked for a daily reminder. <a href="${unsubscribeUrl}" style="color:#9ca3af;">Turn off journal reminders</a></p>
+              </div>
+            </div>`
+        }, { type: 'journal_reminder', userId: uid });
+        sent++;
+      } catch (e) {
+        console.error(`[journal reminder] failed for ${uid}:`, e.message);
+      }
+    }
+    console.log(`[journalDailyReminder] sent=${sent} skipped=${skipped} candidates=${snap.size}`);
+    return null;
+  });
+
+// One-click opt-out link from reminder emails (POPIA: opting out must be easy).
+exports.journalReminderUnsubscribe = functions.https.onRequest(async (req, res) => {
+  const uid = (req.query.u || '').toString();
+  const token = (req.query.t || '').toString();
+  const page = (title, body) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title></head><body style="font-family:Arial,sans-serif;background:#f8f8f8;margin:0;padding:48px 16px;"><div style="max-width:520px;margin:0 auto;background:#fff;border-radius:14px;padding:28px;box-shadow:0 10px 25px rgba(15,23,42,0.06);"><h1 style="font-size:22px;color:#222;margin:0 0 12px;">${title}</h1><p style="color:#4b5563;line-height:1.6;">${body}</p><p><a href="${SITE_URL}/journal.html" style="color:#4f46e5;font-weight:600;">Back to my journal</a></p></div></body></html>`;
+  if (!uid || !token) {
+    res.status(400).send(page('Link incomplete', 'This unsubscribe link is missing information. You can turn reminders off in your journal settings.'));
+    return;
+  }
+  try {
+    const ref = admin.firestore().collection('journals').doc(uid);
+    const snap = await ref.get();
+    if (!snap.exists || (snap.data()?.reminders?.token || '') !== token) {
+      res.status(400).send(page('Link not recognised', 'We could not match this link. You can turn reminders off in your journal settings.'));
+      return;
+    }
+    await ref.set({ reminders: { enabled: false, unsubscribedAt: admin.firestore.FieldValue.serverTimestamp() } }, { merge: true });
+    res.status(200).send(page('Reminders turned off', 'You will not receive daily journal reminders any more. Your journal and entries are untouched, and you can switch reminders back on in your journal settings at any time.'));
+  } catch (e) {
+    console.error('[journal unsubscribe] failed:', e.message);
+    res.status(500).send(page('Something went wrong', 'Please try again, or turn reminders off in your journal settings.'));
+  }
+});
+
+// Expired eBook links: drop their tokens from the file so the URLs stop working.
+exports.cleanupEbookDownloadTokens = functions
+  .runWith({ timeoutSeconds: 120, memory: '256MB' })
+  .pubsub.schedule('every 30 minutes')
+  .onRun(async () => {
+    const db = admin.firestore();
+    const now = admin.firestore.Timestamp.now();
+    const expired = await db.collection(EBOOK_TOKENS).where('expiresAt', '<=', now).limit(400).get();
+    let file = null;
+    try {
+      file = await resolveEbookFile();
+    } catch (e) {
+      console.warn('[ebook tokens] no ebook file found:', e.message);
+    }
+    if (file) {
+      const [metadata] = await file.getMetadata();
+      const current = (metadata?.metadata?.firebaseStorageDownloadTokens || '').split(',').filter(Boolean);
+      const active = await activeEbookTokens(file.name);
+      const stale = current.filter((t) => !active.includes(t));
+      if (stale.length) {
+        await writeEbookTokens(file, active);
+        console.log(`[ebook tokens] removed ${stale.length} expired/legacy token(s)`);
+      }
+    }
+    if (!expired.empty) {
+      const batch = db.batch();
+      expired.docs.forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+    }
+    return null;
+  });

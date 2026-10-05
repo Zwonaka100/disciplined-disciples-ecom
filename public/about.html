@@ -67,6 +67,7 @@
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
+      try{if(localStorage.getItem('cookie_consent')!=='accepted'){gtag('consent','default',{analytics_storage:'denied',ad_storage:'denied'});}}catch(e){gtag('consent','default',{analytics_storage:'denied',ad_storage:'denied'});}
       gtag('js', new Date());
       gtag('config', 'G-2J1GWH59V4');
     </script>
@@ -775,10 +776,18 @@
             <nav class="nav-menu">
                 <ul class="flex space-x-6">
                     <li><a href="index.html" class="nav-link">Home</a></li>
-                    <li><a href="about.html" class="nav-link active">About</a></li>
-                    <li><a href="shop.html" class="nav-link">Shop</a></li>
                     <li><a href="book.html" class="nav-link">Book</a></li>
-                    <li><a href="mentorship.html" class="nav-link">Mentorship</a></li>
+                    <li><a href="journal.html" class="nav-link">Journal</a></li>
+                    <li><a href="academy.html" class="nav-link">Academy</a></li>
+                    <li><a href="shop.html" class="nav-link">Shop</a></li>
+                    <li class="nav-dropdown">
+                        <a href="about.html" class="nav-link nav-dropdown-toggle active" aria-haspopup="true">About <i class="fas fa-chevron-down"></i></a>
+                        <ul class="nav-dropdown-menu">
+                            <li><a href="about.html">Zolile&rsquo;s Story</a></li>
+                            <li><a href="speaking.html">Speaking</a></li>
+                            <li><a href="book.html#featured">As Featured In</a></li>
+                        </ul>
+                    </li>
                     <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a></li>
                     <li><a href="cart.html" class="nav-link" aria-label="Cart"><i class="fas fa-shopping-cart"></i></a></li>
                 </ul>
@@ -813,10 +822,13 @@
         <nav class="mobile-menu">
             <ul class="py-4">
                 <li><a href="index.html" class="nav-link-mobile">Home</a></li>
-                <li><a href="about.html" class="nav-link-mobile active">About</a></li>
-                <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
                 <li><a href="book.html" class="nav-link-mobile">Book</a></li>
-                <li><a href="mentorship.html" class="nav-link-mobile">Mentorship</a></li>
+                <li><a href="journal.html" class="nav-link-mobile">Journal</a></li>
+                <li><a href="academy.html" class="nav-link-mobile">Academy</a></li>
+                <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
+                <li><a href="about.html" class="nav-link-mobile active">About</a></li>
+                <li><a href="speaking.html" class="nav-link-mobile nav-sub">Speaking</a></li>
+                <li><a href="book.html#featured" class="nav-link-mobile nav-sub">As Featured In</a></li>
                 <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
                 <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
             </ul>
@@ -849,6 +861,10 @@
             <a href="profile.html#orders" style="display: flex; align-items: center; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f3e8ff'; this.style.color='#7c3aed';" onmouseout="this.style.background='transparent'; this.style.color='#374151';">
                 <i class="fas fa-box" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
                 My Orders
+            </a>
+            <a href="journal.html" style="display: flex; align-items: center; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f3e8ff'; this.style.color='#7c3aed';" onmouseout="this.style.background='transparent'; this.style.color='#374151';">
+                <i class="fas fa-pen-nib" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
+                My Journal
             </a>
             <a href="profile.html#account" style="display: flex; align-items: center; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f3e8ff'; this.style.color='#7c3aed';" onmouseout="this.style.background='transparent'; this.style.color='#374151';">
                 <i class="fas fa-cog" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
@@ -1015,7 +1031,8 @@
             <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1rem;">
                 <a href="shop.html" class="cta-button">Shop the Collection</a>
                 <a href="book.html" style="display:inline-block;padding:1rem 3rem;background:transparent;color:white;font-size:1.125rem;font-weight:700;border-radius:50px;text-decoration:none;border:2px solid rgba(255,255,255,0.6);transition:all 0.3s ease;position:relative;z-index:1;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='transparent'">Order the Book</a>
-                <a href="mentorship.html" style="display:inline-block;padding:1rem 3rem;background:transparent;color:white;font-size:1.125rem;font-weight:700;border-radius:50px;text-decoration:none;border:2px solid rgba(255,255,255,0.6);transition:all 0.3s ease;position:relative;z-index:1;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='transparent'">Apply for Mentorship</a>
+                <a href="academy.html" style="display:inline-block;padding:1rem 3rem;background:transparent;color:white;font-size:1.125rem;font-weight:700;border-radius:50px;text-decoration:none;border:2px solid rgba(255,255,255,0.6);transition:all 0.3s ease;position:relative;z-index:1;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='transparent'">Join the Academy</a>
+                <a href="speaking.html" style="display:inline-block;padding:1rem 3rem;background:transparent;color:white;font-size:1.125rem;font-weight:700;border-radius:50px;text-decoration:none;border:2px solid rgba(255,255,255,0.6);transition:all 0.3s ease;position:relative;z-index:1;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='transparent'">Book Zolile to Speak</a>
             </div>
         </div>
     </section>
@@ -1037,6 +1054,9 @@
                 <ul>
                     <li><a href="index.html" class="footer-link">Home</a></li>
                     <li><a href="shop.html" class="footer-link">Shop</a></li>
+                    <li><a href="academy.html" class="footer-link">Academy</a></li>
+                    <li><a href="journal.html" class="footer-link">30-Day Journal</a></li>
+                    <li><a href="speaking.html" class="footer-link">Speaking</a></li>
                     <li><a href="about.html" class="footer-link">About</a></li>
                     <li><a href="blog.html" class="footer-link">Blog</a></li>
                     <li><a href="contact.html" class="footer-link">Contact</a></li>
@@ -1064,7 +1084,7 @@
         </div>
     </footer>
 
-    <script src="script.js?v=20260826a"></script>
+    <script src="script.js?v=20261005a"></script>
     <script>
     (function () {
         var firebaseConfig = {

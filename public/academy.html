@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+    <script>if(/^(disciplined-disciples-1\.(web\.app|firebaseapp\.com))$/.test(location.hostname)){location.replace('https://disciplineddisciples.co.za'+location.pathname+location.search+location.hash);}</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academy | Disciplined Disciples</title>
+    <meta name="description" content="Disciplined Disciples Academy: mentorship with Zolile Nomaqhiza CA(SA) for every stage of the CA journey (university, IAC, training contract, APC) and for professionals in every field. Includes the flagship SAICA APC Programme.">
+    <link rel="canonical" href="https://disciplineddisciples.co.za/academy">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="profile-avatar-fix.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" type="image/png" href="Assets/45.png">
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2J1GWH59V4"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      try{if(localStorage.getItem('cookie_consent')!=='accepted'){gtag('consent','default',{analytics_storage:'denied',ad_storage:'denied'});}}catch(e){gtag('consent','default',{analytics_storage:'denied',ad_storage:'denied'});}
+      gtag('js', new Date());
+      gtag('config', 'G-2J1GWH59V4');
+    </script>
+    <style>
+        .m-hero {
+            position: relative;
+            background: #111;
+            color: #fff;
+            padding: 5rem 1rem 4rem;
+            overflow: hidden;
+        }
+        .m-hero::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: url('Assets/Other/IMG-20250928-WA0012.jpg');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.42;
+            z-index: 0;
+        }
+        .m-hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.45) 0%, rgba(15, 23, 42, 0.65) 100%);
+            z-index: 0;
+        }
+        .m-hero .m-shell { max-width: 1080px; margin: 0 auto; text-align: center; position: relative; z-index: 1; }
+        .m-kicker { display: inline-block; letter-spacing: 0.18em; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; padding: 6px 14px; border-radius: 999px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18); margin-bottom: 1.2rem; }
+        .m-hero h1 { font-size: clamp(2rem, 4.5vw, 3.2rem); font-weight: 800; margin: 0 0 0.8rem; line-height: 1.15; color: #fff; }
+        .m-hero p.lede { max-width: 720px; margin: 0 auto; color: rgba(255,255,255,0.78); line-height: 1.7; font-size: 1.05rem; }
+        .m-section { max-width: 1100px; margin: 0 auto; padding: 3.5rem 1rem; }
+        .m-section h2 { font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0 0 0.5rem; text-align: center; }
+        .m-section p.section-sub { text-align: center; color: #64748b; margin: 0 auto 2.5rem; max-width: 640px; line-height: 1.6; }
+
+        .pkg-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.25rem; }
+        @media (max-width: 1024px) { .pkg-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 600px) { .pkg-grid { grid-template-columns: 1fr; } }
+
+        .pkg-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 18px; padding: 1.6rem 1.4rem; display: flex; flex-direction: column; position: relative; transition: all 0.25s ease; box-shadow: 0 2px 8px rgba(15,23,42,0.04); }
+        .pkg-card:hover { transform: translateY(-3px); box-shadow: 0 16px 36px rgba(15,23,42,0.10); border-color: #cbd5e1; }
+        .pkg-card.featured { border: 2px solid #4f46e5; box-shadow: 0 18px 38px rgba(79,70,229,0.18); }
+        .pkg-card .pkg-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 12px; border-radius: 999px; }
+        .pkg-card h3 { font-size: 1.15rem; font-weight: 800; color: #0f172a; margin: 0 0 0.3rem; }
+        .pkg-card .pkg-tag { font-size: 0.78rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.8rem; }
+        .pkg-card .pkg-price { font-size: 2rem; font-weight: 800; color: #0f172a; line-height: 1; margin-bottom: 0.2rem; }
+        .pkg-card .pkg-price small { font-size: 0.85rem; color: #94a3b8; font-weight: 600; margin-left: 4px; }
+        .pkg-card .pkg-cadence { font-size: 0.82rem; color: #64748b; margin-bottom: 1.1rem; }
+        .pkg-card ul { list-style: none; padding: 0; margin: 0 0 1.4rem; flex-grow: 1; }
+        .pkg-card ul li { padding: 5px 0; color: #475569; font-size: 0.9rem; display: flex; align-items: flex-start; gap: 8px; line-height: 1.55; }
+        .pkg-card ul li i { color: #10b981; margin-top: 4px; font-size: 0.85rem; flex-shrink: 0; }
+        .pkg-cta { display: block; width: 100%; padding: 0.85rem 1rem; border: none; border-radius: 10px; background: #0f172a; color: #fff; font-weight: 700; font-size: 0.92rem; cursor: pointer; transition: all 0.2s ease; text-align: center; text-decoration: none; }
+        .pkg-cta:hover { background: #1e293b; transform: translateY(-1px); }
+        .pkg-card.featured .pkg-cta { background: linear-gradient(135deg, #4f46e5, #7c3aed); }
+        .pkg-card.free .pkg-cta { background: #fff; color: #0f172a; border: 2px solid #0f172a; }
+        .pkg-card.free .pkg-cta:hover { background: #0f172a; color: #fff; }
+
+        .m-form-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 28px rgba(15,23,42,0.06); margin: 0 auto; max-width: 720px; }
+        .m-form-card h2 { text-align: left; font-size: 1.35rem; margin: 0 0 0.4rem; }
+        .m-form-card p.form-sub { text-align: left; color: #64748b; margin: 0 0 1.3rem; font-size: 0.92rem; }
+        .m-form-card .selected-pkg { background: linear-gradient(135deg, #eef2ff 0%, #ede9fe 100%); border: 1px solid #c7d2fe; border-radius: 10px; padding: 12px 16px; margin-bottom: 1.2rem; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .m-form-card .selected-pkg .pkg-info { color: #3730a3; font-weight: 600; font-size: 0.9rem; }
+        .m-form-card .selected-pkg .pkg-info span { display: block; font-size: 0.78rem; color: #6366f1; font-weight: 500; margin-top: 2px; }
+        .m-form-card .selected-pkg .pkg-amount { font-size: 1.3rem; font-weight: 800; color: #1e1b4b; }
+        .m-form-card input, .m-form-card select, .m-form-card textarea { border: 1px solid #d1d9e6; border-radius: 10px; padding: 10px 12px; font-size: 0.92rem; width: 100%; box-sizing: border-box; font-family: inherit; transition: all 0.2s ease; }
+        .m-form-card input:focus, .m-form-card select:focus, .m-form-card textarea:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,0.15); }
+        .m-form-card .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+        @media (max-width: 640px) { .m-form-card .form-grid { grid-template-columns: 1fr; } }
+        .m-form-card .full { grid-column: 1 / -1; }
+        .m-submit-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0.95rem 1.6rem; border: none; border-radius: 10px; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; font-weight: 700; cursor: pointer; transition: all 0.2s ease; font-size: 0.95rem; }
+        .m-submit-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(79,70,229,0.32); }
+        .m-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .m-alert { border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; font-size: 0.9rem; }
+        .m-alert.ok { background: #ecfdf5; color: #065f46; border: 1px solid #6ee7b7; }
+        .m-alert.err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .m-alert.info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+
+        .trust-strip { background: #f8fafc; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; padding: 2.5rem 1rem; }
+        .trust-strip .trust-grid { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; text-align: center; }
+        @media (max-width: 720px) { .trust-strip .trust-grid { grid-template-columns: 1fr; gap: 2rem; } }
+        .trust-strip .trust-item i { font-size: 1.6rem; color: #4f46e5; margin-bottom: 0.5rem; display: block; }
+        .trust-strip .trust-item h4 { font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0 0 0.3rem; }
+        .trust-strip .trust-item p { font-size: 0.88rem; color: #64748b; margin: 0; line-height: 1.55; }
+
+        .m-explain-section {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 3.2rem 1rem;
+        }
+        .m-explain-section h2 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #0f172a;
+            text-align: center;
+            margin: 0 0 0.5rem;
+        }
+        .m-explain-sub {
+            text-align: center;
+            color: #64748b;
+            margin: 0 auto 2rem;
+            max-width: 760px;
+            line-height: 1.65;
+        }
+        .m-steps-grid,
+        .m-fit-grid,
+        .m-faq-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+        }
+        .m-step-card,
+        .m-fit-card,
+        .m-faq-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1rem 1.1rem;
+            box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+        }
+        .m-step-card .step-no {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 999px;
+            background: #eef2ff;
+            color: #3730a3;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 0.6rem;
+        }
+        .m-step-card h4,
+        .m-fit-card h4,
+        .m-faq-card h4 {
+            margin: 0 0 0.45rem;
+            color: #0f172a;
+            font-size: 0.98rem;
+            font-weight: 800;
+        }
+        .m-step-card p,
+        .m-fit-card p,
+        .m-faq-card p {
+            margin: 0;
+            color: #475569;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        .m-fit-card ul {
+            margin: 0;
+            padding-left: 1rem;
+            color: #475569;
+            font-size: 0.9rem;
+            line-height: 1.65;
+        }
+        .m-honesty-note {
+            margin-top: 1rem;
+            padding: 0.95rem 1rem;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            color: #475569;
+            font-size: 0.9rem;
+            line-height: 1.65;
+        }
+
+        /* Academy additions (same tokens as the package cards) */
+        .journey-track { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.9rem; position: relative; }
+        @media (max-width: 900px) { .journey-track { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 520px) { .journey-track { grid-template-columns: 1fr; } }
+        .journey-stage { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 1.1rem; box-shadow: 0 2px 8px rgba(15,23,42,0.04); position: relative; }
+        .journey-stage .stage-no { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 999px; background: #eef2ff; color: #3730a3; font-size: 0.8rem; font-weight: 700; margin-bottom: 0.6rem; }
+        .journey-stage.highlight { border: 2px solid #4f46e5; box-shadow: 0 12px 28px rgba(79,70,229,0.14); }
+        .journey-stage h4 { margin: 0 0 0.35rem; color: #0f172a; font-size: 0.98rem; font-weight: 800; }
+        .journey-stage p { margin: 0; color: #475569; font-size: 0.86rem; line-height: 1.55; }
+        .journey-others { margin-top: 1rem; background: linear-gradient(135deg, #eef2ff 0%, #ede9fe 100%); border: 1px solid #c7d2fe; border-radius: 14px; padding: 1.1rem 1.3rem; display: flex; gap: 1rem; align-items: flex-start; }
+        .journey-others i { color: #4f46e5; font-size: 1.3rem; margin-top: 2px; }
+        .journey-others h4 { margin: 0 0 0.3rem; color: #1e1b4b; font-size: 1rem; font-weight: 800; }
+        .journey-others p { margin: 0; color: #3730a3; font-size: 0.9rem; line-height: 1.6; }
+
+        .apc-section { background: #0f172a; color: #fff; padding: 4rem 1rem; }
+        .apc-shell { max-width: 1100px; margin: 0 auto; }
+        .apc-head { text-align: center; max-width: 780px; margin: 0 auto 2.4rem; }
+        .apc-head .m-kicker { color: #fff; }
+        .apc-head h2 { color: #fff; font-size: clamp(1.7rem, 3.5vw, 2.4rem); font-weight: 800; margin: 0 0 0.8rem; line-height: 1.2; }
+        .apc-head p { color: rgba(255,255,255,0.78); line-height: 1.7; margin: 0; font-size: 1.02rem; }
+        .apc-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+        @media (max-width: 960px) { .apc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 600px) { .apc-grid { grid-template-columns: 1fr; } }
+        .apc-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 1.3rem; }
+        .apc-card i.apc-icon { font-size: 1.3rem; color: #a5b4fc; margin-bottom: 0.7rem; display: block; }
+        .apc-card h4 { color: #fff; margin: 0 0 0.45rem; font-size: 1rem; font-weight: 800; }
+        .apc-card p, .apc-card li { color: rgba(255,255,255,0.75); font-size: 0.9rem; line-height: 1.6; margin: 0; }
+        .apc-card ul { margin: 0.5rem 0 0; padding-left: 1.1rem; }
+        .apc-card .apc-note { margin-top: 0.6rem; font-size: 0.8rem; color: rgba(255,255,255,0.55); }
+        .apc-commitment { margin: 1.8rem auto 0; max-width: 820px; text-align: center; color: rgba(255,255,255,0.8); line-height: 1.7; font-size: 0.98rem; }
+        .apc-cta-row { display: flex; gap: 0.8rem; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 1.6rem; }
+        .apc-price { font-size: 1.6rem; font-weight: 800; color: #fff; }
+        .apc-price small { font-size: 0.85rem; color: rgba(255,255,255,0.6); font-weight: 600; margin-left: 6px; }
+        .apc-cta { display: inline-flex; align-items: center; gap: 8px; padding: 0.95rem 1.6rem; border: none; border-radius: 10px; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; font-weight: 700; cursor: pointer; transition: all 0.2s ease; font-size: 0.95rem; }
+        .apc-cta:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(79,70,229,0.4); }
+        .apc-disclaimer { text-align: center; margin-top: 1.2rem; font-size: 0.78rem; color: rgba(255,255,255,0.5); }
+
+        .journal-included { max-width: 1100px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 1rem 1.2rem; display: flex; gap: 0.9rem; align-items: center; box-shadow: 0 2px 8px rgba(15,23,42,0.04); }
+        .journal-included i { color: #7c3aed; font-size: 1.4rem; }
+        .journal-included p { margin: 0; color: #475569; font-size: 0.92rem; line-height: 1.55; }
+        .journal-included a { color: #4f46e5; font-weight: 700; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <header class="header bg-white shadow">
+        <div class="container flex justify-between items-center py-4">
+            <a href="index.html" class="logo flex items-center">
+                <img src="Assets/45.png" alt="Disciplined Disciples Logo" style="height:48px; width:auto; margin-right:10px;">
+                <span class="font-bold text-xl">Disciplined Disciples</span>
+            </a>
+    <nav class="nav-menu">
+    <ul class="flex space-x-6">
+                    <li><a href="index.html" class="nav-link">Home</a></li>
+                    <li><a href="book.html" class="nav-link">Book</a></li>
+                    <li><a href="journal.html" class="nav-link">Journal</a></li>
+                    <li><a href="academy.html" class="nav-link active">Academy</a></li>
+                    <li><a href="shop.html" class="nav-link">Shop</a></li>
+                    <li class="nav-dropdown">
+                        <a href="about.html" class="nav-link nav-dropdown-toggle" aria-haspopup="true">About <i class="fas fa-chevron-down"></i></a>
+                        <ul class="nav-dropdown-menu">
+                            <li><a href="about.html">Zolile&rsquo;s Story</a></li>
+                            <li><a href="speaking.html">Speaking</a></li>
+                            <li><a href="book.html#featured">As Featured In</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a></li>
+                    <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a></li>
+                    <li><a href="cart.html" class="nav-link" aria-label="Cart"><i class="fas fa-shopping-cart"></i></a></li>
+                </ul>
+    <a href="login-signup.html" id="login-signup-link" class="nav-link"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
+    <!-- Modern Profile Button -->
+    <div id="profile-ribbon" style="display: none; position: relative;">
+        <button id="profile-btn" style="
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+        " onmouseover="this.style.transform='scale(1.08)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.5)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)';">
+            <span id="profile-ribbon-initials" style="letter-spacing: 1px;">U</span>
+        </button>
+    </div>
+</nav>
+            <button class="menu-toggle" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <nav class="mobile-menu">
+            <ul class="py-4">
+                <li><a href="index.html" class="nav-link-mobile">Home</a></li>
+                <li><a href="book.html" class="nav-link-mobile">Book</a></li>
+                <li><a href="journal.html" class="nav-link-mobile">Journal</a></li>
+                <li><a href="academy.html" class="nav-link-mobile active">Academy</a></li>
+                <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
+                <li><a href="about.html" class="nav-link-mobile">About</a></li>
+                <li><a href="speaking.html" class="nav-link-mobile nav-sub">Speaking</a></li>
+                <li><a href="book.html#featured" class="nav-link-mobile nav-sub">As Featured In</a></li>
+                <li><a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-linkedin"></i> LinkedIn</a></li>
+                <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
+                <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
+            </ul>
+            <a href="login-signup.html" id="login-signup-link-mobile" class="nav-link-mobile"><i class="fas fa-sign-in-alt"></i> Login/Signup</a>
+        </nav>
+    </header>
+
+    <div id="profile-dropdown" class="hidden" style="position:fixed;right:16px;top:70px;background:white;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,0.15);min-width:220px;z-index:9999;overflow:hidden;border:1px solid rgba(0,0,0,0.05);">
+        <div style="padding:16px;background:#f5f5f5;color:#222;border-bottom:1px solid #ececec;">
+            <p id="dropdown-user-name" style="font-weight:600;font-size:15px;margin:0;">Welcome!</p>
+            <p id="dropdown-user-email" style="font-size:12px;opacity:0.85;margin:4px 0 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></p>
+        </div>
+        <div style="padding:8px 0;">
+            <a href="profile.html" style="display:flex;align-items:center;padding:12px 16px;color:#374151;text-decoration:none;font-size:14px;"><i class="fas fa-user-circle" style="margin-right:12px;color:#9ca3af;width:16px;"></i>My Profile</a>
+            <a href="profile.html#orders" style="display:flex;align-items:center;padding:12px 16px;color:#374151;text-decoration:none;font-size:14px;"><i class="fas fa-box" style="margin-right:12px;color:#9ca3af;width:16px;"></i>My Orders</a>
+            <a href="journal.html" style="display:flex;align-items:center;padding:12px 16px;color:#374151;text-decoration:none;font-size:14px;"><i class="fas fa-pen-nib" style="margin-right:12px;color:#9ca3af;width:16px;"></i>My Journal</a>
+            <div style="height:1px;background:#e5e7eb;margin:8px 0;"></div>
+            <button id="dropdown-logout-btn" style="display:flex;align-items:center;width:100%;padding:12px 16px;color:#dc2626;background:none;border:none;font-size:14px;cursor:pointer;"><i class="fas fa-sign-out-alt" style="margin-right:12px;width:16px;"></i>Logout</button>
+        </div>
+    </div>
+
+    <main>
+        <section class="m-hero">
+            <div class="m-shell">
+                <span class="m-kicker" id="academy-kicker"><i class="fas fa-graduation-cap mr-1"></i> Disciplined Disciples Academy</span>
+                <h1 id="academy-hero-title">Mentorship for every stage of the journey.</h1>
+                <p class="lede" id="academy-hero-lede">From university and CTA, through the IAC, your training contract and the APC, all the way to CA(SA), and for professionals in every other field. Mentorship from a CA(SA) who failed six times and kept going.</p>
+            </div>
+        </section>
+
+        <section class="m-section">
+            <h2>Who we help</h2>
+            <p class="section-sub">Wherever you are on the road, the Academy meets you there. Pick a package below or start with a free Discovery Call.</p>
+            <div class="journey-track">
+                <article class="journey-stage">
+                    <span class="stage-no">1</span>
+                    <h4>University &amp; CTA</h4>
+                    <p>Building study discipline, managing setbacks and staying on course through undergrad and CTA/PGDA.</p>
+                </article>
+                <article class="journey-stage">
+                    <span class="stage-no">2</span>
+                    <h4>IAC (formerly ITC)</h4>
+                    <p>Preparing for the first board exam, or coming back after a result that didn't go your way.</p>
+                </article>
+                <article class="journey-stage">
+                    <span class="stage-no">3</span>
+                    <h4>Training contract</h4>
+                    <p>Balancing work, study and life as a trainee without losing your direction.</p>
+                </article>
+                <article class="journey-stage highlight">
+                    <span class="stage-no">4</span>
+                    <h4>APC</h4>
+                    <p>Our flagship APC Programme: professional writing, case simulation, script reviews and 1-on-1 sessions.</p>
+                </article>
+                <article class="journey-stage">
+                    <span class="stage-no">5</span>
+                    <h4>CA(SA) &amp; beyond</h4>
+                    <p>Newly qualified and figuring out what comes next in your career.</p>
+                </article>
+            </div>
+            <div class="journey-others">
+                <i class="fas fa-users"></i>
+                <div>
+                    <h4>Not on the CA path? You belong here too.</h4>
+                    <p>The Academy also mentors students and professionals in other fields and qualifications, career changers and founders. Discipline is the same muscle everywhere.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="m-section" style="padding-top:0;">
+            <h2 id="academy-packages-title">Pick your path</h2>
+            <p class="section-sub" id="academy-packages-subtitle">Every package starts with a real conversation. No fluff, no recycled scripts &mdash; you bring the goal, we build the discipline.</p>
+
+            <div class="pkg-grid" id="pkg-grid">
+                <article class="pkg-card free" data-pkg="discovery" data-price="0" data-name="Discovery Call">
+                    <h3>Discovery</h3>
+                    <p class="pkg-tag">Start here</p>
+                    <p class="pkg-price">R0<small>free</small></p>
+                    <p class="pkg-cadence">15-minute intro call</p>
+                    <ul>
+                        <li><i class="fas fa-check-circle"></i> Quick clarity on where you are right now</li>
+                        <li><i class="fas fa-check-circle"></i> Honest read on what package would actually help</li>
+                        <li><i class="fas fa-check-circle"></i> Zero pressure to commit</li>
+                    </ul>
+                    <button class="pkg-cta" type="button">Book Discovery</button>
+                </article>
+
+                <article class="pkg-card" data-pkg="single" data-price="249" data-name="Single Session">
+                    <h3>Single Session</h3>
+                    <p class="pkg-tag">One conversation</p>
+                    <p class="pkg-price">R249</p>
+                    <p class="pkg-cadence">1 &times; 60-minute deep dive</p>
+                    <ul>
+                        <li><i class="fas fa-check-circle"></i> One specific decision or roadblock</li>
+                        <li><i class="fas fa-check-circle"></i> Written action plan within 24h</li>
+                        <li><i class="fas fa-check-circle"></i> 7-day follow-up message</li>
+                        <li><i class="fas fa-check-circle"></i> 30-Day Discipline Journal included</li>
+                    </ul>
+                    <button class="pkg-cta" type="button">Book session</button>
+                </article>
+
+                <article class="pkg-card featured" data-pkg="focus" data-price="799" data-name="Focus Pack">
+                    <span class="pkg-badge">Most picked</span>
+                    <h3>Focus Pack</h3>
+                    <p class="pkg-tag">Build momentum</p>
+                    <p class="pkg-price">R799</p>
+                    <p class="pkg-cadence">4 sessions over 90 days</p>
+                    <ul>
+                        <li><i class="fas fa-check-circle"></i> Fortnightly 60-minute sessions</li>
+                        <li><i class="fas fa-check-circle"></i> Personal discipline scorecard</li>
+                        <li><i class="fas fa-check-circle"></i> WhatsApp check-ins between sessions</li>
+                        <li><i class="fas fa-check-circle"></i> Free copy of the eBook</li>
+                        <li><i class="fas fa-check-circle"></i> 30-Day Discipline Journal included</li>
+                    </ul>
+                    <button class="pkg-cta" type="button">Book Focus Pack</button>
+                </article>
+
+                <article class="pkg-card" data-pkg="transformation" data-price="1499" data-name="Transformation Path">
+                    <h3>Transformation Path</h3>
+                    <p class="pkg-tag">Go all in</p>
+                    <p class="pkg-price">R1,499</p>
+                    <p class="pkg-cadence">8 sessions over 6 months</p>
+                    <ul>
+                        <li><i class="fas fa-check-circle"></i> Bi-weekly 60-minute sessions</li>
+                        <li><i class="fas fa-check-circle"></i> Personal 6-month transformation plan</li>
+                        <li><i class="fas fa-check-circle"></i> Unlimited WhatsApp access</li>
+                        <li><i class="fas fa-check-circle"></i> Quarterly progress reviews</li>
+                        <li><i class="fas fa-check-circle"></i> Free eBook + Disciplined Disciples tee</li>
+                        <li><i class="fas fa-check-circle"></i> 30-Day Discipline Journal included</li>
+                    </ul>
+                    <button class="pkg-cta" type="button">Book Transformation</button>
+                </article>
+            </div>
+
+            <div class="journal-included">
+                <i class="fas fa-pen-nib"></i>
+                <p><strong>Every paid package includes the 30-Day Discipline Journal</strong>, a private daily practice journal in your account that Zolile can use (with your permission) to see how consistently you are showing up between sessions. <a href="journal.html">See the journal &rarr;</a></p>
+            </div>
+        </section>
+
+        <!-- Flagship: SAICA APC Programme -->
+        <section class="apc-section" id="apc-programme">
+            <div class="apc-shell">
+                <div class="apc-head">
+                    <span class="m-kicker"><i class="fas fa-star mr-1"></i> Flagship programme</span>
+                    <h2>SAICA APC Programme</h2>
+                    <p>Our core mission is to equip candidates with the exact competencies needed to excel in the SAICA APC board examination. We don&rsquo;t just teach you how to study; we train you to think, write and act like a seasoned professional advisor.</p>
+                </div>
+
+                <div class="apc-grid">
+                    <article class="apc-card">
+                        <i class="fas fa-file-pen apc-icon"></i>
+                        <h4>Professional Writing Framework</h4>
+                        <p>Our comprehensive 33-page master guide on how to structure, articulate and write like a high-level professional advisor. Available exclusively to programme candidates.</p>
+                    </article>
+                    <article class="apc-card">
+                        <i class="fas fa-user-group apc-icon"></i>
+                        <h4>Diagnostic + 5 one-on-one sessions</h4>
+                        <p>We begin with a diagnostic deep-dive to find where you stand in your APC journey, followed by five live one-on-one sessions. Strictly non-recorded: personal, human and tailored to you.</p>
+                    </article>
+                    <article class="apc-card">
+                        <i class="fas fa-microchip apc-icon"></i>
+                        <h4>AI toolkit &amp; pre-populated prompts</h4>
+                        <p>Multi-layered AI frameworks and carefully prepared prompts to accelerate:</p>
+                        <ul>
+                            <li>Trigger identification and research</li>
+                            <li>Ethical evaluation and question anticipation</li>
+                            <li>Financial ratio analysis</li>
+                            <li>Microeconomic industry and case study research</li>
+                        </ul>
+                        <p class="apc-note">For preparation and research. Not for use in the exam itself.</p>
+                    </article>
+                    <article class="apc-card">
+                        <i class="fas fa-clipboard-check apc-icon"></i>
+                        <h4>Full case simulation &amp; script reviews</h4>
+                        <p>We simulate an entire board paper with you over a defined period, from research and trigger identification right up to final drafting and review. Submit your own mock exam scripts and practice assessments for personal script reviews.</p>
+                    </article>
+                    <article class="apc-card">
+                        <i class="fas fa-people-group apc-icon"></i>
+                        <h4>Diverse candidate community</h4>
+                        <p>Join a collaborative network of driven candidates from different board courses and institutions, such as IAS, UCT and APT.</p>
+                    </article>
+                    <article class="apc-card">
+                        <i class="fas fa-pen-nib apc-icon"></i>
+                        <h4>30-Day Discipline Journal</h4>
+                        <p>Build the daily habits of attention, reflection, research and sustained effort that carry you through the APC, with an APC-specific version of the journal.</p>
+                    </article>
+                </div>
+
+                <p class="apc-commitment"><strong>Our commitment:</strong> every session is tailored to the individual candidate. Through rigorous preparation, AI-enabled research and personal mentorship, we make sure you step into the exam room with clarity, strategy and confidence.</p>
+
+                <div class="apc-cta-row">
+                    <span class="apc-price" id="apc-price-label">Apply<small>fee confirmed on your Discovery Call</small></span>
+                    <button class="apc-cta" type="button" id="apc-apply-btn"><i class="fas fa-paper-plane"></i> Apply for the APC Programme</button>
+                </div>
+                <p class="apc-disclaimer">Disciplined Disciples Academy is independent and is not affiliated with SAICA or any board course provider. Mentorship supports your preparation; it cannot guarantee exam results.</p>
+            </div>
+        </section>
+
+        <section class="trust-strip">
+            <div class="trust-grid">
+                <div class="trust-item">
+                    <i class="fas fa-shield-halved"></i>
+                    <h4>Secure payment</h4>
+                    <p>Paid packages process through PayFast &mdash; the same gateway the rest of the store uses.</p>
+                </div>
+                <div class="trust-item">
+                    <i class="fas fa-rotate-left"></i>
+                    <h4>Reschedule any time</h4>
+                    <p>Life happens. Move a session up to 24 hours before and there&rsquo;s no penalty.</p>
+                </div>
+                <div class="trust-item">
+                    <i class="fas fa-handshake-angle"></i>
+                    <h4>Personal, not scripted</h4>
+                    <p>Every session is run by Zolile directly. No outsourced coaches, no canned responses.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="m-explain-section">
+            <h2>How the Academy Works</h2>
+            <p class="m-explain-sub">The process is intentionally simple so you can move from "I need help" to "I have a clear plan" without confusion.</p>
+            <div class="m-steps-grid">
+                <article class="m-step-card">
+                    <span class="step-no">1</span>
+                    <h4>Pick a package</h4>
+                    <p>Choose Discovery, a Single Session, the Focus Pack, the Transformation Path or the APC Programme based on your stage and budget.</p>
+                </article>
+                <article class="m-step-card">
+                    <span class="step-no">2</span>
+                    <h4>Submit your context</h4>
+                    <p>Share your real challenge in the form so the session starts with direction, not guesswork.</p>
+                </article>
+                <article class="m-step-card">
+                    <span class="step-no">3</span>
+                    <h4>Secure checkout for paid options</h4>
+                    <p>Paid packages redirect to PayFast and are confirmed after successful payment. Your journal unlocks straight away.</p>
+                </article>
+                <article class="m-step-card">
+                    <span class="step-no">4</span>
+                    <h4>Begin</h4>
+                    <p>You receive the next steps and session rhythm based on the package you selected.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="m-explain-section" style="padding-top:0;">
+            <h2>Which package fits you?</h2>
+            <p class="m-explain-sub">Use this quick guide to choose confidently, whether you are a student, a board-exam candidate, a trainee, a professional, a founder or in a career transition.</p>
+            <div class="m-fit-grid">
+                <article class="m-fit-card">
+                    <h4>Discovery (Free)</h4>
+                    <ul>
+                        <li>Best if you are unsure what support you need.</li>
+                        <li>Best if budget is tight and you need initial direction first.</li>
+                    </ul>
+                </article>
+                <article class="m-fit-card">
+                    <h4>Single Session</h4>
+                    <ul>
+                        <li>Best for one urgent decision or one blocked area.</li>
+                        <li>Good if you want clarity quickly without a longer commitment.</li>
+                    </ul>
+                </article>
+                <article class="m-fit-card">
+                    <h4>Focus Pack / Transformation Path</h4>
+                    <ul>
+                        <li>Best if you need momentum and accountability over months.</li>
+                        <li>Strong fit for IAC candidates, trainees and professionals rebuilding.</li>
+                    </ul>
+                </article>
+                <article class="m-fit-card">
+                    <h4>APC Programme</h4>
+                    <ul>
+                        <li>Built specifically for SAICA APC candidates.</li>
+                        <li>First attempt or coming back after a result that didn&rsquo;t go your way.</li>
+                    </ul>
+                </article>
+            </div>
+            <div class="m-honesty-note">
+                <strong>Honest expectation:</strong> mentorship gives structure, accountability, and perspective. It does not remove hard work or guarantee instant outcomes. The value comes from consistent execution between sessions.
+            </div>
+        </section>
+
+        <section class="m-explain-section" style="padding-top:0;">
+            <h2>Academy FAQs</h2>
+            <div class="m-faq-grid">
+                <article class="m-faq-card">
+                    <h4>Is this the same as the old Mentorship?</h4>
+                    <p>Yes. Mentorship is now called the Disciplined Disciples Academy. Existing packages, sessions and payments are unchanged, and paid packages now include the 30-Day Journal.</p>
+                </article>
+                <article class="m-faq-card">
+                    <h4>Is this only for CA students?</h4>
+                    <p>No. We support the whole CA journey (university, IAC, training contract, APC) and also mentor professionals in other fields, founders and career changers.</p>
+                </article>
+                <article class="m-faq-card">
+                    <h4>How quickly will I hear back?</h4>
+                    <p>Discovery requests and APC applications are reviewed within 5-7 business days. Paid packages are confirmed as soon as PayFast confirms your payment.</p>
+                </article>
+                <article class="m-faq-card">
+                    <h4>Is the AI toolkit allowed in the exam?</h4>
+                    <p>The AI toolkit is for preparation and research before the exam: understanding triggers, industries and ratios. It is not used in the exam room.</p>
+                </article>
+                <article class="m-faq-card">
+                    <h4>Can I reschedule a session?</h4>
+                    <p>Yes. Sessions can be moved with at least 24 hours notice so your slot can be managed fairly.</p>
+                </article>
+                <article class="m-faq-card">
+                    <h4>What if I am still unsure?</h4>
+                    <p>Start with Discovery. It is designed to help you choose the right next step without pressure.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="m-section" id="booking">
+            <h2 id="academy-form-title">Tell us about you</h2>
+            <p class="section-sub" id="academy-form-subtitle">Pick a package above, then fill this in. We respond within 5&ndash;7 business days for free Discovery calls and APC applications; paid packages are confirmed after checkout.</p>
+
+            <div class="m-form-card">
+                <div id="mentorship-alert" class="m-alert" style="display:none;"></div>
+
+                <div class="selected-pkg" id="selected-pkg-banner" style="display:none;">
+                    <div class="pkg-info">
+                        <span id="selected-pkg-tag">Selected package</span>
+                        <strong id="selected-pkg-name">&mdash;</strong>
+                    </div>
+                    <div class="pkg-amount" id="selected-pkg-amount">R0</div>
+                </div>
+
+                <form id="mentorship-apply-form">
+                    <div class="form-grid">
+                        <div>
+                            <label for="m-name" style="font-size:0.8rem;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Full name *</label>
+                            <input id="m-name" type="text" required placeholder="Jane Discipline" autocomplete="name">
+                        </div>
+                        <div>
+                            <label for="m-email" style="font-size:0.8rem;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Email *</label>
+                            <input id="m-email" type="email" required placeholder="you@email.com" autocomplete="email">
+                        </div>
+                        <div>
+                            <label for="m-phone" style="font-size:0.8rem;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Phone (WhatsApp preferred)</label>
+                            <input id="m-phone" type="tel" placeholder="+27 ..." autocomplete="tel">
+                        </div>
+                        <div>
+                            <label for="m-track" style="font-size:0.8rem;font-weight:600;color:#475569;display:block;margin-bottom:4px;">Where are you on the journey?</label>
+                            <select id="m-track">
+                                <option value="university">University / CTA (PGDA) student</option>
+                                <option value="iac">IAC (formerly ITC) candidate</option>
+                                <option value="trainee">Trainee accountant (training contract)</option>
+                                <option value="apc">APC candidate</option>
+                                <option value="newly-qualified">Newly qualified CA(SA)</option>
+                                <option value="professional">Professional in another field</option>
+                                <option value="entrepreneur">Entrepreneur / founder</option>
+                                <option value="career-pivot">Career change</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="full">
+                            <label for="m-goal" style="font-size:0.8rem;font-weight:600;color:#475569;display:block;margin-bottom:4px;">What do you actually need help with? *</label>
+                            <textarea id="m-goal" rows="4" required placeholder="Be honest. Be specific. What does winning look like in 90 days?"></textarea>
+                        </div>
+                        <div class="full" style="margin-top:6px;">
+                            <button id="m-submit" type="submit" class="m-submit-btn">
+                                <i class="fas fa-paper-plane"></i>
+                                <span id="m-submit-label">Pick a package first</span>
+                            </button>
+                            <p style="font-size:0.78rem;color:#94a3b8;margin:10px 0 0;">Paid packages redirect to PayFast for secure checkout. Your spot is held for 30 minutes.</p>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Hidden PayFast form, posted programmatically after the application is saved -->
+                <form id="payfast-mentorship-form" action="https://www.payfast.co.za/eng/process" method="post" style="display:none;">
+                    <input type="hidden" name="merchant_id" value="15069294">
+                    <input type="hidden" name="merchant_key" value="nms7cymkxsyll">
+                    <input type="hidden" name="return_url" value="https://disciplineddisciples.co.za/academy.html?status=paid">
+                    <input type="hidden" name="cancel_url" value="https://disciplineddisciples.co.za/academy.html?status=cancelled">
+                    <input type="hidden" name="notify_url" value="https://us-central1-disciplined-disciples-1.cloudfunctions.net/verifyPayfastPayment">
+                    <input type="hidden" name="amount" id="pf-amount">
+                    <input type="hidden" name="item_name" id="pf-item-name">
+                    <input type="hidden" name="name_first" id="pf-name">
+                    <input type="hidden" name="email_address" id="pf-email">
+                    <input type="hidden" name="cell_number" id="pf-phone">
+                    <input type="hidden" name="custom_str1" id="pf-app-id">
+                    <input type="hidden" name="custom_str2" id="pf-package">
+                    <input type="hidden" name="custom_str3" value="mentorship">
+                </form>
+            </div>
+        </section>
+    </main>
+
+
+    <footer class="footer">
+        <div class="container grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="footer-col">
+                <h3 class="footer-heading">Disciplined Disciples</h3>
+                <p class="footer-text">Premium apparel designed to inspire discipline, purpose, and faith.</p>
+                <div class="social-links">
+                    <a href="https://www.linkedin.com/in/zolile-nomaqhiza/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Follow Zolile on LinkedIn"><i class="fab fa-linkedin"></i></a>
+                    <a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Follow us on Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-link" aria-label="Follow us on Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-link" aria-label="Follow us on Twitter"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Quick Links</h3>
+                <ul>
+                    <li><a href="index.html" class="footer-link">Home</a></li>
+                    <li><a href="shop.html" class="footer-link">Shop</a></li>
+                    <li><a href="academy.html" class="footer-link">Academy</a></li>
+                    <li><a href="journal.html" class="footer-link">30-Day Journal</a></li>
+                    <li><a href="speaking.html" class="footer-link">Speaking</a></li>
+                    <li><a href="blog.html" class="footer-link">Blog</a></li>
+                    <li><a href="contact.html" class="footer-link">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading">Support</h3>
+                <ul>
+                    <li><a href="faq.html" class="footer-link">FAQs</a></li>
+                    <li><a href="shipping-returns.html" class="footer-link">Shipping & Returns</a></li>
+                    <li><a href="privacy-policy.html" class="footer-link">Privacy Policy</a></li>
+                    <li><a href="terms-of-service.html" class="footer-link">Terms of Service</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3 class="footer-heading text-lg font-semibold mb-4">Contact Us</h3>
+                <p class="footer-text text-gray-300 text-sm mb-2">Email: nomaqhizazolile@gmail.com</p>
+                <p class="footer-text text-gray-300 text-sm mb-2">Phone: +27 69 206 0618</p>
+                <p class="footer-text text-gray-300 text-sm">Johannesburg, South Africa</p>
+            </div>
+        </div>
+        <div class="footer-bottom border-t border-gray-700 mt-8 pt-4 text-center text-gray-500 text-sm">
+            <p>&copy; 2026 Disciplined Disciples. All rights reserved.</p>
+            <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> 💜</p>
+        </div>
+    </footer>
+
+    <a href="https://wa.me/27692060618?text=Hi%20Zolile%21%20I%27m%20interested%20in%20the%20Academy." class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <script src="firebase-config.js"></script>
+    <script src="script.js?v=20261005a"></script>
+    <script>
+    (function () {
+        'use strict';
+
+        // Package keys are stored on each application, so they never change
+        // (existing applications keep working). Prices match functions/index.js.
+        var PACKAGES = {
+            discovery:       { name: 'Discovery Call',      price: 0,    tag: 'Free 15-min intro' },
+            single:          { name: 'Single Session',      price: 249,  tag: '1 × 60-min deep dive' },
+            focus:           { name: 'Focus Pack',          price: 799,  tag: '4 sessions / 90 days' },
+            transformation:  { name: 'Transformation Path', price: 1499, tag: '8 sessions / 6 months' },
+            'apc-programme': { name: 'APC Programme',       price: 0,    tag: 'SAICA APC flagship programme', apply: true }
+        };
+
+        var selectedKey = null;
+
+        function $(id) { return document.getElementById(id); }
+
+        function ensureFirebase() {
+            if (firebase.apps && firebase.apps.length) return firebase.firestore();
+            if (typeof getFirebaseConfig === 'function') {
+                firebase.initializeApp(getFirebaseConfig());
+                return firebase.firestore();
+            }
+            return null;
+        }
+
+        function formatRand(n) {
+            return 'R' + Number(n).toLocaleString('en-ZA');
+        }
+
+        // Admin > Settings > Academy controls the copy and the APC Programme fee.
+        function applyAcademyContent() {
+            var db = ensureFirebase();
+            if (!db) return;
+
+            db.collection('siteContent').doc('academy').get().then(function (doc) {
+                if (!doc.exists) return;
+                var data = doc.data() || {};
+
+                if (data.kicker && $('academy-kicker')) $('academy-kicker').innerHTML = '<i class="fas fa-graduation-cap mr-1"></i> ';
+                if (data.kicker && $('academy-kicker')) $('academy-kicker').appendChild(document.createTextNode(data.kicker));
+                if (data.heroTitle && $('academy-hero-title')) $('academy-hero-title').textContent = data.heroTitle;
+                if (data.heroLede && $('academy-hero-lede')) $('academy-hero-lede').textContent = data.heroLede;
+                if (data.packagesTitle && $('academy-packages-title')) $('academy-packages-title').textContent = data.packagesTitle;
+                if (data.packagesSubtitle && $('academy-packages-subtitle')) $('academy-packages-subtitle').textContent = data.packagesSubtitle;
+                if (data.formTitle && $('academy-form-title')) $('academy-form-title').textContent = data.formTitle;
+                if (data.formSubtitle && $('academy-form-subtitle')) $('academy-form-subtitle').textContent = data.formSubtitle;
+
+                var apcPrice = Number(data.apcProgrammePrice);
+                if (Number.isFinite(apcPrice) && apcPrice > 0) {
+                    PACKAGES['apc-programme'].price = apcPrice;
+                    PACKAGES['apc-programme'].apply = false;
+                    var label = $('apc-price-label');
+                    if (label) label.innerHTML = formatRand(apcPrice) + '<small>once-off</small>';
+                }
+            }).catch(function (err) {
+                console.log('Academy content not configured yet:', err.code || err.message || err);
+            });
+        }
+
+        function showAlert(kind, msg) {
+            var el = $('mentorship-alert');
+            el.className = 'm-alert ' + (kind === 'error' ? 'err' : kind === 'success' ? 'ok' : 'info');
+            el.textContent = msg;
+            el.style.display = 'block';
+            if (kind === 'success') setTimeout(function () { el.style.display = 'none'; }, 8000);
+        }
+
+        function submitLabel(pkg) {
+            if (pkg.price === 0) return pkg.apply ? 'Submit application' : 'Submit application';
+            return 'Continue to PayFast (' + formatRand(pkg.price) + ')';
+        }
+
+        function selectPackage(key) {
+            selectedKey = key;
+            var pkg = PACKAGES[key];
+            if (!pkg) return;
+            $('selected-pkg-banner').style.display = 'flex';
+            $('selected-pkg-tag').textContent = pkg.tag;
+            $('selected-pkg-name').textContent = pkg.name;
+            $('selected-pkg-amount').textContent = pkg.price === 0 ? (pkg.apply ? 'Apply' : 'Free') : formatRand(pkg.price);
+            $('m-submit-label').textContent = submitLabel(pkg);
+            if (key === 'apc-programme' && $('m-track')) $('m-track').value = 'apc';
+            // Smooth scroll to form
+            var booking = $('booking');
+            if (booking) booking.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Highlight the chosen card
+            document.querySelectorAll('.pkg-card').forEach(function (c) {
+                c.style.outline = c.getAttribute('data-pkg') === key ? '3px solid #4f46e5' : '';
+                c.style.outlineOffset = c.getAttribute('data-pkg') === key ? '3px' : '';
+            });
+        }
+
+        function handleSubmit(e) {
+            e.preventDefault();
+            if (!selectedKey) {
+                showAlert('info', 'Pick a package above first.');
+                return;
+            }
+            var pkg = PACKAGES[selectedKey];
+            var name = ($('m-name').value || '').trim();
+            var email = ($('m-email').value || '').trim().toLowerCase();
+            var phone = ($('m-phone').value || '').trim();
+            var track = $('m-track').value;
+            var goal = ($('m-goal').value || '').trim();
+            if (!name || !email || !goal) {
+                showAlert('error', 'Name, email and goal are required.');
+                return;
+            }
+
+            var db = ensureFirebase();
+            if (!db) { showAlert('error', 'Could not connect. Refresh and try again.'); return; }
+
+            var btn = $('m-submit');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Saving&hellip;</span>';
+
+            var currentUser = null;
+            try {
+                currentUser = firebase.auth && firebase.auth().currentUser ? firebase.auth().currentUser : null;
+            } catch (err) {
+                currentUser = null;
+            }
+
+            var docData = {
+                name: name,
+                email: email,
+                userId: currentUser ? currentUser.uid : null,
+                phone: phone,
+                track: track,
+                goal: goal,
+                package: selectedKey,
+                packageName: pkg.name,
+                amount: pkg.price,
+                paymentStatus: pkg.price === 0 ? 'N/A' : 'Pending',
+                status: 'new',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            function resetButton() {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> <span id="m-submit-label">Pick a package first</span>';
+            }
+
+            db.collection('mentorshipApplications').add(docData)
+                .then(function (ref) {
+                    if (pkg.price === 0) {
+                        var completedPkg = selectedKey;
+                        showAlert('success', completedPkg === 'apc-programme'
+                            ? 'Application received! Zolile will reach out within 5–7 business days to book your diagnostic call and confirm the programme details.'
+                            : 'Application received! Zolile will reach out within 5–7 business days to schedule your Discovery Call.');
+                        $('mentorship-apply-form').reset();
+                        $('selected-pkg-banner').style.display = 'none';
+                        selectedKey = null;
+                        resetButton();
+                        try { gtag('event', 'mentorship_application', { package: completedPkg, value: 0 }); } catch (e) {}
+                        return;
+                    }
+                    // Paid package -> submit PayFast form
+                    try { gtag('event', 'mentorship_checkout_started', { package: selectedKey, value: pkg.price }); } catch (e) {}
+                    $('pf-amount').value = pkg.price.toFixed(2);
+                    $('pf-item-name').value = 'Academy — ' + pkg.name;
+                    $('pf-name').value = name.split(' ')[0] || name;
+                    $('pf-email').value = email;
+                    $('pf-phone').value = phone;
+                    $('pf-app-id').value = ref.id;
+                    $('pf-package').value = selectedKey;
+                    showAlert('info', 'Redirecting to PayFast…');
+                    setTimeout(function () { $('payfast-mentorship-form').submit(); }, 600);
+                })
+                .catch(function (err) {
+                    console.error('[academy] submit failed:', err);
+                    showAlert('error', 'Could not save: ' + (err.message || err));
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-paper-plane"></i> <span id="m-submit-label">' + submitLabel(pkg) + '</span>';
+                });
+        }
+
+        function handleReturnStatus() {
+            var params = new URLSearchParams(window.location.search);
+            var status = params.get('status');
+            if (status === 'paid') {
+                showAlert('success', 'Thank you! PayFast is confirming your payment. You will receive a confirmation email shortly, your 30-Day Journal unlocks automatically, and Zolile will be in touch to schedule your first session.');
+                var booking = $('booking');
+                if (booking) booking.scrollIntoView({ behavior: 'smooth' });
+            } else if (status === 'cancelled') {
+                showAlert('info', 'Payment cancelled. No problem — pick another package or message us on WhatsApp.');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            try { ensureFirebase(); } catch (e) { console.error(e); }
+            applyAcademyContent();
+            document.querySelectorAll('.pkg-cta').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var card = btn.closest('.pkg-card');
+                    if (card) selectPackage(card.getAttribute('data-pkg'));
+                });
+            });
+            var apcBtn = $('apc-apply-btn');
+            if (apcBtn) apcBtn.addEventListener('click', function () { selectPackage('apc-programme'); });
+            if (window.location.hash === '#apc-programme-apply') selectPackage('apc-programme');
+            $('mentorship-apply-form').addEventListener('submit', handleSubmit);
+            handleReturnStatus();
+        });
+    })();
+    </script>
+</body>
+</html>

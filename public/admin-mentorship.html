@@ -4,7 +4,7 @@
     <script>if(/^(disciplined-disciples-1\.(web\.app|firebaseapp\.com))$/.test(location.hostname)){location.replace('https://disciplineddisciples.co.za'+location.pathname+location.search+location.hash);}</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mentorship &middot; Admin &middot; Disciplined Disciples</title>
+    <title>Academy &middot; Admin &middot; Disciplined Disciples</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -19,6 +19,8 @@
         .pkg-single         { background:#fef3c7; color:#92400e; }
         .pkg-focus          { background:#ede9fe; color:#5b21b6; }
         .pkg-transformation { background:#fce7f3; color:#9d174d; }
+        .pkg-apc-programme  { background:#0f172a; color:#ffffff; }
+        .pay-review  { background:#fef3c7; color:#92400e; }
         .pay-paid    { background:#dcfce7; color:#166534; }
         .pay-pending { background:#fee2e2; color:#991b1b; }
         .pay-na      { background:#f1f5f9; color:#475569; }
@@ -38,8 +40,8 @@
         <main class="flex-1 ml-64 p-6 lg:p-8 space-y-6">
             <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                 <div>
-                    <h1 class="text-2xl font-bold text-slate-900">Mentorship Pipeline</h1>
-                    <p class="text-sm text-slate-500 mt-1">Drag-free kanban &mdash; click a card to expand, change status, or add notes.</p>
+                    <h1 class="text-2xl font-bold text-slate-900">Academy Pipeline</h1>
+                    <p class="text-sm text-slate-500 mt-1">Disciplined Disciples Academy (formerly Mentorship). Click a card to expand, change status, add notes, or check the applicant&rsquo;s 30-Day Journal.</p>
                 </div>
                 <div class="flex gap-2">
                     <button id="mentorship-refresh" class="px-4 py-2 text-sm font-medium border border-slate-200 bg-white rounded hover:bg-slate-50 transition">
@@ -83,6 +85,7 @@
                     <option value="single">Single Session (R249)</option>
                     <option value="focus">Focus Pack (R799)</option>
                     <option value="transformation">Transformation (R1,499)</option>
+                    <option value="apc-programme">APC Programme</option>
                 </select>
                 <select id="mentorship-payment-filter" class="border border-slate-200 rounded px-2 py-2 text-xs">
                     <option value="all">Any payment status</option>
@@ -99,7 +102,7 @@
     </div>
 
     <script src="firebase-config.js"></script>
-    <script src="js/admin-sidebar.js?v=20260601c" defer></script>
+    <script src="js/admin-sidebar.js?v=20261005a" defer></script>
     <script>
     (function () {
         'use strict';
@@ -115,11 +118,90 @@
             discovery:      'Discovery',
             single:         'Single',
             focus:          'Focus',
-            transformation: 'Transformation'
+            transformation: 'Transformation',
+            'apc-programme': 'APC Programme'
         };
 
         let allApps = [];
         let expandedId = null;
+        // 30-Day Journal: who has access, and progress for mentees who chose to share it.
+        // Progress never includes what they wrote.
+        let journalAccessByUid = {};
+        let journalProgressByUid = {};
+        let journalProgressByEmail = {};
+
+        function journalUidFor(app) {
+            if (app.userId) return app.userId;
+            const p = journalProgressByEmail[(app.email || '').toLowerCase()];
+            return p ? p.uid : null;
+        }
+
+        function journalHTML(app) {
+            const uid = journalUidFor(app);
+            const access = uid ? journalAccessByUid[uid] : null;
+            const progress = uid ? journalProgressByUid[uid] : journalProgressByEmail[(app.email || '').toLowerCase()];
+            const paid = (app.paymentStatus || '').toLowerCase() === 'paid';
+            let accessLine;
+            if (access && access.granted) {
+                accessLine = '<span class="text-emerald-700 font-semibold"><i class="fas fa-lock-open"></i> Journal unlocked</span>';
+            } else if (uid) {
+                accessLine = '<span class="text-slate-500">Journal not unlocked</span> <button class="journal-grant ml-1 text-[11px] px-2 py-1 bg-violet-600 text-white rounded hover:bg-violet-700" data-uid="' + escH(uid) + '"><i class="fas fa-unlock mr-1"></i>Unlock journal</button>';
+            } else {
+                accessLine = '<span class="text-slate-500">' + (paid
+                    ? 'Journal unlocks automatically when they sign in with ' + escH(app.email || 'their application email') + '.'
+                    : 'No account linked yet. Journal unlocks with any paid package.') + '</span>';
+            }
+            let progressLine;
+            if (progress) {
+                const last = progress.lastEntryDate ? ' &middot; last entry ' + escH(progress.lastEntryDate) : '';
+                progressLine = '<span class="text-slate-700">Day ' + escH(progress.currentDay || 0) + ' of 30 &middot; <strong>' + escH(progress.daysCompleted || 0) + '</strong> days written &middot; ' + escH(progress.returns || 0) + ' returns' + last + '</span>';
+            } else {
+                progressLine = '<span class="text-slate-400">Progress not shared (the mentee can share it from their journal settings).</span>';
+            }
+            return '<div class="text-xs bg-violet-50 border border-violet-100 rounded p-2 space-y-1">'
+                + '<strong class="text-violet-700 text-[10px] uppercase tracking-wider">30-Day Journal</strong>'
+                + '<div>' + accessLine + '</div><div>' + progressLine + '</div></div>';
+        }
+
+        async function loadJournalData(db) {
+            journalAccessByUid = {};
+            journalProgressByUid = {};
+            journalProgressByEmail = {};
+            try {
+                const [accessSnap, progressSnap] = await Promise.all([
+                    db.collection('journalAccess').get(),
+                    db.collection('journalProgress').where('shareWithMentor', '==', true).get()
+                ]);
+                accessSnap.forEach(d => { journalAccessByUid[d.id] = d.data() || {}; });
+                progressSnap.forEach(d => {
+                    const data = Object.assign({ uid: d.id }, d.data() || {});
+                    journalProgressByUid[d.id] = data;
+                    if (data.email) journalProgressByEmail[String(data.email).toLowerCase()] = data;
+                });
+            } catch (e) {
+                console.warn('[academy admin] journal data unavailable', e);
+            }
+        }
+
+        async function grantJournal(uid) {
+            const db = ensureFirebase();
+            if (!db || !uid) return;
+            try {
+                const by = (firebase.auth().currentUser && firebase.auth().currentUser.email) || 'admin';
+                const payload = {
+                    granted: true,
+                    sources: firebase.firestore.FieldValue.arrayUnion({ source: 'admin', ref: by, at: new Date().toISOString() }),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                if (!journalAccessByUid[uid]) payload.grantedAt = firebase.firestore.FieldValue.serverTimestamp();
+                await db.collection('journalAccess').doc(uid).set(payload, { merge: true });
+                journalAccessByUid[uid] = Object.assign({}, journalAccessByUid[uid], { granted: true });
+                renderKanban();
+                showAlert('success', 'Journal unlocked.');
+            } catch (e) {
+                console.error(e); showAlert('error', 'Could not unlock journal: ' + e.message);
+            }
+        }
 
         function $(id) { return document.getElementById(id); }
 
@@ -170,13 +252,14 @@
 
         function packagePillHTML(pkg) {
             const key = (pkg || '').toLowerCase();
-            const cls = ['discovery','single','focus','transformation'].includes(key) ? 'pkg-' + key : 'pkg-discovery';
+            const cls = ['discovery','single','focus','transformation','apc-programme'].includes(key) ? 'pkg-' + key : 'pkg-discovery';
             return '<span class="pkg-pill ' + cls + '">' + escH(PKG_LABELS[key] || pkg || 'No package') + '</span>';
         }
         function paymentPillHTML(pay) {
             const p = (pay || '').toLowerCase();
             if (p === 'paid')    return '<span class="pkg-pill pay-paid">Paid</span>';
             if (p === 'pending') return '<span class="pkg-pill pay-pending">Pending</span>';
+            if (p === 'under review') return '<span class="pkg-pill pay-review">Payment review</span>';
             return '<span class="pkg-pill pay-na">Free / N/A</span>';
         }
 
@@ -257,6 +340,7 @@
                 card.querySelector('.status-select')?.addEventListener('change', (e) => updateStatus(id, e.target.value));
                 card.querySelector('.notes-save')?.addEventListener('click', () => saveNotes(id));
                 card.querySelector('.delete-btn')?.addEventListener('click', () => deleteApp(id));
+                card.querySelector('.journal-grant')?.addEventListener('click', (e) => grantJournal(e.currentTarget.getAttribute('data-uid')));
             });
         }
 
@@ -285,6 +369,8 @@
                             ${a.phone ? `<p class="text-xs text-slate-600"><i class="fas fa-phone fa-fw text-slate-400"></i> <a href="tel:${escH(a.phone)}" class="hover:underline">${escH(a.phone)}</a> <a href="https://wa.me/${escH(a.phone.replace(/[^0-9]/g,''))}" target="_blank" class="ml-1 text-emerald-600 hover:underline"><i class="fab fa-whatsapp"></i></a></p>` : ''}
                             ${a.track ? `<p class="text-xs text-slate-600"><i class="fas fa-tag fa-fw text-slate-400"></i> ${escH(a.track)}</p>` : ''}
                             ${a.goal ? `<div class="text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded p-2"><strong class="text-slate-500 text-[10px] uppercase tracking-wider">Goal</strong><br>${escH(a.goal)}</div>` : ''}
+                            ${a.paymentReview ? `<div class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded p-2"><strong class="text-[10px] uppercase tracking-wider">Payment needs review</strong><br>Received R${escH(a.paymentReview.received)}, expected ${a.paymentReview.expected == null ? 'an unknown amount' : 'R' + escH(a.paymentReview.expected)}. Check PayFast before confirming.</div>` : ''}
+                            ${journalHTML(a)}
                             <div>
                                 <label class="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Move to</label>
                                 <select class="status-select w-full border border-slate-200 rounded px-2 py-1.5 text-xs mt-1">
@@ -371,6 +457,7 @@
                     .orderBy('createdAt', 'desc')
                     .limit(200).get();
                 allApps = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+                await loadJournalData(db);
                 renderKpis();
                 renderKanban();
             } catch (e) {

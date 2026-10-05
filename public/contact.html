@@ -109,6 +109,7 @@
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
+      try{if(localStorage.getItem('cookie_consent')!=='accepted'){gtag('consent','default',{analytics_storage:'denied',ad_storage:'denied'});}}catch(e){gtag('consent','default',{analytics_storage:'denied',ad_storage:'denied'});}
       gtag('js', new Date());
       gtag('config', 'G-2J1GWH59V4');
     </script>
@@ -124,10 +125,18 @@
             <nav class="nav-menu">
                 <ul class="flex space-x-6">
                     <li><a href="index.html" class="nav-link">Home</a></li>
-                    <li><a href="about.html" class="nav-link">About</a></li>
-                    <li><a href="shop.html" class="nav-link">Shop</a></li>
                     <li><a href="book.html" class="nav-link">Book</a></li>
-                    <li><a href="mentorship.html" class="nav-link">Mentorship</a></li>
+                    <li><a href="journal.html" class="nav-link">Journal</a></li>
+                    <li><a href="academy.html" class="nav-link">Academy</a></li>
+                    <li><a href="shop.html" class="nav-link">Shop</a></li>
+                    <li class="nav-dropdown">
+                        <a href="about.html" class="nav-link nav-dropdown-toggle" aria-haspopup="true">About <i class="fas fa-chevron-down"></i></a>
+                        <ul class="nav-dropdown-menu">
+                            <li><a href="about.html">Zolile&rsquo;s Story</a></li>
+                            <li><a href="speaking.html">Speaking</a></li>
+                            <li><a href="book.html#featured">As Featured In</a></li>
+                        </ul>
+                    </li>
                     <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a></li>
                     <li><a href="cart.html" class="nav-link" aria-label="Cart"><i class="fas fa-shopping-cart"></i></a></li>
                 </ul>
@@ -161,10 +170,13 @@
         <nav class="mobile-menu">
             <ul class="py-4">
                 <li><a href="index.html" class="nav-link-mobile">Home</a></li>
-                <li><a href="about.html" class="nav-link-mobile">About</a></li>
-                <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
                 <li><a href="book.html" class="nav-link-mobile">Book</a></li>
-                <li><a href="mentorship.html" class="nav-link-mobile">Mentorship</a></li>
+                <li><a href="journal.html" class="nav-link-mobile">Journal</a></li>
+                <li><a href="academy.html" class="nav-link-mobile">Academy</a></li>
+                <li><a href="shop.html" class="nav-link-mobile">Shop</a></li>
+                <li><a href="about.html" class="nav-link-mobile">About</a></li>
+                <li><a href="speaking.html" class="nav-link-mobile nav-sub">Speaking</a></li>
+                <li><a href="book.html#featured" class="nav-link-mobile nav-sub">As Featured In</a></li>
                 <li><a href="https://www.instagram.com/disciplined_disciples_2023/" target="_blank" rel="noopener noreferrer" class="nav-link-mobile"><i class="fab fa-instagram"></i> Instagram</a></li>
                 <li><a href="cart.html" class="nav-link-mobile"><i class="fas fa-shopping-cart"></i> Cart</a></li>
             </ul>
@@ -198,6 +210,10 @@
                 <i class="fas fa-box" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
                 My Orders
             </a>
+            <a href="journal.html" style="display: flex; align-items: center; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f3e8ff'; this.style.color='#7c3aed';" onmouseout="this.style.background='transparent'; this.style.color='#374151';">
+                <i class="fas fa-pen-nib" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
+                My Journal
+            </a>
             <a href="profile.html#account" style="display: flex; align-items: center; padding: 12px 16px; color: #374151; text-decoration: none; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#f3e8ff'; this.style.color='#7c3aed';" onmouseout="this.style.background='transparent'; this.style.color='#374151';">
                 <i class="fas fa-cog" style="margin-right: 12px; color: #9ca3af; width: 16px;"></i>
                 Settings
@@ -225,7 +241,7 @@
     <section style="background:#f7f8fc;padding:2.5rem 1rem 0;">
         <div class="container" style="max-width:960px;margin:0 auto;">
             <p style="text-align:center;font-size:0.82rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#667eea;margin-bottom:0.8rem;">How can we help?</p>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem;" id="entry-path-grid">
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;" id="entry-path-grid">
                 <!-- Customer Support -->
                 <div onclick="selectPath('support')" id="path-support" style="background:white;border:2px solid #e5e7eb;border-radius:12px;padding:1.4rem 1rem;text-align:center;cursor:pointer;transition:all 0.2s ease;">
                     <div style="width:48px;height:48px;border-radius:10px;background:#eff6ff;display:flex;align-items:center;justify-content:center;margin:0 auto 0.8rem;">
@@ -234,13 +250,21 @@
                     <p style="font-weight:700;font-size:0.92rem;color:#1a202c;margin:0 0 0.3rem;">Customer Support</p>
                     <p style="font-size:0.8rem;color:#9ca3af;margin:0;line-height:1.5;">Orders, returns, product questions</p>
                 </div>
-                <!-- Mentorship Enquiry -->
-                <a href="mentorship.html" id="path-mentorship" style="background:white;border:2px solid #e5e7eb;border-radius:12px;padding:1.4rem 1rem;text-align:center;cursor:pointer;transition:all 0.2s ease;text-decoration:none;display:block;">
+                <!-- Academy Enquiry -->
+                <a href="academy.html" id="path-mentorship" style="background:white;border:2px solid #e5e7eb;border-radius:12px;padding:1.4rem 1rem;text-align:center;cursor:pointer;transition:all 0.2s ease;text-decoration:none;display:block;">
                     <div style="width:48px;height:48px;border-radius:10px;background:#f5f3ff;display:flex;align-items:center;justify-content:center;margin:0 auto 0.8rem;">
                         <i class="fas fa-graduation-cap" style="color:#7c3aed;font-size:1.3rem;"></i>
                     </div>
-                    <p style="font-weight:700;font-size:0.92rem;color:#1a202c;margin:0 0 0.3rem;">Mentorship Enquiry</p>
-                    <p style="font-size:0.8rem;color:#9ca3af;margin:0;line-height:1.5;">Apply to Zolile's mentorship programme</p>
+                    <p style="font-weight:700;font-size:0.92rem;color:#1a202c;margin:0 0 0.3rem;">Academy Enquiry</p>
+                    <p style="font-size:0.8rem;color:#9ca3af;margin:0;line-height:1.5;">Mentorship and the APC Programme with Zolile</p>
+                </a>
+                <!-- Speaking Enquiry -->
+                <a href="speaking.html#enquire" id="path-speaking" style="background:white;border:2px solid #e5e7eb;border-radius:12px;padding:1.4rem 1rem;text-align:center;cursor:pointer;transition:all 0.2s ease;text-decoration:none;display:block;">
+                    <div style="width:48px;height:48px;border-radius:10px;background:#fff7ed;display:flex;align-items:center;justify-content:center;margin:0 auto 0.8rem;">
+                        <i class="fas fa-microphone" style="color:#ea580c;font-size:1.3rem;"></i>
+                    </div>
+                    <p style="font-weight:700;font-size:0.92rem;color:#1a202c;margin:0 0 0.3rem;">Speaking Enquiry</p>
+                    <p style="font-size:0.8rem;color:#9ca3af;margin:0;line-height:1.5;">Book Zolile for your event</p>
                 </a>
                 <!-- Collaboration Enquiry -->
                 <div onclick="selectPath('collab')" id="path-collab" style="background:white;border:2px solid #e5e7eb;border-radius:12px;padding:1.4rem 1rem;text-align:center;cursor:pointer;transition:all 0.2s ease;">
@@ -256,7 +280,8 @@
     <style>
         #entry-path-grid > div:hover, #entry-path-grid > a:hover { border-color:#667eea; transform:translateY(-3px); box-shadow:0 8px 24px rgba(102,126,234,0.12); }
         #entry-path-grid > div.active-path { border-color:#667eea; background:#f8f6ff; }
-        @media(max-width:600px){ #entry-path-grid{ grid-template-columns:1fr; } }
+        @media(max-width:900px){ #entry-path-grid{ grid-template-columns:repeat(2,1fr) !important; } }
+        @media(max-width:600px){ #entry-path-grid{ grid-template-columns:1fr !important; } }
     </style>
     <script>
     function selectPath(type) {
@@ -381,6 +406,9 @@
                 <ul>
                     <li><a href="index.html" class="footer-link">Home</a></li>
                     <li><a href="shop.html" class="footer-link">Shop</a></li>
+                    <li><a href="academy.html" class="footer-link">Academy</a></li>
+                    <li><a href="journal.html" class="footer-link">30-Day Journal</a></li>
+                    <li><a href="speaking.html" class="footer-link">Speaking</a></li>
                     <li><a href="blog.html" class="footer-link">Blog</a></li>
                     <li><a href="contact.html" class="footer-link active">Contact</a></li>
                 </ul>
@@ -406,7 +434,7 @@
             <p>Built by <a href="https://zande.io" target="_blank" rel="noopener noreferrer" style="color: #667eea; text-decoration: none; transition: color 0.2s;">Zande Technologies</a> 💜</p>
         </div>
     </footer>
-    <script src="script.js?v=20260826a"></script>
+    <script src="script.js?v=20261005a"></script>
     <script>
     (function(){
         var firebaseConfig={apiKey:"AIzaSyBVpuDI_YJI7mxtT6-igSL7ZX3s-cqMRnc",authDomain:"disciplined-disciples-1.firebaseapp.com",projectId:"disciplined-disciples-1",storageBucket:"disciplined-disciples-1.firebasestorage.app",messagingSenderId:"565996965931",appId:"1:565996965931:web:b9d18489caa790e7afda6e"};

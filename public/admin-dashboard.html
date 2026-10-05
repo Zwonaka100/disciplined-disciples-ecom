@@ -4,7 +4,7 @@
     <script>if(/^(disciplined-disciples-1\.(web\.app|firebaseapp\.com))$/.test(location.hostname)){location.replace('https://disciplineddisciples.co.za'+location.pathname+location.search+location.hash);}</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard � Disciplined Disciples</title>
+    <title>Admin Dashboard · Disciplined Disciples</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -21,6 +21,7 @@
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
+      try{if(localStorage.getItem('cookie_consent')!=='accepted'){gtag('consent','default',{analytics_storage:'denied',ad_storage:'denied'});}}catch(e){gtag('consent','default',{analytics_storage:'denied',ad_storage:'denied'});}
       gtag('js', new Date());
       gtag('config', 'G-2J1GWH59V4');
     </script>
@@ -29,7 +30,7 @@
     <div id="admin-loading" class="fixed inset-0 bg-white bg-opacity-80 flex items-center justify-center z-40 hidden">
         <div class="text-center">
             <div class="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-blue-600 mx-auto mb-4"></div>
-            <p class="text-sm text-slate-600">Syncing latest store data�</p>
+            <p class="text-sm text-slate-600">Syncing latest store data…</p>
         </div>
     </div>
 
@@ -59,7 +60,7 @@
                 <p class="text-sm text-slate-500">Paid Revenue</p>
                 <p id="admin-total-revenue" class="text-3xl font-semibold mt-2">R0.00</p>
                 <p id="admin-revenue-breakdown" class="mt-2 text-xs text-slate-500 leading-relaxed">
-                    Paid: R0.00 � Awaiting: R0.00 � Cancelled (paid): R0.00
+                    Paid: R0.00 · Awaiting: R0.00 · Cancelled (paid): R0.00
                 </p>
             </article>
             <article class="bg-white rounded-xl shadow p-6">
@@ -150,8 +151,8 @@
     </div><!-- End of flex container -->
 
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-    <script src="script.js?v=20260826a"></script>
-    <script src="js/admin-sidebar.js?v=20260601c" defer></script>
+    <script src="script.js?v=20261005a"></script>
+    <script src="js/admin-sidebar.js?v=20261005a" defer></script>
     <script>
     (function () {
         'use strict';
@@ -186,7 +187,7 @@
 
         var SRC_META = {
             contact: { label: 'Contact', icon: 'fa-envelope', cls: 'bg-blue-50 text-blue-700' },
-            mentorship: { label: 'Mentorship', icon: 'fa-user-graduate', cls: 'bg-violet-50 text-violet-700' },
+            mentorship: { label: 'Academy', icon: 'fa-user-graduate', cls: 'bg-violet-50 text-violet-700' },
             collaboration: { label: 'Collaboration', icon: 'fa-handshake', cls: 'bg-rose-50 text-rose-700' },
             community: { label: 'Community', icon: 'fa-heart', cls: 'bg-amber-50 text-amber-700' }
         };
@@ -354,17 +355,17 @@
                     } else if (isPaid) {
                         if (!isClosed) {
                             needsAction = true;
-                            label = 'Paid mentorship - schedule next step';
+                            label = 'Paid Academy package - schedule next step';
                         }
                     } else if (isPendingPay) {
                         needsAction = true;
-                        label = 'Mentorship payment pending';
+                        label = 'Academy payment pending';
                     }
 
                     if (!needsAction) return;
 
                     var applicant = m.name || m.email || 'Applicant';
-                    var packageName = m.packageName || m.package || 'Mentorship';
+                    var packageName = m.packageName || m.package || 'Academy';
                     items.push({
                         href: 'admin-mentorship.html',
                         icon: 'fa-user-graduate',
@@ -452,7 +453,7 @@
                 $('admin-paid-orders').textContent = String(paidCombined);
                 $('admin-total-revenue').textContent = fmtR(paidRevenueCombined);
                 var bd = $('admin-revenue-breakdown');
-                if (bd) bd.textContent = 'Paid (shop): ' + fmtR(revenue) + ' \u00b7 Paid (mentorship): ' + fmtR(mentorshipRevenue) + ' \u00b7 Awaiting: ' + fmtR(awaitingRev) + ' \u00b7 Cancelled (paid): ' + String(cancelledPaid);
+                if (bd) bd.textContent = 'Paid (shop): ' + fmtR(revenue) + ' \u00b7 Paid (Academy): ' + fmtR(mentorshipRevenue) + ' \u00b7 Awaiting: ' + fmtR(awaitingRev) + ' \u00b7 Cancelled (paid): ' + String(cancelledPaid);
                 $('admin-total-customers').textContent = String(Object.keys(customerSet).length);
             }).catch(function (err) {
                 console.error('[kpis]', err);

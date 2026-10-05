@@ -20,6 +20,8 @@
         .src-mentorship { background:#ede9fe; color:#5b21b6; }
         .src-collaboration { background:#ffe4e6; color:#9f1239; }
         .src-community { background:#fef3c7; color:#92400e; }
+        .src-speaking { background:#ffedd5; color:#9a3412; }
+        .src-chapter { background:#e0f2fe; color:#075985; }
         .status-dot { display:inline-block; width:8px; height:8px; border-radius:50%; }
         .status-open { background:#3b82f6; }
         .status-replied { background:#10b981; }
@@ -73,9 +75,11 @@
                             <select id="comm-source-filter" class="border border-slate-200 rounded px-2 py-2 text-xs">
                                 <option value="all">All sources</option>
                                 <option value="contact">Contact</option>
-                                <option value="mentorship">Mentorship</option>
+                                <option value="mentorship">Academy</option>
                                 <option value="collaboration">Collaboration</option>
                                 <option value="community">Community</option>
+                                <option value="speaking">Speaking</option>
+                                <option value="chapter">Free chapter</option>
                             </select>
                         </div>
                         <div class="px-4 py-2 border-b border-slate-100 flex gap-1 text-xs">
@@ -131,9 +135,11 @@
 
         var SOURCE_META = {
             contact: { label: 'Contact', cls: 'src-contact', icon: 'fa-envelope' },
-            mentorship: { label: 'Mentorship', cls: 'src-mentorship', icon: 'fa-user-graduate' },
+            mentorship: { label: 'Academy', cls: 'src-mentorship', icon: 'fa-user-graduate' },
             collaboration: { label: 'Collaboration', cls: 'src-collaboration', icon: 'fa-handshake' },
-            community: { label: 'Community', cls: 'src-community', icon: 'fa-heart' }
+            community: { label: 'Community', cls: 'src-community', icon: 'fa-heart' },
+            speaking: { label: 'Speaking', cls: 'src-speaking', icon: 'fa-microphone' },
+            chapter: { label: 'Free chapter', cls: 'src-chapter', icon: 'fa-book-open' }
         };
 
         var state = {
@@ -431,6 +437,6 @@
         });
     })();
     </script>
-    <script src="js/admin-sidebar.js?v=20260601c" defer></script>
+    <script src="js/admin-sidebar.js?v=20261005a" defer></script>
 </body>
 </html>

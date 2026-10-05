@@ -62,7 +62,7 @@
             <header class="flex items-center justify-between gap-3 flex-wrap">
                 <div>
                     <h1 class="text-2xl font-bold">Settings</h1>
-                    <p class="text-slate-500 text-sm">Manage homepage, about, book, mentorship, team access and store operations.</p>
+                    <p class="text-slate-500 text-sm">Manage homepage, about, book, Academy, team access and store operations.</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <button id="settings-save" class="btn-primary"><i class="fas fa-floppy-disk mr-2"></i>Save changes</button>
@@ -76,7 +76,7 @@
                         <button class="tab-btn active" data-tab="homepage"><i class="fas fa-house"></i>Homepage</button>
                         <button class="tab-btn" data-tab="about"><i class="fas fa-circle-info"></i>About</button>
                         <button class="tab-btn" data-tab="book"><i class="fas fa-book"></i>Book</button>
-                        <button class="tab-btn" data-tab="mentorship"><i class="fas fa-compass"></i>Mentorship</button>
+                        <button class="tab-btn" data-tab="mentorship"><i class="fas fa-graduation-cap"></i>Academy</button>
                         <button class="tab-btn" data-tab="shipping"><i class="fas fa-truck"></i>Shipping</button>
                         <button class="tab-btn" data-tab="notifications"><i class="fas fa-bell"></i>Notifications</button>
                         <button class="tab-btn" data-tab="team"><i class="fas fa-user-shield"></i>Team</button>
@@ -115,7 +115,7 @@
                             <p class="field-label !mb-0">Visible blocks</p>
                             <p class="field-hint !mt-0 mb-2">Show or hide entire sections of the homepage.</p>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <label class="toggle-row"><div><p class="t">Mentorship block</p><p class="d">Promote 1-on-1 mentorship.</p></div><span class="switch"><input id="hp-show-mentorship" type="checkbox"><span class="slider"></span></span></label>
+                                <label class="toggle-row"><div><p class="t">Academy block</p><p class="d">Promote the Academy on the homepage.</p></div><span class="switch"><input id="hp-show-mentorship" type="checkbox"><span class="slider"></span></span></label>
                                 <label class="toggle-row"><div><p class="t">Book spotlight</p><p class="d">Feature Relentlessly Disciplined.</p></div><span class="switch"><input id="hp-show-book" type="checkbox"><span class="slider"></span></span></label>
                                 <label class="toggle-row"><div><p class="t">Testimonials</p><p class="d">Show customer stories carousel.</p></div><span class="switch"><input id="hp-show-testimonials" type="checkbox"><span class="slider"></span></span></label>
                                 <label class="toggle-row"><div><p class="t">Newsletter signup</p><p class="d">Show the email capture.</p></div><span class="switch"><input id="hp-show-newsletter" type="checkbox"><span class="slider"></span></span></label>
@@ -185,19 +185,19 @@
                         </div>
                     </section>
 
-                    <!-- MENTORSHIP -->
+                    <!-- ACADEMY (formerly Mentorship) -->
                     <section data-tab-panel="mentorship" class="card space-y-5 hidden">
                         <div>
-                            <h2 class="text-lg font-bold text-slate-900">Mentorship page content</h2>
-                            <p class="text-sm text-slate-500">Control the hero and section messaging for mentorship.</p>
+                            <h2 class="text-lg font-bold text-slate-900">Academy page content</h2>
+                            <p class="text-sm text-slate-500">Control the hero and section messaging on the Academy page, and the APC Programme fee.</p>
                         </div>
                         <div>
                             <label class="field-label">Hero kicker</label>
-                            <input id="mentorship-kicker" class="field-input" placeholder="Mentorship by Zolile Nomaqhiza CA(SA)">
+                            <input id="mentorship-kicker" class="field-input" placeholder="Disciplined Disciples Academy">
                         </div>
                         <div>
                             <label class="field-label">Hero title</label>
-                            <input id="mentorship-hero-title" class="field-input" placeholder="Discipline is the DNA of every breakthrough.">
+                            <input id="mentorship-hero-title" class="field-input" placeholder="Mentorship for every stage of the journey.">
                         </div>
                         <div>
                             <label class="field-label">Hero intro</label>
@@ -220,6 +220,11 @@
                         <div>
                             <label class="field-label">Form section subtitle</label>
                             <textarea id="mentorship-form-subtitle" rows="2" class="field-textarea"></textarea>
+                        </div>
+                        <div class="rounded-lg border border-violet-200 bg-violet-50 p-4">
+                            <label class="field-label">APC Programme fee (R)</label>
+                            <input id="academy-apc-price" type="number" min="0" step="1" class="field-input" placeholder="Leave empty to take applications first">
+                            <p class="field-hint">Empty: candidates apply and you confirm the fee on the Discovery Call. A number: candidates pay this amount through PayFast when they apply. Every paid package includes the 30-Day Journal.</p>
                         </div>
                     </section>
 
@@ -268,7 +273,7 @@
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <label class="toggle-row"><div><p class="t">New order alerts</p><p class="d">Email admins when a paid order arrives.</p></div><span class="switch"><input id="notif-orders" type="checkbox" checked><span class="slider"></span></span></label>
-                            <label class="toggle-row"><div><p class="t">Mentorship applications</p><p class="d">Email admins for every new lead.</p></div><span class="switch"><input id="notif-mentorship" type="checkbox" checked><span class="slider"></span></span></label>
+                            <label class="toggle-row"><div><p class="t">Academy applications</p><p class="d">Email admins for every new lead.</p></div><span class="switch"><input id="notif-mentorship" type="checkbox" checked><span class="slider"></span></span></label>
                             <label class="toggle-row"><div><p class="t">Support requests</p><p class="d">Email admins for every contact-form message.</p></div><span class="switch"><input id="notif-support" type="checkbox" checked><span class="slider"></span></span></label>
                             <label class="toggle-row"><div><p class="t">Welcome email to new users</p><p class="d">Send a welcome message on signup.</p></div><span class="switch"><input id="notif-welcome" type="checkbox" checked><span class="slider"></span></span></label>
                         </div>
@@ -334,7 +339,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <button class="btn-secondary text-left flex items-center justify-between gap-3" data-export="orders"><span><i class="fas fa-bag-shopping mr-2 text-emerald-500"></i>Export orders</span><i class="fas fa-download text-slate-400"></i></button>
                             <button class="btn-secondary text-left flex items-center justify-between gap-3" data-export="users"><span><i class="fas fa-users mr-2 text-indigo-500"></i>Export customers</span><i class="fas fa-download text-slate-400"></i></button>
-                            <button class="btn-secondary text-left flex items-center justify-between gap-3" data-export="mentorshipApplications"><span><i class="fas fa-compass mr-2 text-violet-500"></i>Export mentorship leads</span><i class="fas fa-download text-slate-400"></i></button>
+                            <button class="btn-secondary text-left flex items-center justify-between gap-3" data-export="mentorshipApplications"><span><i class="fas fa-compass mr-2 text-violet-500"></i>Export Academy applications</span><i class="fas fa-download text-slate-400"></i></button>
                             <button class="btn-secondary text-left flex items-center justify-between gap-3" data-export="broadcastJobs"><span><i class="fas fa-envelope mr-2 text-amber-500"></i>Export broadcasts</span><i class="fas fa-download text-slate-400"></i></button>
                             <button class="btn-secondary text-left flex items-center justify-between gap-3" data-export="inboxThreads"><span><i class="fas fa-comments mr-2 text-pink-500"></i>Export inbox threads</span><i class="fas fa-download text-slate-400"></i></button>
                             <button class="btn-secondary text-left flex items-center justify-between gap-3" data-export="products"><span><i class="fas fa-shirt mr-2 text-cyan-500"></i>Export products</span><i class="fas fa-download text-slate-400"></i></button>
@@ -372,7 +377,7 @@
     <div id="toast" class="toast"></div>
 
     <script src="firebase-config.js?v=20260601d"></script>
-    <script src="js/admin-sidebar.js?v=20260601c" defer></script>
+    <script src="js/admin-sidebar.js?v=20261005a" defer></script>
     <script>
     (function(){
         'use strict';
@@ -381,7 +386,8 @@
         const settingsRef = db.collection('siteSettings').doc('main');
         const ABOUT_CONTENT_REF = db.collection('siteContent').doc('about');
         const BOOK_CONTENT_REF = db.collection('siteContent').doc('book');
-        const MENTORSHIP_CONTENT_REF = db.collection('siteContent').doc('mentorship');
+        // The Academy page reads siteContent/academy. (siteContent/mentorship is the old, unused doc.)
+        const MENTORSHIP_CONTENT_REF = db.collection('siteContent').doc('academy');
         const CORE_ADMIN_EMAILS = ['zmabege@gmail.com', 'nomaqhizazolile@gmail.com'];
 
         function isAdminEmail(email) {
@@ -485,13 +491,14 @@
                 synopsis: ''
             },
             mentorship: {
-                kicker: 'Mentorship by Zolile Nomaqhiza CA(SA)',
-                heroTitle: 'Discipline is the DNA of every breakthrough.',
-                heroLede: 'Whether you\'re a CA student staring down board exams, a young professional rebuilding from a valley season, or an entrepreneur scaling with intention — pick the level of support that fits your moment.',
+                kicker: 'Disciplined Disciples Academy',
+                heroTitle: 'Mentorship for every stage of the journey.',
+                heroLede: 'From university and CTA, through the IAC, your training contract and the APC, all the way to CA(SA), and for professionals in every other field. Mentorship from a CA(SA) who failed six times and kept going.',
+                apcProgrammePrice: '',
                 packagesTitle: 'Pick your path',
                 packagesSubtitle: 'Every package starts with a real conversation. No fluff, no recycled scripts — you bring the goal, we build the discipline.',
                 formTitle: 'Tell us about you',
-                formSubtitle: 'Pick a package above, then fill this in. We respond within 5–7 business days for free Discovery calls; paid packages are confirmed immediately after checkout.'
+                formSubtitle: 'Pick a package above, then fill this in. We respond within 5–7 business days for free Discovery calls and APC applications; paid packages are confirmed after checkout.'
             }
         };
 
@@ -619,6 +626,7 @@
             setVal('mentorship-packages-subtitle', s.mentorship.packagesSubtitle);
             setVal('mentorship-form-title', s.mentorship.formTitle);
             setVal('mentorship-form-subtitle', s.mentorship.formSubtitle);
+            setVal('academy-apc-price', Number(s.mentorship.apcProgrammePrice) > 0 ? Number(s.mentorship.apcProgrammePrice) : '');
         }
 
         // ---------- Save ----------
@@ -687,6 +695,7 @@
                         packagesSubtitle: getVal('mentorship-packages-subtitle'),
                         formTitle: getVal('mentorship-form-title'),
                         formSubtitle: getVal('mentorship-form-subtitle'),
+                        apcProgrammePrice: Number(getVal('academy-apc-price')) > 0 ? Math.round(Number(getVal('academy-apc-price'))) : null,
                         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                         updatedBy: (authUser && authUser.email) || sessionStorage.getItem('userEmail') || 'admin'
                     }, { merge: true })

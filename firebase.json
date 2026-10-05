@@ -10,6 +10,18 @@
     ],
     "cleanUrls": true,
     "trailingSlash": false,
+    "redirects": [
+      {
+        "source": "/mentorship",
+        "destination": "/academy",
+        "type": 301
+      },
+      {
+        "source": "/mentorship.html",
+        "destination": "/academy",
+        "type": 301
+      }
+    ],
     "headers": [
       {
         "source": "**/*.@(html|js|css)",
