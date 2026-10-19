@@ -13,6 +13,7 @@
     { id: 'orders',         label: 'Orders',         icon: 'fa-shopping-bag',   href: 'admin-orders.html' },
     { id: 'products',       label: 'Products',       icon: 'fa-box',            href: 'admin-products.html' },
     { id: 'mentorship',     label: 'Academy',        icon: 'fa-user-graduate',  href: 'admin-mentorship.html' },
+    { id: 'events',         label: 'Events',         icon: 'fa-ticket',         href: 'admin-events.html' },
     { id: 'blogs',          label: 'Blog',           icon: 'fa-newspaper',      href: 'admin-blogs.html' },
     { id: 'communications', label: 'Communications', icon: 'fa-comments',       href: 'admin-communications.html' },
     { id: 'analytics',      label: 'Analytics',      icon: 'fa-chart-pie',      href: 'admin-analytics.html' },
@@ -36,6 +37,7 @@
         path.includes('admin-community')   ||
         path.includes('admin-collaborations'))    return 'communications';
     if (path.includes('admin-mentorship'))        return 'mentorship';
+    if (path.includes('admin-events'))            return 'events';
     if (path.includes('admin-analytics'))         return 'analytics';
     if (path.includes('admin-settings') ||
         path.includes('admin-book'))              return 'settings';

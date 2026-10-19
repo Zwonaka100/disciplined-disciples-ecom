@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+    <script>if(/^(disciplined-disciples-1\.(web\.app|firebaseapp\.com))$/.test(location.hostname)){location.replace('https://disciplineddisciples.co.za'+location.pathname+location.search+location.hash);}</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="no-referrer">
+    <title>Join your session | Disciplined Disciples</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" type="image/png" href="Assets/45.png">
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; font-family: 'Inter', Arial, sans-serif; background: #0f172a; color: #0f172a; display: flex; align-items: center; justify-content: center; padding: 32px 16px; }
+        body::before { content: ""; position: fixed; inset: 0; background: radial-gradient(circle at 15% 20%, rgba(124,58,237,0.35), transparent 45%), radial-gradient(circle at 85% 80%, rgba(79,70,229,0.35), transparent 45%); z-index: -1; }
+        .card { width: 100%; max-width: 520px; background: #fff; border-radius: 18px; padding: 28px; box-shadow: 0 24px 60px rgba(0,0,0,0.35); }
+        .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #0f172a; font-weight: 800; margin-bottom: 22px; }
+        .brand img { width: 40px; height: 40px; border-radius: 8px; }
+        .kicker { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #6366f1; font-weight: 700; margin: 0 0 6px; }
+        h1 { font-size: 24px; line-height: 1.25; margin: 0 0 6px; }
+        .when { color: #475569; margin: 0 0 20px; font-weight: 600; }
+        .name-box { background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 12px; padding: 14px 16px; margin-bottom: 18px; }
+        .name-box p { margin: 0 0 6px; font-size: 13px; color: #4338ca; font-weight: 600; }
+        .name-row { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+        .name-row strong { font-size: 18px; word-break: break-word; }
+        .copy { border: 1px solid #a5b4fc; background: #fff; color: #4338ca; border-radius: 8px; padding: 6px 10px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
+        .btn { display: flex; width: 100%; align-items: center; justify-content: center; gap: 10px; padding: 15px 20px; border: none; border-radius: 12px; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; font-weight: 700; font-size: 16px; text-decoration: none; cursor: pointer; font-family: inherit; }
+        .btn:hover { box-shadow: 0 10px 22px rgba(79,70,229,0.4); }
+        ol { color: #475569; line-height: 1.7; padding-left: 20px; margin: 18px 0 0; font-size: 15px; }
+        .note { color: #64748b; font-size: 13px; line-height: 1.6; margin: 18px 0 0; }
+        .note a { color: #4f46e5; font-weight: 600; }
+        .countdown { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 16px; margin-bottom: 18px; color: #334155; font-size: 14px; }
+        .state { text-align: center; color: #475569; line-height: 1.6; }
+        .state i { font-size: 28px; color: #6366f1; margin-bottom: 10px; display: block; }
+    </style>
+</head>
+<body>
+    <main class="card">
+        <a class="brand" href="index.html"><img src="Assets/45.png" alt=""> Disciplined Disciples</a>
+        <div id="view"><div class="state"><i class="fas fa-spinner fa-spin"></i>Checking your ticket&hellip;</div></div>
+    </main>
+
+    <script>
+    (function () {
+        'use strict';
+
+        var ENDPOINT = 'https://us-central1-disciplined-disciples-1.cloudfunctions.net/eventJoinLink';
+        var TZ = 'Africa/Johannesburg';
+        var HELP = 'WhatsApp <a href="https://wa.me/27692060618">+27 69 206 0618</a> and we&rsquo;ll sort it out.';
+        var view = document.getElementById('view');
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        function fmt(date, opts) {
+            return new Intl.DateTimeFormat('en-ZA', Object.assign({ timeZone: TZ }, opts)).format(date).replace(',', '');
+        }
+
+        function state(icon, title, body) {
+            view.innerHTML = '<div class="state"><i class="fas ' + icon + '"></i><h1>' + esc(title) + '</h1><p>' + body + '</p></div>';
+        }
+
+        function untilText(ms) {
+            var mins = Math.round(ms / 60000);
+            if (mins < 60) return mins + ' minute' + (mins === 1 ? '' : 's');
+            var hours = Math.floor(mins / 60);
+            if (hours < 48) return hours + ' hour' + (hours === 1 ? '' : 's') + (mins % 60 ? ' ' + (mins % 60) + ' min' : '');
+            return Math.floor(hours / 24) + ' days';
+        }
+
+        function copyName(name) {
+            try { return navigator.clipboard.writeText(name).catch(function () {}); } catch (e) { return Promise.resolve(); }
+        }
+
+        function safeUrl(url) {
+            return /^https:\/\//i.test(url || '') ? url : null;
+        }
+
+        function render(data) {
+            data.meetingUrl = safeUrl(data.meetingUrl);
+            data.recordingUrl = safeUrl(data.recordingUrl);
+            var start = data.startsAt ? new Date(data.startsAt) : null;
+            var when = start ? fmt(start, { weekday: 'long', day: 'numeric', month: 'long' }) + ' · ' + fmt(start, { hour: '2-digit', minute: '2-digit', hour12: false }) + ' SAST' : '';
+            var head = '<p class="kicker">Ticket ' + esc(data.ticketNumber) + '</p><h1>' + esc(data.eventTitle) + '</h1><p class="when">' + esc(when) + '</p>';
+
+            if (data.ended) {
+                view.innerHTML = head + (data.recordingUrl
+                    ? '<p class="note" style="margin:0 0 18px;">This session has ended. Thank you for being part of it.</p><a class="btn" href="' + esc(data.recordingUrl) + '" rel="noopener"><i class="fas fa-circle-play"></i> Watch the recording</a>'
+                    : '<p class="note" style="margin:0;">This session has ended. The recording will be emailed to you as soon as it&rsquo;s ready.</p>');
+                return;
+            }
+            if (!data.meetingUrl) {
+                view.innerHTML = head + '<p class="note" style="margin:0;">Your ticket is valid. The join link isn&rsquo;t live yet; come back to this page closer to the start time. ' + HELP + '</p>';
+                return;
+            }
+
+            var msToStart = start ? start.getTime() - Date.now() : 0;
+            var countdown = msToStart > 60 * 60000
+                ? '<div class="countdown"><i class="fas fa-hourglass-half"></i> Starts in ' + untilText(msToStart) + '. Save this link (it&rsquo;s also in your email and calendar) and come back a few minutes before.</div>'
+                : '';
+            view.innerHTML = head + countdown +
+                '<div class="name-box"><p>Join Teams with this exact name</p><div class="name-row"><strong id="display-name">' + esc(data.displayName) + '</strong>' +
+                '<button class="copy" id="copy-btn" type="button"><i class="far fa-copy"></i> Copy</button></div></div>' +
+                '<a class="btn" id="join-btn" href="' + esc(data.meetingUrl) + '" rel="noopener"><i class="fas fa-video"></i> Open Microsoft Teams</a>' +
+                '<ol><li>Teams opens in the app, or choose <strong>Continue on this browser</strong>.</li>' +
+                '<li>Paste or type your name as shown above.</li>' +
+                '<li>Wait in the lobby. We&rsquo;ll let you in once we&rsquo;ve matched your name to your ticket.</li></ol>' +
+                '<p class="note">This link is personal to your ticket, so please don&rsquo;t share it. Trouble joining? ' + HELP + '</p>';
+
+            document.getElementById('copy-btn').addEventListener('click', function () {
+                var btn = this;
+                copyName(data.displayName).then(function () { btn.innerHTML = '<i class="fas fa-check"></i> Copied'; });
+            });
+            // Copy the name on the way out so it can be pasted straight into Teams.
+            document.getElementById('join-btn').addEventListener('click', function () { copyName(data.displayName); });
+        }
+
+        var token = new URLSearchParams(window.location.search).get('t');
+        if (!token) {
+            state('fa-ticket', 'Join link incomplete', 'Open the <strong>Join the session</strong> button in your ticket email. ' + HELP);
+            return;
+        }
+        fetch(ENDPOINT + '?t=' + encodeURIComponent(token), { cache: 'no-store' })
+            .then(function (res) { return res.json().catch(function () { return { ok: false, error: 'server' }; }); })
+            .then(function (data) {
+                if (data && data.ok) { render(data); return; }
+                var err = data && data.error;
+                if (err === 'not_found') state('fa-circle-question', 'We couldn’t find this ticket', 'Check you opened the full link from your ticket email. ' + HELP);
+                else if (err === 'not_paid') state('fa-receipt', 'Payment not confirmed', 'We haven’t received confirmation of payment for this ticket yet. ' + HELP);
+                else state('fa-triangle-exclamation', 'Something went wrong', 'Please refresh this page in a moment. ' + HELP);
+            })
+            .catch(function () {
+                state('fa-wifi', 'Couldn’t connect', 'Check your internet connection and refresh this page. ' + HELP);
+            });
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>if(/^(disciplined-disciples-1\.(web\.app|firebaseapp\.com))$/.test(location.hostname)){location.replace('https://disciplineddisciples.co.za'+location.pathname+location.search+location.hash);}</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events - Admin</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="js/admin-auth-guard.js?v=20260602a"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" type="image/png" href="Assets/45.png">
+</head>
+<body class="bg-slate-100 text-slate-900 min-h-screen">
+    <div class="flex min-h-screen">
+        <aside id="admin-sidebar" class="hidden md:block w-64 bg-white border-r border-gray-200 fixed h-full overflow-y-auto z-30"></aside>
+
+        <main class="flex-1 md:ml-64 p-4 md:p-8 space-y-6 min-w-0">
+            <header class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h1 class="text-2xl font-bold">Events</h1>
+                    <p class="text-slate-500">Paid live sessions: tickets, check-in and recordings.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <select id="event-picker" class="border border-slate-200 rounded-lg px-3 py-2 bg-white max-w-xs"></select>
+                    <button id="new-event-btn" class="px-4 py-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition"><i class="fas fa-plus mr-1"></i> New event</button>
+                </div>
+            </header>
+
+            <div id="alert" class="hidden rounded-lg border px-4 py-3 text-sm"></div>
+
+            <!-- Stats -->
+            <section class="grid grid-cols-2 lg:grid-cols-5 gap-4" id="stats-row">
+                <article class="bg-white rounded-xl shadow p-4"><p class="text-xs text-slate-500">Tickets sold</p><p id="stat-paid" class="text-2xl font-semibold mt-1">0</p></article>
+                <article class="bg-white rounded-xl shadow p-4"><p class="text-xs text-slate-500">Income</p><p id="stat-revenue" class="text-2xl font-semibold mt-1">R0</p></article>
+                <article class="bg-white rounded-xl shadow p-4"><p class="text-xs text-slate-500">Started, not paid</p><p id="stat-pending" class="text-2xl font-semibold mt-1">0</p></article>
+                <article class="bg-white rounded-xl shadow p-4"><p class="text-xs text-slate-500">Opened join link</p><p id="stat-joined" class="text-2xl font-semibold mt-1">0</p></article>
+                <article class="bg-white rounded-xl shadow p-4"><p class="text-xs text-slate-500">Let in (checked in)</p><p id="stat-attended" class="text-2xl font-semibold mt-1">0</p></article>
+            </section>
+
+            <!-- Check-in / tickets -->
+            <section class="bg-white rounded-xl shadow p-4 md:p-6 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-lg font-semibold">Tickets &amp; check-in</h2>
+                        <p class="text-sm text-slate-500">Search the name or ticket number someone shows in the Teams lobby. Updates live.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <select id="filter" class="border border-slate-200 rounded-lg px-3 py-2 text-sm">
+                            <option value="paid">Paid tickets</option>
+                            <option value="pending">Not paid / review</option>
+                            <option value="all">Everyone</option>
+                        </select>
+                        <button id="export-btn" class="px-3 py-2 text-sm bg-slate-800 text-white rounded-lg hover:bg-slate-900"><i class="fas fa-file-csv mr-1"></i> Download spreadsheet</button>
+                    </div>
+                </div>
+                <input id="search" type="search" placeholder="Search name, email or ticket (e.g. 1004)" class="w-full border border-slate-200 rounded-lg px-4 py-3 text-base">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-left text-slate-500 border-b border-slate-200">
+                                <th class="py-2 pr-3">Ticket</th>
+                                <th class="py-2 pr-3">Name</th>
+                                <th class="py-2 pr-3 hidden md:table-cell">Email / phone</th>
+                                <th class="py-2 pr-3">Status</th>
+                                <th class="py-2 pr-3 hidden md:table-cell">Join link</th>
+                                <th class="py-2 pr-3">Let in</th>
+                                <th class="py-2"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="reg-rows"></tbody>
+                    </table>
+                </div>
+                <p id="reg-empty" class="hidden text-sm text-slate-500 py-4 text-center">No tickets match.</p>
+            </section>
+
+            <!-- Event settings -->
+            <section class="bg-white rounded-xl shadow p-4 md:p-6 space-y-5">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-lg font-semibold" id="form-heading">Event details</h2>
+                        <p class="text-sm text-slate-500">Public page: <a id="public-link" href="masterclass" target="_blank" class="text-indigo-600 font-medium break-all">disciplineddisciples.co.za/masterclass</a></p>
+                    </div>
+                    <button id="save-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Save event</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-1">Title</label>
+                        <input id="f-title" type="text" class="w-full border border-slate-200 rounded-lg px-3 py-2">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-1">Tagline</label>
+                        <input id="f-subtitle" type="text" class="w-full border border-slate-200 rounded-lg px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Date</label>
+                        <input id="f-date" type="date" class="w-full border border-slate-200 rounded-lg px-3 py-2">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Start time (SAST)</label>
+                            <input id="f-time" type="time" class="w-full border border-slate-200 rounded-lg px-3 py-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Length (minutes)</label>
+                            <input id="f-duration" type="number" min="15" step="15" class="w-full border border-slate-200 rounded-lg px-3 py-2">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Ticket price (R)</label>
+                        <input id="f-price" type="number" min="1" step="1" class="w-full border border-slate-200 rounded-lg px-3 py-2">
+                        <p class="text-xs text-slate-500 mt-1">PayFast payments are checked against this price on the server.</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Visibility</label>
+                            <select id="f-status" class="w-full border border-slate-200 rounded-lg px-3 py-2">
+                                <option value="draft">Draft (hidden)</option>
+                                <option value="published">Published</option>
+                                <option value="closed">Closed</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Ticket sales</label>
+                            <select id="f-sales" class="w-full border border-slate-200 rounded-lg px-3 py-2">
+                                <option value="true">Open</option>
+                                <option value="false">Paused</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-1">&ldquo;In this live session&rdquo; points (one per line)</label>
+                        <textarea id="f-highlights" rows="4" class="w-full border border-slate-200 rounded-lg px-3 py-2"></textarea>
+                    </div>
+                </div>
+                <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-3">
+                    <p class="text-sm font-semibold text-amber-900"><i class="fas fa-lock mr-1"></i> Private: only paid ticket holders reach this, through their personal join link</p>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Microsoft Teams meeting link</label>
+                        <input id="f-meeting" type="url" placeholder="https://teams.live.com/meet/..." class="w-full border border-slate-200 rounded-lg px-3 py-2 bg-white">
+                        <p class="text-xs text-slate-600 mt-1">Turn on the lobby in Teams. You can change this link at any time: tickets already sent keep working.</p>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-500">Sales close automatically when the session starts. Ticket holders get a reminder the evening before (11 hours ahead) and 30 minutes before.</p>
+            </section>
+
+            <!-- Recording -->
+            <section class="bg-white rounded-xl shadow p-4 md:p-6 space-y-4">
+                <div>
+                    <h2 class="text-lg font-semibold">Recording</h2>
+                    <p class="text-sm text-slate-500">Paste the recording link (YouTube unlisted, Google Drive or OneDrive, set so anyone with the link can view), then email it to every paid ticket holder. People who already received it are skipped. After the session, their join link also shows the recording.</p>
+                </div>
+                <div class="flex flex-col md:flex-row gap-3">
+                    <input id="f-recording" type="url" placeholder="https://..." class="flex-1 border border-slate-200 rounded-lg px-3 py-2">
+                    <button id="send-recording-btn" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"><i class="fas fa-paper-plane mr-1"></i> Save &amp; email recording</button>
+                </div>
+                <p id="recording-status" class="text-xs text-slate-500"></p>
+            </section>
+        </main>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="js/admin-sidebar.js?v=20261019a" defer></script>
+    <script>
+    (function () {
+        'use strict';
+
+        var TZ = 'Africa/Johannesburg';
+        // First event: prefilled from Zolile's flyer.
+        var DEFAULT_EVENT_ID = 'apc-2024-past-paper-masterclass';
+        var DEFAULTS = {
+            title: 'SAICA APC 2024 Past Paper Masterclass',
+            subtitle: 'Research smarter. Spot the triggers. Walk into the IOD ready to think.',
+            date: '2026-10-24', time: '06:00', durationMinutes: 120, price: 100,
+            status: 'published', salesOpen: true,
+            highlights: [
+                'How to prepare your research from the pre-release information',
+                'How to identify the triggers hidden in the pre-release',
+                'How to anticipate what the IOD will throw at you',
+                'Research that doesn’t just help you know, but helps you think better in the IOD'
+            ]
+        };
+
+        var db = null;
+        var events = [];      // [{ id, data }]
+        var currentId = null; // null while creating a new event
+        var regs = [];
+        var unsubscribe = null;
+
+        function $(id) { return document.getElementById(id); }
+
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+            });
+        }
+
+        function toDate(v) {
+            if (!v) return null;
+            var d = typeof v.toDate === 'function' ? v.toDate() : new Date(v);
+            return isNaN(d.getTime()) ? null : d;
+        }
+
+        function fmt(date, opts) {
+            return new Intl.DateTimeFormat('en-ZA', Object.assign({ timeZone: TZ }, opts)).format(date);
+        }
+
+        function sastParts(date) {
+            // en-CA gives YYYY-MM-DD; en-GB gives HH:mm.
+            return {
+                date: new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(date),
+                time: new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: false }).format(date)
+            };
+        }
+
+        function slugify(text) {
+            return String(text || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || ('event-' + Date.now());
+        }
+
+        function rand(n) { return 'R' + Number(n || 0).toLocaleString('en-ZA'); }
+
+        function alertMsg(kind, msg) {
+            var el = $('alert');
+            el.className = 'rounded-lg border px-4 py-3 text-sm ' + (kind === 'error'
+                ? 'bg-red-50 border-red-200 text-red-800'
+                : kind === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-blue-50 border-blue-200 text-blue-800');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            if (kind === 'success') setTimeout(function () { el.classList.add('hidden'); }, 5000);
+        }
+
+        function isHttps(url) { return /^https:\/\/[^\s]+$/i.test(url); }
+
+        function adminEmail() {
+            try { return (firebase.auth().currentUser || {}).email || null; } catch (e) { return null; }
+        }
+
+        // ---------- Event form ----------
+        function fillForm(data, priv) {
+            var start = toDate(data.startsAt);
+            var parts = start ? sastParts(start) : { date: data.date || '', time: data.time || '' };
+            $('f-title').value = data.title || '';
+            $('f-subtitle').value = data.subtitle || '';
+            $('f-date').value = parts.date;
+            $('f-time').value = parts.time;
+            $('f-duration').value = data.durationMinutes || 120;
+            $('f-price').value = data.price || '';
+            $('f-status').value = data.status || 'draft';
+            $('f-sales').value = data.salesOpen === false ? 'false' : 'true';
+            $('f-highlights').value = (data.highlights || []).join('\n');
+            $('f-meeting').value = (priv && priv.meetingUrl) || '';
+            $('f-recording').value = (priv && priv.recordingUrl) || '';
+            var sent = priv && priv.recordingSentCount;
+            var last = priv && toDate(priv.recordingLastSentAt);
+            $('recording-status').textContent = last
+                ? 'Recording emails sent: ' + (sent || 0) + ' (last run ' + fmt(last, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + ').'
+                : '';
+        }
+
+        function selectEvent(id) {
+            currentId = id;
+            var found = events.filter(function (e) { return e.id === id; })[0];
+            $('form-heading').textContent = found ? 'Event details' : 'New event';
+            var link = found ? 'masterclass?e=' + encodeURIComponent(id) : 'masterclass';
+            $('public-link').href = link;
+            $('public-link').textContent = 'disciplineddisciples.co.za/' + link;
+            if (!found) {
+                fillForm(events.length ? { status: 'draft', salesOpen: true, durationMinutes: 120 } : DEFAULTS, null);
+                listenRegistrations(null);
+                return;
+            }
+            fillForm(found.data, null);
+            db.collection('eventsPrivate').doc(id).get().then(function (snap) {
+                if (currentId === id) fillForm(found.data, snap.exists ? snap.data() : {});
+            }).catch(function (err) { alertMsg('error', 'Could not load the private event details: ' + err.message); });
+            listenRegistrations(id);
+        }
+
+        function renderPicker() {
+            var picker = $('event-picker');
+            picker.innerHTML = events.map(function (e) {
+                var start = toDate(e.data.startsAt);
+                return '<option value="' + esc(e.id) + '">' + esc(e.data.title || e.id) + (start ? ' · ' + esc(fmt(start, { day: 'numeric', month: 'short', year: 'numeric' })) : '') + '</option>';
+            }).join('') + (currentId === null ? '<option value="" selected>New event…</option>' : '');
+            if (currentId) picker.value = currentId;
+        }
+
+        function loadEvents(selectId) {
+            return db.collection('events').get().then(function (snap) {
+                events = snap.docs.map(function (d) { return { id: d.id, data: d.data() }; })
+                    .sort(function (a, b) { return (toDate(b.data.startsAt) || 0) - (toDate(a.data.startsAt) || 0); });
+                var pick = selectId || (events[0] && events[0].id) || null;
+                currentId = pick;
+                renderPicker();
+                selectEvent(pick);
+            }).catch(function (err) { alertMsg('error', 'Could not load events: ' + err.message); });
+        }
+
+        function saveEvent() {
+            var title = $('f-title').value.trim();
+            var date = $('f-date').value;
+            var time = $('f-time').value;
+            var price = Number($('f-price').value);
+            var meetingUrl = $('f-meeting').value.trim();
+            if (!title || !date || !time) { alertMsg('error', 'Title, date and start time are required.'); return; }
+            if (!(price > 0) || Math.round(price) !== price) { alertMsg('error', 'Enter the ticket price as a whole number of rand.'); return; }
+            if (meetingUrl && !isHttps(meetingUrl)) { alertMsg('error', 'The Teams link must start with https://'); return; }
+            var startsAt = new Date(date + 'T' + time + ':00+02:00');
+            if (isNaN(startsAt.getTime())) { alertMsg('error', 'Check the date and time.'); return; }
+
+            var id = currentId || (events.length ? slugify(title) : DEFAULT_EVENT_ID);
+            var isNew = !currentId;
+            if (isNew && events.some(function (e) { return e.id === id; })) id = id + '-' + date;
+            var data = {
+                title: title,
+                subtitle: $('f-subtitle').value.trim(),
+                startsAt: firebase.firestore.Timestamp.fromDate(startsAt),
+                durationMinutes: Math.max(15, Number($('f-duration').value) || 120),
+                price: price,
+                status: $('f-status').value,
+                salesOpen: $('f-sales').value === 'true',
+                highlights: $('f-highlights').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean),
+                platform: 'Microsoft Teams',
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedBy: adminEmail()
+            };
+            if (isNew) data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+
+            var btn = $('save-btn');
+            btn.disabled = true;
+            Promise.all([
+                db.collection('events').doc(id).set(data, { merge: true }),
+                db.collection('eventsPrivate').doc(id).set({ meetingUrl: meetingUrl || null, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true })
+            ]).then(function () {
+                alertMsg('success', isNew ? 'Event created.' : 'Event saved.');
+                if (data.status === 'published' && !meetingUrl) alertMsg('info', 'Saved. Remember to add the Teams link before the session, or ticket holders will see “link not live yet”.');
+                return loadEvents(id);
+            }).catch(function (err) {
+                alertMsg('error', 'Could not save: ' + err.message);
+            }).then(function () { btn.disabled = false; });
+        }
+
+        function sendRecording() {
+            if (!currentId) { alertMsg('error', 'Save the event first.'); return; }
+            var url = $('f-recording').value.trim();
+            if (!isHttps(url)) { alertMsg('error', 'Paste the recording link (it must start with https://).'); return; }
+            var paid = regs.filter(isPaid).length;
+            if (!confirm('Email this recording link to ' + paid + ' paid ticket holder(s)? Anyone who already got it is skipped.')) return;
+            db.collection('eventsPrivate').doc(currentId).set({
+                recordingUrl: url,
+                recordingSendRequestedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                recordingRequestedBy: adminEmail()
+            }, { merge: true }).then(function () {
+                alertMsg('success', 'Recording saved. Emails are going out now; the “Recording sent” column fills in as they go.');
+            }).catch(function (err) { alertMsg('error', 'Could not save the recording: ' + err.message); });
+        }
+
+        // ---------- Registrations ----------
+        function isPaid(r) { return String(r.paymentStatus || '').toLowerCase() === 'paid'; }
+
+        function listenRegistrations(eventId) {
+            if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+            regs = [];
+            renderRegs();
+            if (!eventId) return;
+            unsubscribe = db.collection('eventRegistrations').where('eventId', '==', eventId).onSnapshot(function (snap) {
+                regs = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+                renderRegs();
+            }, function (err) { alertMsg('error', 'Could not load tickets: ' + err.message); });
+        }
+
+        function ticketSort(a, b) {
+            var na = parseInt(String(a.ticketNumber || '').replace(/\D/g, ''), 10) || 1e9;
+            var nb = parseInt(String(b.ticketNumber || '').replace(/\D/g, ''), 10) || 1e9;
+            if (na !== nb) return na - nb;
+            return (toDate(b.createdAt) || 0) - (toDate(a.createdAt) || 0);
+        }
+
+        function visibleRegs() {
+            var filter = $('filter').value;
+            var q = $('search').value.trim().toLowerCase();
+            return regs.filter(function (r) {
+                if (filter === 'paid' && !isPaid(r)) return false;
+                if (filter === 'pending' && isPaid(r)) return false;
+                if (!q) return true;
+                return [r.name, r.email, r.phone, r.ticketNumber].some(function (v) { return String(v || '').toLowerCase().indexOf(q) !== -1; });
+            }).sort(ticketSort);
+        }
+
+        function statusBadge(r) {
+            var s = r.paymentStatus || 'Pending';
+            var cls = isPaid(r) ? 'bg-emerald-100 text-emerald-800' : s === 'Under Review' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600';
+            var extra = isPaid(r) && r.paymentGateway && r.paymentGateway !== 'PayFast' ? ' (' + esc(r.paymentGateway) + ')' : '';
+            var err = r.ticketEmailError ? '<div class="text-xs text-red-600 mt-1">Ticket email failed: resend</div>' : '';
+            return '<span class="px-2 py-0.5 rounded-full text-xs font-semibold ' + cls + '">' + esc(s) + extra + '</span>' + err;
+        }
+
+        function renderRegs() {
+            var paid = regs.filter(isPaid);
+            $('stat-paid').textContent = paid.length;
+            $('stat-revenue').textContent = rand(paid.reduce(function (sum, r) { return sum + (Number(r.amountPaid) || Number(r.amount) || 0); }, 0));
+            $('stat-pending').textContent = regs.length - paid.length;
+            $('stat-joined').textContent = paid.filter(function (r) { return r.firstJoinedAt; }).length;
+            $('stat-attended').textContent = paid.filter(function (r) { return r.attended; }).length;
+
+            var rows = visibleRegs();
+            $('reg-empty').classList.toggle('hidden', rows.length > 0);
+            $('reg-rows').innerHTML = rows.map(function (r) {
+                var joined = toDate(r.firstJoinedAt);
+                var actions = isPaid(r)
+                    ? '<button data-act="resend" data-id="' + esc(r.id) + '" class="text-indigo-600 hover:underline text-xs font-semibold">Resend ticket</button>'
+                    : '<button data-act="markpaid" data-id="' + esc(r.id) + '" class="text-emerald-700 hover:underline text-xs font-semibold">Mark paid</button>';
+                return '<tr class="border-b border-slate-100 align-top">' +
+                    '<td class="py-3 pr-3 font-mono font-semibold whitespace-nowrap">' + esc(r.ticketNumber || '—') + '</td>' +
+                    '<td class="py-3 pr-3"><div class="font-medium">' + esc(r.name) + '</div><div class="text-xs text-slate-500 md:hidden">' + esc(r.email) + '</div></td>' +
+                    '<td class="py-3 pr-3 hidden md:table-cell"><div>' + esc(r.email) + '</div><div class="text-xs text-slate-500">' + esc(r.phone || '') + '</div></td>' +
+                    '<td class="py-3 pr-3">' + statusBadge(r) + (r.recordingSentAt ? '<div class="text-xs text-slate-500 mt-1">Recording sent</div>' : '') + '</td>' +
+                    '<td class="py-3 pr-3 hidden md:table-cell text-xs text-slate-500">' + (joined ? fmt(joined, { hour: '2-digit', minute: '2-digit' }) + (r.joinCount > 1 ? ' (' + r.joinCount + '×)' : '') : '—') + '</td>' +
+                    '<td class="py-3 pr-3">' + (isPaid(r)
+                        ? '<input type="checkbox" data-act="attended" data-id="' + esc(r.id) + '" class="w-6 h-6 accent-emerald-600"' + (r.attended ? ' checked' : '') + '>'
+                        : '<span class="text-xs text-red-600 font-semibold">Not paid</span>') + '</td>' +
+                    '<td class="py-3 text-right whitespace-nowrap">' + actions + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function findReg(id) { return regs.filter(function (r) { return r.id === id; })[0]; }
+
+        function onRowAction(e) {
+            var el = e.target.closest('[data-act]');
+            if (!el) return;
+            var r = findReg(el.getAttribute('data-id'));
+            if (!r) return;
+            var ref = db.collection('eventRegistrations').doc(r.id);
+            var act = el.getAttribute('data-act');
+            if (act === 'attended') {
+                ref.update({
+                    attended: el.checked,
+                    attendedAt: el.checked ? firebase.firestore.FieldValue.serverTimestamp() : null,
+                    attendedMarkedBy: adminEmail()
+                }).catch(function (err) { el.checked = !el.checked; alertMsg('error', 'Could not update: ' + err.message); });
+            } else if (act === 'resend') {
+                if (!confirm('Resend the ticket email to ' + r.email + '?')) return;
+                ref.update({ resendRequestedAt: firebase.firestore.FieldValue.serverTimestamp() })
+                    .then(function () { alertMsg('success', 'Ticket email is being resent to ' + r.email + '.'); })
+                    .catch(function (err) { alertMsg('error', 'Could not resend: ' + err.message); });
+            } else if (act === 'markpaid') {
+                var ev = events.filter(function (x) { return x.id === currentId; })[0];
+                var price = ev ? Number(ev.data.price) : Number(r.amount);
+                if (!confirm('Mark ' + r.name + ' as paid (' + rand(price) + ', e.g. EFT)? This issues their ticket and emails it to ' + r.email + '.')) return;
+                ref.update({
+                    paymentStatus: 'Paid',
+                    paymentGateway: 'Manual',
+                    amountPaid: price,
+                    paymentCompletedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    markedPaidBy: adminEmail()
+                }).then(function () { alertMsg('success', 'Marked paid. The ticket email is on its way.'); })
+                  .catch(function (err) { alertMsg('error', 'Could not mark paid: ' + err.message); });
+            }
+        }
+
+        function csvCell(v) {
+            var s = String(v == null ? '' : v);
+            if (/^[=+\-@]/.test(s)) s = "'" + s; // stop spreadsheet formulas
+            return '"' + s.replace(/"/g, '""') + '"';
+        }
+
+        function exportCsv() {
+            if (!regs.length) { alertMsg('info', 'No tickets to export yet.'); return; }
+            var rows = [['Ticket', 'Name', 'Email', 'Phone', 'Payment status', 'Paid via', 'Amount', 'Registered (SAST)', 'Opened join link (SAST)', 'Let in', 'Recording sent']];
+            var stamp = function (v) { var d = toDate(v); return d ? fmt(d, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''; };
+            regs.slice().sort(ticketSort).forEach(function (r) {
+                rows.push([r.ticketNumber || '', r.name, r.email, r.phone || '', r.paymentStatus || '', r.paymentGateway || '',
+                    r.amountPaid || '', stamp(r.createdAt), stamp(r.firstJoinedAt), r.attended ? 'Yes' : '', r.recordingSentAt ? 'Yes' : '']);
+            });
+            var blob = new Blob(['﻿' + rows.map(function (row) { return row.map(csvCell).join(','); }).join('\r\n')], { type: 'text/csv;charset=utf-8' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = (currentId || 'event') + '-tickets.csv';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+        }
+
+        function init() {
+            if (!(firebase.apps && firebase.apps.length) && typeof getFirebaseConfig === 'function') firebase.initializeApp(getFirebaseConfig());
+            db = firebase.firestore();
+            $('event-picker').addEventListener('change', function () { selectEvent(this.value || null); });
+            $('new-event-btn').addEventListener('click', function () { currentId = null; renderPicker(); selectEvent(null); });
+            $('save-btn').addEventListener('click', saveEvent);
+            $('send-recording-btn').addEventListener('click', sendRecording);
+            $('search').addEventListener('input', renderRegs);
+            $('filter').addEventListener('change', renderRegs);
+            $('export-btn').addEventListener('click', exportCsv);
+            $('reg-rows').addEventListener('click', onRowAction);
+            firebase.auth().onAuthStateChanged(function (user) { if (user) loadEvents(null); });
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    })();
+    </script>
+</body>
+</html>

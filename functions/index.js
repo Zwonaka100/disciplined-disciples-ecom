@@ -524,7 +524,7 @@ async function alertOwnerPaymentReview(kind, ref, details) {
           <h2 style="color:#b45309;">A payment needs your review</h2>
           <p style="color:#475569;">PayFast confirmed a payment, but it did not match what the ${kind} should cost, so nothing has been fulfilled yet. Check the PayFast dashboard, then either mark it paid in admin or refund the customer.</p>
           <table style="font-size:14px;">${rows}</table>
-          <p><a href="${SITE_URL}/${kind === 'order' ? 'admin-orders.html' : 'admin-mentorship.html'}" style="display:inline-block;background:#4f46e5;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">Open admin</a></p>
+          <p><a href="${SITE_URL}/${kind === 'order' ? 'admin-orders.html' : kind === 'event ticket' ? 'admin-events.html' : 'admin-mentorship.html'}" style="display:inline-block;background:#4f46e5;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">Open admin</a></p>
         </div>`
     }, { type: 'payment_review', orderId: ref });
   } catch (err) {
@@ -1239,7 +1239,8 @@ exports.verifyPayfastPayment = withSecrets.https.onRequest(async (req, res) => {
   const payload = querystring.parse(rawBody);
   const paramString = payfastParamString(rawBody);
   const ref = (payload.custom_str1 || payload.m_payment_id || '').toString().trim();
-  const scope = (payload.custom_str3 || '').toString().toLowerCase() === 'mentorship' ? 'academy' : 'order';
+  const scopeTag = (payload.custom_str3 || '').toString().toLowerCase();
+  const scope = scopeTag === 'mentorship' ? 'academy' : scopeTag === 'event' ? 'event' : 'order';
   const payfastPaymentId = (payload.pf_payment_id || '').toString().trim() || null;
   const paymentStatus = (payload.payment_status || '').toString().toUpperCase();
   const amountGross = Number(payload.amount_gross);
@@ -1301,6 +1302,8 @@ exports.verifyPayfastPayment = withSecrets.https.onRequest(async (req, res) => {
 
     if (scope === 'academy') {
       await handleAcademyPayment(ref, payload, payfastPaymentId, amountGross, verification, baseLog);
+    } else if (scope === 'event') {
+      await handleEventPayment(ref, payfastPaymentId, amountGross, verification, baseLog);
     } else {
       await handleOrderPayment(ref, payload, payfastPaymentId, amountGross, verification, baseLog);
     }
@@ -2696,5 +2699,535 @@ exports.cleanupEbookDownloadTokens = functions
       expired.docs.forEach((doc) => batch.delete(doc.ref));
       await batch.commit();
     }
+    return null;
+  });
+
+// === Events (paid live sessions, e.g. the APC masterclass) ===
+// events/{id}            public details (title, startsAt, price, status, salesOpen)
+// eventsPrivate/{id}     admin-only: meetingUrl, recordingUrl, ticketSeq
+// eventRegistrations/{id} created unpaid by the browser; marked paid by the PayFast
+//                        webhook or an admin. onEventRegistrationWrite then issues the
+//                        ticket number and personal join link and emails the ticket.
+// The Teams link is never shown to the browser until a paid ticket's join link is opened.
+const EVENT_TZ = 'Africa/Johannesburg';
+const EVENT_JOIN_BASE = `${SITE_URL}/join`;
+const EVENT_JOIN_EARLY_MINUTES = 60; // a join-link click this close to the start counts as attending
+const EVENT_REMINDER_EVE_HOURS = 11; // 06:00 session -> 19:00 the evening before
+const EVENT_REMINDER_SOON_MINUTES = 30;
+
+function eventStartDate(eventData) {
+  const raw = eventData && eventData.startsAt;
+  if (!raw) return null;
+  const date = typeof raw.toDate === 'function' ? raw.toDate() : new Date(raw);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function eventEndDate(eventData) {
+  const start = eventStartDate(eventData);
+  if (!start) return null;
+  const minutes = Number(eventData.durationMinutes) > 0 ? Number(eventData.durationMinutes) : 120;
+  return new Date(start.getTime() + minutes * 60000);
+}
+
+function formatEventDate(date) {
+  return new Intl.DateTimeFormat('en-ZA', { timeZone: EVENT_TZ, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+}
+
+function formatEventTime(date) {
+  return new Intl.DateTimeFormat('en-ZA', { timeZone: EVENT_TZ, hour: '2-digit', minute: '2-digit', hour12: false }).format(date);
+}
+
+function eventJoinUrl(token) {
+  return `${EVENT_JOIN_BASE}?t=${encodeURIComponent(token)}`;
+}
+
+function eventDisplayName(reg) {
+  return `${(reg.name || '').trim()} ${reg.ticketNumber || ''}`.trim();
+}
+
+function icsDate(date) {
+  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+}
+
+function icsEscape(text) {
+  return String(text || '').replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\;');
+}
+
+// RFC 5545 lines are folded at 75 octets.
+function icsFold(line) {
+  const parts = [];
+  let rest = line;
+  while (Buffer.byteLength(rest, 'utf8') > 75) {
+    let cut = 75;
+    while (Buffer.byteLength(rest.slice(0, cut), 'utf8') > 75) cut--;
+    parts.push(rest.slice(0, cut));
+    rest = ' ' + rest.slice(cut);
+  }
+  parts.push(rest);
+  return parts.join('\r\n');
+}
+
+function eventCalendarText(eventData, reg, joinUrl) {
+  return [
+    `Your personal join link: ${joinUrl}`,
+    `Ticket: ${reg.ticketNumber}`,
+    `Join Teams with the name "${eventDisplayName(reg)}" so you can be let in from the lobby.`,
+    'Please keep this link to yourself: it is tied to your ticket.'
+  ].join('\n');
+}
+
+function buildEventIcs(eventId, eventData, reg, regId, joinUrl) {
+  const start = eventStartDate(eventData);
+  const end = eventEndDate(eventData);
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Disciplined Disciples//Events//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${regId}@disciplineddisciples.co.za`,
+    `DTSTAMP:${icsDate(new Date())}`,
+    `DTSTART:${icsDate(start)}`,
+    `DTEND:${icsDate(end)}`,
+    `SUMMARY:${icsEscape(eventData.title || 'Disciplined Disciples live session')}`,
+    `DESCRIPTION:${icsEscape(eventCalendarText(eventData, reg, joinUrl))}`,
+    `LOCATION:${icsEscape(joinUrl)}`,
+    `URL:${joinUrl}`,
+    'BEGIN:VALARM',
+    'ACTION:DISPLAY',
+    'DESCRIPTION:Starting in 30 minutes',
+    'TRIGGER:-PT30M',
+    'END:VALARM',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ];
+  return lines.map(icsFold).join('\r\n') + '\r\n';
+}
+
+function eventCalendarLinks(eventData, reg, joinUrl) {
+  const start = eventStartDate(eventData);
+  const end = eventEndDate(eventData);
+  const title = eventData.title || 'Disciplined Disciples live session';
+  const details = eventCalendarText(eventData, reg, joinUrl);
+  const google = 'https://calendar.google.com/calendar/render?' + new URLSearchParams({
+    action: 'TEMPLATE',
+    text: title,
+    dates: `${icsDate(start)}/${icsDate(end)}`,
+    details,
+    location: joinUrl
+  }).toString();
+  const outlook = 'https://outlook.live.com/calendar/0/deeplink/compose?' + new URLSearchParams({
+    path: '/calendar/action/compose',
+    rru: 'addevent',
+    subject: title,
+    startdt: start.toISOString(),
+    enddt: end.toISOString(),
+    body: details,
+    location: joinUrl
+  }).toString();
+  return { google, outlook };
+}
+
+function eventEmailShell(kicker, heading, bodyHtml) {
+  return `
+    <div style="font-family:Arial,sans-serif;max-width:580px;margin:0 auto;background:#ffffff;">
+      <div style="background:#0f172a;color:#fff;padding:28px 26px;text-align:center;">
+        <p style="margin:0;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#a5b4fc;">${escapeHtmlForBroadcast(kicker)}</p>
+        <h1 style="margin:10px 0 0;font-size:23px;line-height:1.3;">${escapeHtmlForBroadcast(heading)}</h1>
+      </div>
+      <div style="padding:26px;background:#f8f9fa;color:#1f2937;">${bodyHtml}${FOUNDER_SIGNATURE}</div>
+    </div>`;
+}
+
+function eventTicketPanel(eventData, reg, joinUrl) {
+  const start = eventStartDate(eventData);
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;margin:18px 0;">
+      <tr><td style="padding:18px 20px;">
+        <p style="margin:0 0 4px;font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">When</p>
+        <p style="margin:0 0 14px;font-size:16px;font-weight:700;color:#0f172a;">${escapeHtmlForBroadcast(formatEventDate(start))} &middot; ${formatEventTime(start)} (South African time)</p>
+        <p style="margin:0 0 4px;font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Your ticket</p>
+        <p style="margin:0 0 14px;font-size:22px;font-weight:800;color:#4f46e5;letter-spacing:1px;">${escapeHtmlForBroadcast(reg.ticketNumber)}</p>
+        <p style="margin:0 0 4px;font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Join Teams with this name</p>
+        <p style="margin:0;font-size:16px;font-weight:700;color:#0f172a;">${escapeHtmlForBroadcast(eventDisplayName(reg))}</p>
+      </td></tr>
+    </table>
+    <p style="text-align:center;margin:24px 0 10px;">
+      <a href="${joinUrl}" style="background:#4f46e5;color:#fff;padding:14px 30px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block;font-size:16px;">Join the session</a>
+    </p>
+    <p style="text-align:center;margin:0 0 6px;font-size:12px;color:#64748b;">This link is personal to your ticket. Please don&rsquo;t share it.</p>`;
+}
+
+async function sendEventTicketEmail(regId, reg, eventId, eventData) {
+  const joinUrl = eventJoinUrl(reg.joinToken);
+  const links = eventCalendarLinks(eventData, reg, joinUrl);
+  const firstName = (reg.name || 'there').trim().split(' ')[0];
+  const body = `
+    <p style="font-size:16px;">Hi ${escapeHtmlForBroadcast(firstName)},</p>
+    <p style="line-height:1.7;color:#4b5563;">Your seat is confirmed for <strong>${escapeHtmlForBroadcast(eventData.title)}</strong>. Thank you for investing in yourself.</p>
+    ${eventTicketPanel(eventData, reg, joinUrl)}
+    <p style="font-weight:700;margin:22px 0 8px;">Add it to your calendar</p>
+    <p style="margin:0 0 6px;">
+      <a href="${links.google}" style="color:#4f46e5;font-weight:600;">Google Calendar</a> &nbsp;&middot;&nbsp;
+      <a href="${links.outlook}" style="color:#4f46e5;font-weight:600;">Outlook</a> &nbsp;&middot;&nbsp;
+      Apple / other: open the attached <strong>.ics</strong> file
+    </p>
+    <p style="font-weight:700;margin:22px 0 8px;">On the day</p>
+    <ul style="color:#4b5563;line-height:1.7;padding-left:18px;margin:0;">
+      <li>Click <strong>Join the session</strong> a few minutes early. It opens Microsoft Teams (app or browser).</li>
+      <li>Enter your name as <strong>${escapeHtmlForBroadcast(eventDisplayName(reg))}</strong>.</li>
+      <li>You&rsquo;ll wait in the lobby until we let you in. We check names against the ticket list.</li>
+    </ul>
+    <p style="line-height:1.7;color:#4b5563;margin-top:18px;">We&rsquo;ll email you a reminder before the session, and the recording afterwards. Tickets are non-refundable. Questions? Reply to this email or WhatsApp ${SUPPORT_PHONE}.</p>`;
+  await sendMailReliable({
+    to: reg.email,
+    subject: `🎟️ Your ticket: ${eventData.title} · ${reg.ticketNumber}`,
+    html: eventEmailShell('Ticket confirmed', eventData.title, body),
+    attachments: [{
+      filename: 'add-to-calendar.ics',
+      content: buildEventIcs(eventId, eventData, reg, regId, joinUrl),
+      contentType: 'text/calendar; charset=utf-8; method=PUBLISH'
+    }]
+  }, { type: 'event_ticket', orderId: regId, userId: reg.userId || null });
+}
+
+async function getEventPrice(eventId) {
+  const snap = await admin.firestore().collection('events').doc(eventId).get();
+  if (!snap.exists) return null;
+  const price = Number(snap.data()?.price);
+  return Number.isFinite(price) && price > 0 ? price : null;
+}
+
+// Called by verifyPayfastPayment once PayFast has confirmed the notification.
+// Only marks the registration paid; onEventRegistrationWrite issues and emails the ticket.
+async function handleEventPayment(regId, payfastPaymentId, amountGross, verification, baseLog) {
+  const regRef = admin.firestore().collection('eventRegistrations').doc(regId);
+  const regSnap = await regRef.get();
+  if (!regSnap.exists) {
+    await logPaymentNotification(Object.assign({ outcome: 'rejected', reasons: ['Event registration not found'] }, baseLog));
+    return;
+  }
+  const reg = regSnap.data() || {};
+  if (isPaidStatus(reg.paymentStatus)) {
+    await logPaymentNotification(Object.assign({ outcome: 'duplicate' }, baseLog));
+    return;
+  }
+
+  const expectedPrice = await getEventPrice(reg.eventId);
+  const reasons = [];
+  if (expectedPrice == null) reasons.push(`No server price for event "${reg.eventId || 'unknown'}"`);
+  else if (!(amountGross + 0.009 >= expectedPrice)) reasons.push(`Paid R${amountGross.toFixed(2)} but the ticket costs R${expectedPrice.toFixed(2)}`);
+
+  if (reasons.length) {
+    await regRef.set({
+      paymentStatus: 'Under Review',
+      paymentGateway: 'PayFast',
+      paymentReference: payfastPaymentId || null,
+      paymentReview: { reasons, expected: expectedPrice, received: amountGross, at: new Date().toISOString() },
+      paymentVerification: verification,
+      webhookReceivedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    await logPaymentNotification(Object.assign({ outcome: 'review', reasons }, baseLog));
+    await alertOwnerPaymentReview('event ticket', regId, {
+      Attendee: `${reg.name || ''} (${reg.email || 'no email'})`,
+      Event: reg.eventTitle || reg.eventId || 'unknown',
+      'Amount received': `R${amountGross.toFixed(2)}`,
+      Expected: expectedPrice == null ? 'unknown' : `R${expectedPrice.toFixed(2)}`,
+      Reasons: reasons
+    });
+    return;
+  }
+
+  await regRef.set({
+    paymentStatus: 'Paid',
+    paymentGateway: 'PayFast',
+    paymentReference: payfastPaymentId || null,
+    paymentCompletedAt: admin.firestore.FieldValue.serverTimestamp(),
+    amountPaid: amountGross,
+    paymentVerification: verification,
+    webhookReceivedAt: admin.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+  await logPaymentNotification(Object.assign({ outcome: 'paid' }, baseLog));
+}
+
+// Gives a paid registration its ticket number (DD-1001, DD-1002, ... per event) and
+// secret join token. Safe to call twice: an existing ticket is returned unchanged.
+async function issueEventTicket(regRef) {
+  const db = admin.firestore();
+  return db.runTransaction(async (tx) => {
+    const regSnap = await tx.get(regRef);
+    const reg = regSnap.data() || {};
+    if (reg.ticketNumber && reg.joinToken) return { reg, issued: false };
+    const privRef = db.collection('eventsPrivate').doc(reg.eventId);
+    const privSnap = await tx.get(privRef);
+    const seq = (Number(privSnap.exists ? privSnap.data()?.ticketSeq : 0) || 0) + 1;
+    const update = {
+      ticketNumber: `DD-${1000 + seq}`,
+      joinToken: crypto.randomBytes(18).toString('base64url'),
+      ticketIssuedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+    tx.set(privRef, { ticketSeq: seq }, { merge: true });
+    tx.set(regRef, update, { merge: true });
+    return { reg: Object.assign({}, reg, update), issued: true, seq };
+  });
+}
+
+function millis(value) {
+  if (!value) return 0;
+  if (typeof value.toMillis === 'function') return value.toMillis();
+  const t = new Date(value).getTime();
+  return Number.isNaN(t) ? 0 : t;
+}
+
+exports.onEventRegistrationWrite = withSecrets.firestore
+  .document('eventRegistrations/{regId}')
+  .onWrite(async (change, context) => {
+    if (!change.after.exists) return null;
+    const regId = context.params.regId;
+    const regRef = change.after.ref;
+    const after = change.after.data() || {};
+    const before = change.before.exists ? (change.before.data() || {}) : {};
+    if (!isPaidStatus(after.paymentStatus) || !after.eventId) return null;
+
+    const firstTicket = !after.ticketNumber || !after.joinToken;
+    const resendAsked = millis(after.resendRequestedAt) > millis(before.resendRequestedAt);
+    if (!firstTicket && !resendAsked) return null;
+
+    const eventSnap = await admin.firestore().collection('events').doc(after.eventId).get();
+    if (!eventSnap.exists || !eventStartDate(eventSnap.data())) {
+      console.error(`[event ticket] event ${after.eventId} missing or has no start time; ticket for ${regId} not sent`);
+      return null;
+    }
+    const eventData = eventSnap.data();
+
+    const { reg, issued, seq } = await issueEventTicket(regRef);
+    if (issued && !reg.userId && reg.email) {
+      try {
+        const user = await admin.auth().getUserByEmail(reg.email);
+        await regRef.set({ userId: user.uid }, { merge: true });
+      } catch (e) {
+        // No account with this email: the ticket email is all they need.
+      }
+    }
+    try {
+      await sendEventTicketEmail(regId, reg, after.eventId, eventData);
+      await regRef.set({
+        ticketSentAt: admin.firestore.FieldValue.serverTimestamp(),
+        ticketSendCount: admin.firestore.FieldValue.increment(1),
+        ticketEmailError: admin.firestore.FieldValue.delete()
+      }, { merge: true });
+    } catch (e) {
+      console.error(`[event ticket] email failed for ${regId}:`, e.message);
+      await regRef.set({ ticketEmailError: e.message }, { merge: true });
+    }
+
+    if (issued && after.paymentGateway === 'PayFast') {
+      try {
+        await sendMailReliable({
+          to: OWNER_EMAIL,
+          subject: `🎟️ Ticket sold — ${reg.name || 'Attendee'} · ${reg.ticketNumber} (${seq} sold)`,
+          html: `
+            <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;">
+              <h2 style="color:#1a202c;">${escapeHtmlForBroadcast(eventData.title)}</h2>
+              <p><strong>Attendee:</strong> ${escapeHtmlForBroadcast(reg.name || '(unknown)')}<br>
+                 <strong>Email:</strong> ${escapeHtmlForBroadcast(reg.email || '(none)')}<br>
+                 <strong>Phone:</strong> ${escapeHtmlForBroadcast(reg.phone || '(none)')}<br>
+                 <strong>Ticket:</strong> ${escapeHtmlForBroadcast(reg.ticketNumber)}<br>
+                 <strong>Amount:</strong> R${Number(reg.amountPaid || 0).toFixed(2)}<br>
+                 <strong>Tickets sold so far:</strong> ${seq}</p>
+              <p><a href="${SITE_URL}/admin-events.html" style="display:inline-block;background:#4f46e5;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">Open Events admin</a></p>
+            </div>`
+        }, { type: 'event_ticket_owner', orderId: regId });
+      } catch (e) {
+        console.error('[event ticket owner email] failed:', e.message);
+      }
+    }
+    return null;
+  });
+
+// Backs /join?t=... (public/join.html). Returns the Teams link only for a paid ticket,
+// and records when the ticket holder used it around the session time.
+exports.eventJoinLink = functions.https.onRequest(async (req, res) => {
+  const origin = req.get('origin') || '';
+  if (/^https:\/\/(www\.)?disciplineddisciples\.co\.za$/.test(origin) || /^http:\/\/localhost(:\d+)?$/.test(origin)) {
+    res.set('Access-Control-Allow-Origin', origin);
+    res.set('Vary', 'Origin');
+  }
+  if (req.method === 'OPTIONS') {
+    res.set('Access-Control-Allow-Methods', 'GET');
+    res.status(204).send('');
+    return;
+  }
+  res.set('Cache-Control', 'no-store');
+  const token = (req.query.t || '').toString().trim();
+  if (!token || token.length > 64) {
+    res.status(400).json({ ok: false, error: 'missing' });
+    return;
+  }
+  try {
+    const db = admin.firestore();
+    const found = await db.collection('eventRegistrations').where('joinToken', '==', token).limit(1).get();
+    if (found.empty) {
+      res.status(404).json({ ok: false, error: 'not_found' });
+      return;
+    }
+    const regDoc = found.docs[0];
+    const reg = regDoc.data() || {};
+    if (!isPaidStatus(reg.paymentStatus)) {
+      res.status(403).json({ ok: false, error: 'not_paid' });
+      return;
+    }
+    const [eventSnap, privSnap] = await Promise.all([
+      db.collection('events').doc(reg.eventId).get(),
+      db.collection('eventsPrivate').doc(reg.eventId).get()
+    ]);
+    const eventData = eventSnap.exists ? eventSnap.data() : {};
+    const priv = privSnap.exists ? privSnap.data() : {};
+    const start = eventStartDate(eventData);
+    const end = eventEndDate(eventData);
+    const now = Date.now();
+    const ended = !!end && now > end.getTime();
+
+    const inWindow = start && now >= start.getTime() - EVENT_JOIN_EARLY_MINUTES * 60000 && !ended;
+    const touch = { lastOpenedAt: admin.firestore.FieldValue.serverTimestamp() };
+    if (inWindow) {
+      touch.joinCount = admin.firestore.FieldValue.increment(1);
+      touch.lastJoinedAt = admin.firestore.FieldValue.serverTimestamp();
+      if (!reg.firstJoinedAt) touch.firstJoinedAt = admin.firestore.FieldValue.serverTimestamp();
+    }
+    await regDoc.ref.set(touch, { merge: true });
+
+    res.status(200).json({
+      ok: true,
+      name: reg.name || '',
+      ticketNumber: reg.ticketNumber || '',
+      displayName: eventDisplayName(reg),
+      eventTitle: eventData.title || '',
+      startsAt: start ? start.toISOString() : null,
+      endsAt: end ? end.toISOString() : null,
+      ended,
+      meetingUrl: priv.meetingUrl || null,
+      recordingUrl: ended ? (priv.recordingUrl || null) : null
+    });
+  } catch (e) {
+    console.error('[eventJoinLink] failed:', e.message);
+    res.status(500).json({ ok: false, error: 'server' });
+  }
+});
+
+async function sendEventReminder(regDoc, eventData, kind) {
+  const reg = regDoc.data() || {};
+  const start = eventStartDate(eventData);
+  const joinUrl = eventJoinUrl(reg.joinToken);
+  const firstName = (reg.name || 'there').trim().split(' ')[0];
+  const sameDay = new Intl.DateTimeFormat('en-CA', { timeZone: EVENT_TZ }).format(new Date())
+    === new Intl.DateTimeFormat('en-CA', { timeZone: EVENT_TZ }).format(start);
+  const when = kind === 'soon'
+    ? `starts at ${formatEventTime(start)}`
+    : `is ${sameDay ? 'today' : 'tomorrow'} at ${formatEventTime(start)}`;
+  const body = `
+    <p style="font-size:16px;">Hi ${escapeHtmlForBroadcast(firstName)},</p>
+    <p style="line-height:1.7;color:#4b5563;"><strong>${escapeHtmlForBroadcast(eventData.title)}</strong> ${when} (South African time). ${kind === 'soon'
+      ? 'Grab your notes and join a few minutes early.'
+      : 'Set your alarm, have your pre-release and notes ready, and join a few minutes early.'}</p>
+    ${eventTicketPanel(eventData, reg, joinUrl)}`;
+  await sendMailReliable({
+    to: reg.email,
+    subject: kind === 'soon'
+      ? `⏰ Starting soon: ${eventData.title}`
+      : `Reminder: ${eventData.title} ${sameDay ? 'today' : 'tomorrow'} at ${formatEventTime(start)}`,
+    html: eventEmailShell(kind === 'soon' ? 'Starting soon' : 'Reminder', eventData.title, body)
+  }, { type: `event_reminder_${kind}`, orderId: regDoc.id, userId: reg.userId || null });
+}
+
+exports.eventReminders = functions
+  .runWith({ secrets: ['EMAIL_PASSWORD'], timeoutSeconds: 540, memory: '256MB' })
+  .pubsub.schedule('every 10 minutes')
+  .timeZone(EVENT_TZ)
+  .onRun(async () => {
+    const db = admin.firestore();
+    const now = Date.now();
+    const upcoming = await db.collection('events')
+      .where('startsAt', '>', admin.firestore.Timestamp.fromMillis(now))
+      .where('startsAt', '<=', admin.firestore.Timestamp.fromMillis(now + (EVENT_REMINDER_EVE_HOURS + 1) * 3600000))
+      .get();
+    for (const eventDoc of upcoming.docs) {
+      const eventData = eventDoc.data() || {};
+      if (eventData.status !== 'published') continue;
+      const start = eventStartDate(eventData).getTime();
+      const eveAt = start - EVENT_REMINDER_EVE_HOURS * 3600000;
+      const soonAt = start - EVENT_REMINDER_SOON_MINUTES * 60000;
+      if (now < eveAt) continue;
+      const kind = now >= soonAt ? 'soon' : 'eve';
+      const field = kind === 'soon' ? 'reminderSoonSentAt' : 'reminderEveSentAt';
+      const regs = await db.collection('eventRegistrations')
+        .where('eventId', '==', eventDoc.id)
+        .where('paymentStatus', '==', 'Paid')
+        .get();
+      let sent = 0;
+      for (const regDoc of regs.docs) {
+        const reg = regDoc.data() || {};
+        if (!reg.joinToken || reg[field]) continue;
+        // Someone who only just got their ticket email doesn't need the evening reminder too.
+        if (kind === 'eve' && millis(reg.ticketSentAt) >= eveAt) continue;
+        try {
+          await sendEventReminder(regDoc, eventData, kind);
+          await regDoc.ref.set({ [field]: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+          sent++;
+        } catch (e) {
+          console.error(`[event reminder] ${kind} failed for ${regDoc.id}:`, e.message);
+        }
+      }
+      console.log(`[eventReminders] ${eventDoc.id} ${kind}: sent=${sent}`);
+    }
+    return null;
+  });
+
+// Admin > Events > "Email the recording": sets recordingSendRequestedAt on eventsPrivate.
+exports.onEventRecordingRequested = withSecrets.firestore
+  .document('eventsPrivate/{eventId}')
+  .onUpdate(async (change, context) => {
+    const before = change.before.data() || {};
+    const after = change.after.data() || {};
+    if (!(millis(after.recordingSendRequestedAt) > millis(before.recordingSendRequestedAt))) return null;
+    const recordingUrl = (after.recordingUrl || '').toString().trim();
+    if (!/^https:\/\//i.test(recordingUrl)) {
+      console.error(`[event recording] ${context.params.eventId}: no https recording link set`);
+      return null;
+    }
+    const db = admin.firestore();
+    const eventSnap = await db.collection('events').doc(context.params.eventId).get();
+    const eventData = eventSnap.exists ? eventSnap.data() : { title: 'our live session' };
+    const regs = await db.collection('eventRegistrations')
+      .where('eventId', '==', context.params.eventId)
+      .where('paymentStatus', '==', 'Paid')
+      .get();
+    let sent = 0;
+    for (const regDoc of regs.docs) {
+      const reg = regDoc.data() || {};
+      if (reg.recordingSentAt) continue;
+      const firstName = (reg.name || 'there').trim().split(' ')[0];
+      const body = `
+        <p style="font-size:16px;">Hi ${escapeHtmlForBroadcast(firstName)},</p>
+        <p style="line-height:1.7;color:#4b5563;">Thank you for joining <strong>${escapeHtmlForBroadcast(eventData.title)}</strong>. Here is the recording, so you can go back over the session as you prepare.</p>
+        <p style="text-align:center;margin:24px 0;">
+          <a href="${escapeHtmlForBroadcast(recordingUrl)}" style="background:#4f46e5;color:#fff;padding:14px 30px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block;">Watch the recording</a>
+        </p>
+        <p style="line-height:1.7;color:#4b5563;">The recording is for ticket holders only, so please don&rsquo;t share the link.</p>`;
+      try {
+        await sendMailReliable({
+          to: reg.email,
+          subject: `🎥 Recording: ${eventData.title}`,
+          html: eventEmailShell('Session recording', eventData.title, body)
+        }, { type: 'event_recording', orderId: regDoc.id, userId: reg.userId || null });
+        await regDoc.ref.set({ recordingSentAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+        sent++;
+      } catch (e) {
+        console.error(`[event recording] failed for ${regDoc.id}:`, e.message);
+      }
+    }
+    await change.after.ref.set({ recordingSentCount: admin.firestore.FieldValue.increment(sent), recordingLastSentAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+    console.log(`[event recording] ${context.params.eventId}: sent=${sent}`);
     return null;
   });

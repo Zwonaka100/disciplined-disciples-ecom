@@ -209,6 +209,18 @@
             <div id="my-library-items" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </section>
 
+        <!-- My Tickets: live sessions (eventRegistrations linked to this account) -->
+        <section id="my-tickets-section" class="hidden bg-white rounded-xl shadow p-6">
+            <div class="mb-4">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <i class="fas fa-ticket text-indigo-600"></i>
+                    My Tickets
+                </h2>
+                <p class="text-sm text-gray-500 mt-1">Live sessions you&rsquo;ve booked. Your join link also shows the recording once it&rsquo;s ready.</p>
+            </div>
+            <div id="my-tickets-items" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </section>
+
         <section id="mentorship-tools" class="bg-white rounded-xl shadow p-6 hidden">
             <header class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
@@ -333,6 +345,55 @@
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="script.js?v=20261005a"></script>
     <script>
+        // My Tickets: paid event registrations made while signed in (or matched to this account's email).
+        (function () {
+            'use strict';
+            function esc(s) {
+                return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+                });
+            }
+            function toDate(v) { return v && typeof v.toDate === 'function' ? v.toDate() : null; }
+            function render(regs, eventsById) {
+                var section = document.getElementById('my-tickets-section');
+                var list = document.getElementById('my-tickets-items');
+                if (!section || !list || !regs.length) return;
+                list.innerHTML = regs.map(function (r) {
+                    var ev = eventsById[r.eventId] || {};
+                    var start = toDate(ev.startsAt);
+                    var when = start ? new Intl.DateTimeFormat('en-ZA', { timeZone: 'Africa/Johannesburg', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(start) + ' SAST' : '';
+                    return '<article class="rounded-lg border border-gray-200 p-4 flex flex-col gap-1">' +
+                        '<p class="text-xs font-semibold uppercase tracking-wide text-indigo-600">Ticket ' + esc(r.ticketNumber) + '</p>' +
+                        '<h3 class="font-semibold text-gray-900">' + esc(ev.title || r.eventTitle || 'Live session') + '</h3>' +
+                        '<p class="text-sm text-gray-500">' + esc(when) + '</p>' +
+                        '<a href="join?t=' + encodeURIComponent(r.joinToken) + '" class="mt-2 inline-flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 self-start"><i class="fas fa-video"></i> Open my join page</a>' +
+                        '</article>';
+                }).join('');
+                section.classList.remove('hidden');
+            }
+            document.addEventListener('DOMContentLoaded', function () {
+                if (!window.firebase || !firebase.apps || !firebase.apps.length) return;
+                firebase.auth().onAuthStateChanged(function (user) {
+                    if (!user) return;
+                    var db = firebase.firestore();
+                    db.collection('eventRegistrations').where('userId', '==', user.uid).get().then(function (snap) {
+                        var regs = snap.docs.map(function (d) { return d.data(); })
+                            .filter(function (r) { return r.paymentStatus === 'Paid' && r.joinToken; });
+                        if (!regs.length) return;
+                        var ids = regs.map(function (r) { return r.eventId; }).filter(function (id, i, a) { return a.indexOf(id) === i; });
+                        return Promise.all(ids.map(function (id) {
+                            return db.collection('events').doc(id).get().then(function (doc) { return [id, doc.exists ? doc.data() : {}]; }).catch(function () { return [id, {}]; });
+                        })).then(function (pairs) {
+                            var byId = {};
+                            pairs.forEach(function (p) { byId[p[0]] = p[1]; });
+                            regs.sort(function (a, b) { return (toDate((byId[b.eventId] || {}).startsAt) || 0) - (toDate((byId[a.eventId] || {}).startsAt) || 0); });
+                            render(regs, byId);
+                        });
+                    }).catch(function (err) { console.warn('[MyTickets] lookup failed:', err && err.message ? err.message : err); });
+                });
+            });
+        })();
+
         document.addEventListener('DOMContentLoaded', () => {
             if (window.AuthGuard && typeof window.AuthGuard.initProfilePage === 'function') {
                 window.AuthGuard.initProfilePage();

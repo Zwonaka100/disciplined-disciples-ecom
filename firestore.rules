@@ -209,6 +209,46 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // Events (paid live sessions). Published/closed events are public; drafts are admin-only.
+    match /events/{eventId} {
+      allow read: if isAdmin() || resource.data.status in ['published', 'closed'];
+      allow write: if isAdmin();
+    }
+
+    // Meeting link, recording link and ticket counter - never readable by the public.
+    match /eventsPrivate/{eventId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Event tickets. Anyone may register for an event that is on sale, unpaid and at the
+    // event's price; the PayFast webhook or an admin marks it paid, and the server then
+    // adds the ticket number and join token.
+    match /eventRegistrations/{regId} {
+      allow create: if request.resource.data.eventId is string
+        && exists(/databases/$(database)/documents/events/$(request.resource.data.eventId))
+        && get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.status == 'published'
+        && get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.salesOpen == true
+        && request.resource.data.amount == get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.price
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 1
+        && request.resource.data.name.size() <= 140
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 200
+        && request.resource.data.email.matches('.+@.+[.].+')
+        && request.resource.data.get('phone', '') is string
+        && request.resource.data.get('phone', '').size() <= 40
+        && request.resource.data.consent == true
+        && request.resource.data.paymentStatus == 'Pending'
+        && request.resource.data.keys().hasOnly([
+          'eventId', 'eventTitle', 'name', 'email', 'phone', 'userId', 'amount',
+          'consent', 'paymentStatus', 'source', 'createdAt'
+        ])
+        && (request.resource.data.get('userId', null) == null
+            || (isSignedIn() && request.resource.data.userId == request.auth.uid));
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
     // Mentorship programs - admin only
     match /mentorshipPrograms/{programId} {
       allow read, write: if isAdmin();
