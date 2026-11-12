@@ -74,6 +74,12 @@
         .pkg-card ul li i { color: #10b981; margin-top: 4px; font-size: 0.85rem; flex-shrink: 0; }
         .pkg-cta { display: block; width: 100%; padding: 0.85rem 1rem; border: none; border-radius: 10px; background: #0f172a; color: #fff; font-weight: 700; font-size: 0.92rem; cursor: pointer; transition: all 0.2s ease; text-align: center; text-decoration: none; }
         .pkg-cta:hover { background: #1e293b; transform: translateY(-1px); }
+        /* Workbook (standalone digital product): the same card look, one card, centred. */
+        .pkg-grid.single { grid-template-columns: minmax(0, 440px); justify-content: center; }
+        .pkg-card .wb-desc { font-size: 0.9rem; color: #475569; line-height: 1.6; margin: 0 0 1rem; }
+        .wb-cta { display: block; box-sizing: border-box; width: 100%; padding: 0.85rem 1rem; border: none; border-radius: 10px; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; font-weight: 700; font-size: 0.92rem; cursor: pointer; transition: all 0.2s ease; text-align: center; text-decoration: none; }
+        .wb-cta:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(79,70,229,0.28); }
+        .wb-note { text-align: center; margin: 0.9rem auto 0; max-width: 440px; font-size: 0.78rem; color: #64748b; line-height: 1.5; }
         .pkg-card.featured .pkg-cta { background: linear-gradient(135deg, #4f46e5, #7c3aed); }
         .pkg-card.free .pkg-cta { background: #fff; color: #0f172a; border: 2px solid #0f172a; }
         .pkg-card.free .pkg-cta:hover { background: #0f172a; color: #fff; }
@@ -463,6 +469,31 @@
             </div>
         </section>
 
+        <!-- Standalone product: DDA APC Candidate Workbook (digital PDF, paid through PayFast checkout) -->
+        <section class="m-section" style="padding-top:0;" id="apc-workbook">
+            <h2>Prefer to start on your own?</h2>
+            <p class="section-sub">The DDA APC Candidate Workbook gives you the method and the toolkit as a 108-page PDF, yours to keep.</p>
+            <div class="pkg-grid single">
+                <article class="pkg-card featured" data-product="apc-workbook">
+                    <h3>DDA APC Candidate Workbook</h3>
+                    <p class="pkg-tag">Self-study &middot; PDF &middot; 108 pages</p>
+                    <p class="pkg-price">R149</p>
+                    <p class="pkg-cadence">One-time purchase, instant download</p>
+                    <p class="wb-desc">A complete preparation workbook for APC candidates: how to spot triggers, research a case in three layers, and write like a professional advisor, with a ready-to-use prompt suite for your own preparation.</p>
+                    <ul>
+                        <li><i class="fas fa-check-circle"></i> Part 1: Candidate Manual</li>
+                        <li><i class="fas fa-check-circle"></i> Part 2: Trigger identification</li>
+                        <li><i class="fas fa-check-circle"></i> Part 3: Three-layer research</li>
+                        <li><i class="fas fa-check-circle"></i> Part 4: The research method</li>
+                        <li><i class="fas fa-check-circle"></i> Part 5: The writing masterclass</li>
+                        <li><i class="fas fa-check-circle"></i> Part 6: The prompt suite</li>
+                    </ul>
+                    <a class="wb-cta" href="checkout.html?product=apc-workbook" id="apc-workbook-buy">Buy the workbook</a>
+                </article>
+            </div>
+            <p class="wb-note">Independent of SAICA. No guarantee of exam results. For preparation only.</p>
+        </section>
+
         <!-- Flagship: SAICA APC Programme -->
         <section class="apc-section" id="apc-programme">
             <div class="apc-shell">
@@ -476,7 +507,7 @@
                     <article class="apc-card">
                         <i class="fas fa-file-pen apc-icon"></i>
                         <h4>Professional Writing Framework</h4>
-                        <p>Our comprehensive 33-page master guide on how to structure, articulate and write like a high-level professional advisor. Available exclusively to programme candidates.</p>
+                        <p>Our comprehensive 33-page master guide on how to structure, articulate and write like a high-level professional advisor. Included in the programme, and its method is also in the DDA APC Candidate Workbook. The programme adds personal mentoring and feedback on your own writing.</p>
                     </article>
                     <article class="apc-card">
                         <i class="fas fa-user-group apc-icon"></i>
@@ -494,6 +525,7 @@
                             <li>Microeconomic industry and case study research</li>
                         </ul>
                         <p class="apc-note">For preparation and research. Not for use in the exam itself.</p>
+                        <p class="apc-note">The prompt suite is also part of the DDA APC Candidate Workbook. The programme adds personal mentoring, feedback and the Discovery Call process on top.</p>
                     </article>
                     <article class="apc-card">
                         <i class="fas fa-clipboard-check apc-icon"></i>

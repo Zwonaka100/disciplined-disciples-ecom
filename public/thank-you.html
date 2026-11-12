@@ -146,6 +146,20 @@
             </div>
 
             <!-- JOURNAL SECTION (shown when the order includes the 30-Day Journal) -->
+            <div id="workbook-order-section" class="bg-white rounded-lg shadow-lg p-8 mb-8 border-2 border-indigo-400" style="display:none;">
+                <div class="mb-6 text-center">
+                    <i class="fas fa-file-pdf text-5xl text-indigo-600 mb-3"></i>
+                    <h2 class="text-2xl font-bold text-indigo-700 mb-2">Your DDA APC Candidate Workbook is Ready!</h2>
+                    <p class="text-gray-600">No shipping needed. It is saved to My Library on your profile as soon as PayFast confirms your payment, and you can download it any time.</p>
+                </div>
+                <div class="mt-6 text-center">
+                    <a href="profile.html" class="inline-block px-8 py-4 text-lg font-bold text-white rounded-lg shadow-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="fas fa-download mr-2"></i>
+                        Go to My Library
+                    </a>
+                </div>
+            </div>
+
             <div id="journal-order-section" class="bg-white rounded-lg shadow-lg p-8 mb-8 border-2 border-indigo-400" style="display:none;">
                 <div class="mb-6 text-center">
                     <i class="fas fa-pen-nib text-5xl text-indigo-600 mb-3"></i>
@@ -311,6 +325,7 @@
         var statusIcon = document.getElementById('ty-status-icon');
         var digitalSection = document.getElementById('digital-order-section');
         var journalSection = document.getElementById('journal-order-section');
+        var workbookSection = document.getElementById('workbook-order-section');
         var physicalSection = document.getElementById('physical-order-section');
         var profileBtn = document.getElementById('profile-cta-btn');
         var orderDocId = null;
@@ -326,11 +341,13 @@
         function showSections(items) {
             var hasEbook = items.some(function (i) { var id = String(i.productId || '').toLowerCase(); return id === 'ebook' || String(i.name || '').toLowerCase().indexOf('ebook') !== -1; });
             var hasJournal = items.some(function (i) { return String(i.productId || '').toLowerCase() === 'journal'; });
-            var hasPhysical = items.some(function (i) { return i.fulfillmentType !== 'digital' && String(i.productId || '').toLowerCase() !== 'ebook' && String(i.productId || '').toLowerCase() !== 'journal'; });
+            var hasWorkbook = items.some(function (i) { return String(i.productId || '').toLowerCase() === 'apc-workbook'; });
+            var hasPhysical = items.some(function (i) { return i.fulfillmentType !== 'digital' && String(i.productId || '').toLowerCase() !== 'ebook' && String(i.productId || '').toLowerCase() !== 'journal' && String(i.productId || '').toLowerCase() !== 'apc-workbook'; });
             digitalSection.style.display = hasEbook ? 'block' : 'none';
             journalSection.style.display = hasJournal ? 'block' : 'none';
+            workbookSection.style.display = hasWorkbook ? 'block' : 'none';
             physicalSection.style.display = hasPhysical ? 'block' : 'none';
-            if (!hasPhysical && (hasEbook || hasJournal)) {
+            if (!hasPhysical && (hasEbook || hasJournal || hasWorkbook)) {
                 profileBtn.innerHTML = '<i class="fas fa-book-reader mr-2"></i> Go to My Library';
                 profileBtn.href = 'profile.html';
             }

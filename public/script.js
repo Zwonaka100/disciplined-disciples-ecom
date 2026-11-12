@@ -1438,6 +1438,13 @@ function isEbookLineItem(item) {
     return productId === 'ebook' || name.includes('ebook');
 }
 
+// The DDA APC Candidate Workbook is matched by product id only, so it can never be mistaken for
+// the eBook or the Journal. The server still decides who may download it (getWorkbookDownloadLink).
+function isWorkbookLineItem(item) {
+    if (!item) return false;
+    return (item.productId || item.id || '').toString().toLowerCase() === 'apc-workbook';
+}
+
 // Journal access: paid Academy packages and journal purchases unlock it. If there is
 // no access record yet, ask the server to check (this is what unlocks the journal
 // automatically for people who were already mentees before the journal existed).
@@ -1494,6 +1501,8 @@ window.checkEbookEntitlementAndShow = async function() {
 
         let hasEbookFromOrders = false;
         let earliestPurchase = null;
+        let hasWorkbookFromOrders = false;
+        let workbookPurchase = null;
         try {
             const ordersSnap = await db.collection('artifacts').doc('default-app-id').collection('orders')
                 .where('userId', '==', userId).get();
@@ -1508,6 +1517,13 @@ window.checkEbookEntitlementAndShow = async function() {
                         earliestPurchase = orderDate;
                     }
                 }
+                if (paid && items.some(isWorkbookLineItem)) {
+                    hasWorkbookFromOrders = true;
+                    const wbDate = data.orderDate && data.orderDate.toDate ? data.orderDate.toDate() : (data.orderDate ? new Date(data.orderDate) : null);
+                    if (wbDate && (!workbookPurchase || wbDate < workbookPurchase)) {
+                        workbookPurchase = wbDate;
+                    }
+                }
             });
         } catch (orderErr) {
             console.warn('[MyLibrary] Order scan failed:', orderErr && orderErr.message ? orderErr.message : orderErr);
@@ -1516,9 +1532,23 @@ window.checkEbookEntitlementAndShow = async function() {
         const hasEbook = hasEntitlement || hasEbookFromOrders;
         const hasJournal = await window.getJournalAccess();
 
+        // Workbook: the server's entitlement record (written after PayFast confirms), or a paid order of theirs.
+        let hasWorkbookEntitlement = false;
+        try {
+            const wbTopRef = db.collection('workbookEntitlements').doc(userId);
+            const [wbTopSnap, wbItemsSnap] = await Promise.all([wbTopRef.get(), wbTopRef.collection('items').limit(1).get()]);
+            hasWorkbookEntitlement = !!(
+                (wbTopSnap.exists && wbTopSnap.data() && wbTopSnap.data().hasWorkbook === true) ||
+                (wbItemsSnap && !wbItemsSnap.empty)
+            );
+        } catch (wbErr) {
+            console.warn('[MyLibrary] Workbook entitlement lookup failed, relying on the order scan:', wbErr && wbErr.message ? wbErr.message : wbErr);
+        }
+        const hasWorkbook = hasWorkbookEntitlement || hasWorkbookFromOrders;
+
         const librarySection = document.getElementById('my-library-section');
         const libraryItems = document.getElementById('my-library-items');
-        if (!librarySection || !libraryItems || (!hasEbook && !hasJournal)) {
+        if (!librarySection || !libraryItems || (!hasEbook && !hasJournal && !hasWorkbook)) {
             return;
         }
 
@@ -1537,6 +1567,27 @@ window.checkEbookEntitlementAndShow = async function() {
                         <button id="library-download-ebook" type="button" class="mt-3 inline-flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 self-start">
                             <i class="fas fa-download"></i>
                             Download eBook
+                        </button>
+                    </div>
+                </div>`);
+        }
+        if (hasWorkbook) {
+            const wbPurchasedOn = workbookPurchase ? workbookPurchase.toLocaleDateString('en-ZA', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+            cards.push(`
+                <div class="flex gap-4 p-4 bg-white border border-indigo-100 rounded-lg">
+                    <div class="w-20 h-28 rounded shadow-sm flex-shrink-0 flex flex-col items-center justify-center text-white text-center" style="background: linear-gradient(135deg, #4f46e5, #7c3aed);">
+                        <i class="fas fa-file-pdf text-xl"></i>
+                        <span class="text-[10px] font-bold mt-2 leading-tight px-1">APC<br>WORKBOOK</span>
+                    </div>
+                    <div class="flex flex-col justify-between flex-1 min-w-0">
+                        <div>
+                            <h3 class="font-semibold text-gray-900 break-words">DDA APC Candidate Workbook</h3>
+                            <p class="text-xs text-gray-500 mt-1">PDF • 108 pages • Permanent access</p>
+                            ${wbPurchasedOn ? `<p class="text-xs text-gray-400 mt-1">Purchased ${wbPurchasedOn}</p>` : ''}
+                        </div>
+                        <button id="library-download-workbook" type="button" class="mt-3 inline-flex items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 self-start">
+                            <i class="fas fa-download"></i>
+                            Download workbook
                         </button>
                     </div>
                 </div>`);
@@ -1586,6 +1637,31 @@ window.checkEbookEntitlementAndShow = async function() {
                 } finally {
                     libBtn.removeAttribute('disabled');
                     libBtn.innerHTML = originalHtml;
+                }
+            });
+        }
+        const wbBtn = document.getElementById('library-download-workbook');
+        if (wbBtn && !wbBtn.dataset.bound) {
+            wbBtn.dataset.bound = 'true';
+            wbBtn.addEventListener('click', async () => {
+                wbBtn.setAttribute('disabled', 'true');
+                const originalHtml = wbBtn.innerHTML;
+                wbBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
+                try {
+                    if (typeof firebase === 'undefined' || !firebase.functions) {
+                        throw new Error('Firebase Functions client not available');
+                    }
+                    const getLink = firebase.functions().httpsCallable('getWorkbookDownloadLink');
+                    const result = await getLink({});
+                    const url = result && result.data && result.data.url;
+                    if (!url) throw new Error('No download URL returned');
+                    window.open(url, '_blank', 'noopener');
+                } catch (error) {
+                    console.error('Library workbook download failed:', error);
+                    alert('Unable to prepare your workbook download. Please try again or contact support.');
+                } finally {
+                    wbBtn.removeAttribute('disabled');
+                    wbBtn.innerHTML = originalHtml;
                 }
             });
         }

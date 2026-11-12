@@ -44,7 +44,15 @@ const PAYFAST_VALIDATE_URL = 'https://www.payfast.co.za/eng/query/validate';
 // functions/.env so signatures are enforced. Without it, PayFast's server-side
 // confirmation (query/validate) is still required for every payment.
 const PAYFAST_PASSPHRASE = (process.env.PAYFAST_PASSPHRASE || '').toString().trim();
-const FIXED_PRICES = { ebook: 119, 'book-physical': 249 };
+// The DDA APC Candidate Workbook (standalone digital PDF). Keep the price in step with
+// WORKBOOK_PRICE in public/checkout.html and public/academy.html.
+const WORKBOOK_PRODUCT_ID = 'apc-workbook';
+const WORKBOOK_PRICE = 149;
+const FIXED_PRICES = { ebook: 119, 'book-physical': 249, [WORKBOOK_PRODUCT_ID]: WORKBOOK_PRICE };
+// The workbook PDF lives in its own private folder, never in ebook/, so one product can
+// never be served in place of the other. Storage rules block direct reads (admins only).
+const WORKBOOK_STORAGE_PREFIX = 'workbook/';
+const WORKBOOK_FILE_NAME = 'workbook/DDA_APC_Candidate_Workbook.pdf';
 const DELIVERY_PRICES = { paxi_standard: 59.95, paxi_express: 109.95, collection_sandton: 0, collection_benoni: 0 };
 const ACADEMY_PACKAGE_PRICES = { discovery: 0, single: 249, focus: 799, transformation: 1499 };
 const ACADEMY_PACKAGE_NAMES = {
@@ -126,9 +134,16 @@ function isJournalItem(item) {
   return productId === JOURNAL_PRODUCT_ID;
 }
 
+// The workbook is matched by product id only, so it can never be mistaken for the eBook
+// (whose check also looks at the name) and no other product can unlock it by accident.
+function isWorkbookItem(item) {
+  const productId = (item?.productId || item?.id || '').toString().toLowerCase();
+  return productId === WORKBOOK_PRODUCT_ID;
+}
+
 function isDigitalItem(item) {
   const fulfillment = (item?.fulfillmentType || '').toString().toLowerCase();
-  return fulfillment === 'digital' || isEbookItem(item) || isJournalItem(item);
+  return fulfillment === 'digital' || isEbookItem(item) || isJournalItem(item) || isWorkbookItem(item);
 }
 
 function isPhysicalItem(item) {
@@ -143,6 +158,11 @@ function orderContainsEbook(order) {
 function orderContainsJournal(order) {
   const items = Array.isArray(order?.items) ? order.items : [];
   return items.some(isJournalItem);
+}
+
+function orderContainsWorkbook(order) {
+  const items = Array.isArray(order?.items) ? order.items : [];
+  return items.some(isWorkbookItem);
 }
 
 function deriveOrderType(order) {
@@ -296,6 +316,54 @@ async function grantEbookEntitlement(userId, orderId, source = 'order') {
   }, { merge: true });
 }
 
+// === DDA APC Candidate Workbook ===
+// The same pattern as the eBook, with its own private folder and its own entitlement record
+// (workbookEntitlements/{uid}/items/{orderId}). Granting is idempotent: the item document id
+// is the order id, so a repeated PayFast notification only rewrites the same document.
+async function resolveWorkbookFile() {
+  const exact = bucket.file(WORKBOOK_FILE_NAME);
+  const [exists] = await exact.exists();
+  if (exists) return exact;
+  // Self-heal if the file was re-uploaded under another name: newest PDF in workbook/.
+  const [files] = await bucket.getFiles({ prefix: WORKBOOK_STORAGE_PREFIX });
+  const pdfs = files.filter((f) => f.name.toLowerCase().endsWith('.pdf'));
+  if (!pdfs.length) {
+    throw new functions.https.HttpsError('not-found', 'No workbook PDF found in storage under the workbook/ prefix.');
+  }
+  pdfs.sort((a, b) => {
+    const ta = new Date(a.metadata?.updated || a.metadata?.timeCreated || 0).getTime();
+    const tb = new Date(b.metadata?.updated || b.metadata?.timeCreated || 0).getTime();
+    return tb - ta;
+  });
+  return pdfs[0];
+}
+
+async function grantWorkbookEntitlement(userId, orderId, source = 'order') {
+  if (!userId) return;
+  const db = admin.firestore();
+  const ref = db.collection('workbookEntitlements').doc(userId)
+    .collection('items').doc(orderId || 'unknown');
+  await ref.set({
+    productId: WORKBOOK_PRODUCT_ID,
+    orderId: orderId || null,
+    grantedAt: admin.firestore.FieldValue.serverTimestamp(),
+    source
+  }, { merge: true });
+  await db.collection('workbookEntitlements').doc(userId).set({
+    hasWorkbook: true,
+    lastGrantedAt: admin.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+}
+
+async function userHasWorkbookEntitlement(userId) {
+  if (!userId) return false;
+  const db = admin.firestore();
+  const top = await db.collection('workbookEntitlements').doc(userId).get();
+  if (top.exists && top.data()?.hasWorkbook === true) return true;
+  const items = await db.collection('workbookEntitlements').doc(userId).collection('items').limit(1).get();
+  return !items.empty;
+}
+
 // eBook links are short-lived. Firebase download tokens never expire on their own,
 // so each request mints a fresh token, records when it expires, and rewrites the
 // file's token list to only the still-valid ones. That drops any older or leaked
@@ -443,6 +511,8 @@ async function priceOrderServerSide(order) {
     let unit = null;
     if (isEbookItem(item)) {
       unit = FIXED_PRICES.ebook;
+    } else if (isWorkbookItem(item)) {
+      unit = FIXED_PRICES[WORKBOOK_PRODUCT_ID];
     } else if (productId === 'book-physical') {
       unit = FIXED_PRICES['book-physical'];
     } else if (isJournalItem(item)) {
@@ -605,6 +675,68 @@ exports.getEbookDownloadLink = withSecrets.https.onCall(async (data, context) =>
   return { url, expiresIn: LINK_EXPIRY_SECONDS, file: file.name };
 });
 
+// === SECURE WORKBOOK DOWNLOAD FUNCTION ===
+// Same protections as the eBook: the buyer must be signed in AND own the workbook; the link is
+// minted per request, expires in 10 minutes, and downloads are throttled per 24 hours.
+exports.getWorkbookDownloadLink = withSecrets.https.onCall(async (data, context) => {
+  if (!context.auth || !context.auth.uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'You must be logged in to download the workbook.');
+  }
+  const userId = context.auth.uid;
+  const MAX_DOWNLOADS_PER_DAY = 25;
+  const LINK_EXPIRY_SECONDS = 600;
+  const db = admin.firestore();
+
+  // 1) Explicit entitlement record (written by the server only)
+  let entitled = await userHasWorkbookEntitlement(userId);
+
+  // 2) Fallback: a paid order of theirs that contains the workbook (self-heals a missed grant)
+  if (!entitled) {
+    const ordersRef = db.collection('artifacts').doc('default-app-id').collection('orders');
+    const ordersSnap = await ordersRef.where('userId', '==', userId).get();
+    let backfillOrderId = null;
+    ordersSnap.forEach((doc) => {
+      const order = doc.data();
+      if (isPaidStatus(order?.paymentStatus) && orderContainsWorkbook(order)) {
+        entitled = true;
+        backfillOrderId = doc.id;
+      }
+    });
+    if (entitled) {
+      try { await grantWorkbookEntitlement(userId, backfillOrderId, 'backfill'); } catch (_) { /* non-fatal */ }
+    }
+  }
+
+  if (!entitled) {
+    throw new functions.https.HttpsError('permission-denied', 'You have not purchased the workbook.');
+  }
+
+  const logRef = db.collection('artifacts').doc('default-app-id').collection('workbookDownloads').doc(userId);
+  const logSnap = await logRef.get();
+  const logData = logSnap.exists ? logSnap.data() : {};
+  const now = Date.now();
+  const dayMs = 24 * 60 * 60 * 1000;
+  const lastResetMs = logData.windowStart && logData.windowStart.toMillis ? logData.windowStart.toMillis() : 0;
+  const inWindow = now - lastResetMs < dayMs;
+  const currentCount = inWindow ? (logData.windowCount || 0) : 0;
+  if (currentCount >= MAX_DOWNLOADS_PER_DAY) {
+    throw new functions.https.HttpsError('resource-exhausted', 'Daily download limit reached. Please try again tomorrow or contact support.');
+  }
+
+  const file = await resolveWorkbookFile();
+  const url = await issueEbookDownloadUrl(file, userId, LINK_EXPIRY_SECONDS);
+
+  await logRef.set({
+    windowStart: inWindow ? logData.windowStart : admin.firestore.FieldValue.serverTimestamp(),
+    windowCount: currentCount + 1,
+    totalCount: (logData.totalCount || 0) + 1,
+    lastDownload: admin.firestore.FieldValue.serverTimestamp(),
+    lastFile: file.name
+  }, { merge: true });
+
+  return { url, expiresIn: LINK_EXPIRY_SECONDS, file: file.name };
+});
+
 const BRAND_PURPLE = '#4f46e5';
 const LOGO_PATH = path.join(__dirname, 'assets', 'logo.png');
 
@@ -691,7 +823,7 @@ async function generateInvoicePDF(orderId, order, userProfile) {
           const quantity = Number(item.quantity) || 1;
           doc.text(item.name || 'Item', 56, yPosition, { width: 155 });
           doc.text(item.size || (isDigitalItem(item) ? 'Digital' : 'N/A'), 220, yPosition);
-          doc.text(item.color || (isEbookItem(item) ? 'PDF' : (isJournalItem(item) ? 'Online' : 'N/A')), 270, yPosition);
+          doc.text(item.color || ((isEbookItem(item) || isWorkbookItem(item)) ? 'PDF' : (isJournalItem(item) ? 'Online' : 'N/A')), 270, yPosition);
           doc.text(quantity.toString(), 330, yPosition);
           doc.text(`R${price.toFixed(2)}`, 380, yPosition);
           doc.text(`R${(price * quantity).toFixed(2)}`, 470, yPosition);
@@ -773,7 +905,13 @@ async function sendOrderPlacedEmails(orderId, order, docRef) {
         try { await grantJournalAccess(order.userId, 'order', orderId); }
         catch (e) { console.error('grantJournalAccess failed:', e.message); }
     }
-    const journalOnly = digitalOnly && hasJournalItem && !hasEbookItem;
+    const hasWorkbookItem = orderContainsWorkbook(order);
+    if (hasWorkbookItem && order.userId) {
+        try { await grantWorkbookEntitlement(order.userId, orderId, 'order'); }
+        catch (e) { console.error('grantWorkbookEntitlement failed:', e.message); }
+    }
+    const journalOnly = digitalOnly && hasJournalItem && !hasEbookItem && !hasWorkbookItem;
+    const workbookOnly = digitalOnly && hasWorkbookItem && !hasEbookItem && !hasJournalItem;
 
     const orderDateRaw = order && order.orderDate;
     const orderDateValue = orderDateRaw && typeof orderDateRaw.toDate === 'function'
@@ -790,7 +928,9 @@ async function sendOrderPlacedEmails(orderId, order, docRef) {
     const statusMessage = digitalOnly
         ? (journalOnly
             ? 'Your 30-Day Journal is unlocked and saved to your account. Sign in any time to write today’s entry.'
-            : 'Your eBook is ready and permanently saved to your profile. Sign in any time to download it.')
+            : (workbookOnly
+                ? 'Your DDA APC Candidate Workbook is ready and permanently saved to your profile. Sign in any time to download it.'
+                : 'Your eBook is ready and permanently saved to your profile. Sign in any time to download it.'))
         : (order.statusMessage || order.lastCustomerMessage || 'Your order is confirmed and being prepared with care!');
     const totalAmount = Number(order.totalAmount) || 0;
     const itemsList = Array.isArray(order.items) ? order.items : [];
@@ -798,6 +938,8 @@ async function sendOrderPlacedEmails(orderId, order, docRef) {
     const styledItems = itemsList.map(item => {
         const meta = isEbookItem(item)
             ? 'Format: Digital PDF (lifetime access)'
+            : isWorkbookItem(item)
+            ? 'Format: Digital PDF, 108 pages (lifetime access)'
             : (isJournalItem(item)
                 ? 'Format: Online journal + printable version (lifetime access)'
                 : `Size: ${item.size || 'N/A'} | Qty: ${item.quantity || 1}`);
@@ -827,6 +969,18 @@ async function sendOrderPlacedEmails(orderId, order, docRef) {
       </div>
     ` : '';
 
+    const workbookSection = hasWorkbookItem ? `
+      <div style="background: linear-gradient(135deg,#eef2ff 0%,#f5f3ff 100%); padding: 22px; border-radius: 10px; margin-bottom: 22px; border-left: 4px solid #4f46e5;">
+        <h3 style="margin: 0 0 10px 0; color: #1f2937;">\u{1F4D8} Your DDA APC Candidate Workbook is ready</h3>
+        <p style="margin: 0 0 12px 0; color: #4b5563; line-height: 1.6;">
+          Your workbook (108 pages, six parts) is now permanently saved to your profile. Sign in any time to download it \u2014 your access never expires. It is for preparation only, independent of SAICA, and carries no guarantee of exam results.
+        </p>
+        <p style="margin: 14px 0 0 0;">
+          <a href="${SITE_URL}/profile.html" style="background:#4f46e5;color:white;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;">Open My Profile & Download</a>
+        </p>
+      </div>
+    ` : '';
+
     const journalSection = hasJournalItem ? `
       <div style="background: linear-gradient(135deg,#eef2ff 0%,#f5f3ff 100%); padding: 22px; border-radius: 10px; margin-bottom: 22px; border-left: 4px solid #7c3aed;">
         <h3 style="margin: 0 0 10px 0; color: #1f2937;">\u{1F4D3} Your 30-Day Journal is unlocked</h3>
@@ -847,7 +1001,9 @@ async function sendOrderPlacedEmails(orderId, order, docRef) {
       </div>
     ` : '';
 
-    const founderNote = journalOnly
+    const founderNote = workbookOnly
+      ? `<p style="color: #4b5563; line-height: 1.7;">${firstName}, thank you for trusting us with your preparation. Work through the workbook in order, one part at a time, and write your answers out in full \u2014 the method only pays off when you practise it. If you would like personal mentoring, feedback on your own scripts and a Discovery Call, our APC Programme builds on exactly what you now hold.</p>`
+      : journalOnly
       ? `<p style="color: #4b5563; line-height: 1.7;">${firstName}, the aim isn't perfection \u2014 it's formation. Keep the commitments small enough to survive difficult days, and when you miss one, return. Don't turn one missed day into a collapsed identity.</p>`
       : digitalOnly
       ? `<p style="color: #4b5563; line-height: 1.7;">${firstName}, this isn't just a PDF \u2014 it's a promise to yourself. Read it slowly. Underline what convicts you. Come back to the chapters that hurt. Discipline is built one quiet decision at a time, and you just made one of them.</p>`
@@ -870,7 +1026,9 @@ async function sendOrderPlacedEmails(orderId, order, docRef) {
         <p style="margin: 0;"><a href="${SITE_URL}/book.html" style="color: #4f46e5; font-weight: 600;">Read \u201CRelentlessly Disciplined\u201D \u2192</a></p>
       </div>`;
 
-    const subjectPrefix = journalOnly
+    const subjectPrefix = workbookOnly
+      ? '\u{1F4D8} Your DDA APC Candidate Workbook is ready'
+      : journalOnly
       ? '\u{1F4D3} Your 30-Day Journal is unlocked'
       : digitalOnly ? '\u{1F4D6} Your eBook is ready' : (orderType === 'mixed' ? '\u{1F4E6} Order confirmed (parcel + digital)' : '\u{1F4E6} Order confirmed');
 
@@ -878,7 +1036,7 @@ async function sendOrderPlacedEmails(orderId, order, docRef) {
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center;">
               <h1 style="margin: 0; font-size: 28px;">Thank you, ${firstName}!</h1>
-              <p style="margin: 10px 0 0 0; font-size: 16px;">${journalOnly ? 'Your journal is unlocked and saved to your account.' : (digitalOnly ? 'Your eBook is locked in and saved to your profile.' : 'Your Disciplined Disciples order is confirmed.')}</p>
+              <p style="margin: 10px 0 0 0; font-size: 16px;">${workbookOnly ? 'Your workbook is locked in and saved to your profile.' : journalOnly ? 'Your journal is unlocked and saved to your account.' : (digitalOnly ? 'Your eBook is locked in and saved to your profile.' : 'Your Disciplined Disciples order is confirmed.')}</p>
             </div>
             <div style="padding: 30px; background: #f8f9fa;">
               <h2 style="color: #333; margin-bottom: 10px;">Order ${trimmedOrderId}</h2>
@@ -895,6 +1053,7 @@ async function sendOrderPlacedEmails(orderId, order, docRef) {
               </div>
               ${shippingSection}
               ${ebookSection}
+              ${workbookSection}
               ${journalSection}
               <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                 <h3 style="margin: 0 0 10px 0; color: #111827;">A note from the founder</h3>
@@ -929,7 +1088,7 @@ async function sendOrderPlacedEmails(orderId, order, docRef) {
     const adminEmailHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: #28a745; color: white; padding: 26px; text-align: center;">
-              <h1 style="margin: 0; font-size: 24px;">\u{1F389} New ${journalOnly ? 'Journal' : orderType === 'digital' ? 'eBook' : orderType === 'mixed' ? 'Mixed' : 'Physical'} Order</h1>
+              <h1 style="margin: 0; font-size: 24px;">\u{1F389} New ${workbookOnly ? 'Workbook' : journalOnly ? 'Journal' : orderType === 'digital' ? 'eBook' : orderType === 'mixed' ? 'Mixed' : 'Physical'} Order</h1>
               <p style="margin: 10px 0 0 0; font-size: 16px;">${digitalOnly ? 'No fulfilment needed \u2014 customer already has access.' : 'Action: prepare and ship.'}</p>
             </div>
             <div style="padding: 25px; background: #f8f9fa;">
@@ -1528,6 +1687,13 @@ async function handleOrderPayment(orderId, payload, payfastPaymentId, amountGros
       await grantJournalAccess(orderData.userId, 'order', orderId);
     } catch (e) {
       console.error('Failed to grant journal access from webhook:', e.message);
+    }
+  }
+  if (orderData.userId && orderContainsWorkbook(orderData)) {
+    try {
+      await grantWorkbookEntitlement(orderData.userId, orderId, 'payfast');
+    } catch (e) {
+      console.error('Failed to grant workbook entitlement from webhook:', e.message);
     }
   }
 }

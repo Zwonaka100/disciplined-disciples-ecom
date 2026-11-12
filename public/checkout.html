@@ -350,7 +350,8 @@
     let isDigitalEbookCheckout = false;
 
     // Fixed prices for the book products (kept in step with functions/index.js FIXED_PRICES).
-    const BOOK_PRICES = { ebook: 119.00, 'book-physical': 249.00 };
+    // The DDA APC Candidate Workbook is R149 (also fixed server-side as WORKBOOK_PRICE in functions/index.js).
+    const BOOK_PRICES = { ebook: 119.00, 'book-physical': 249.00, 'apc-workbook': 149.00 };
     let journalPrice = null;
 
     async function loadJournalPrice() {
@@ -409,6 +410,22 @@
         const params = new URLSearchParams(window.location.search);
         const bookType = (params.get('book') || '').toLowerCase();
         const productType = (params.get('product') || '').toLowerCase();
+
+        if (productType === 'apc-workbook') {
+            isDigitalEbookCheckout = true;
+            window.cart = [{
+                productId: 'apc-workbook',
+                name: 'DDA APC Candidate Workbook',
+                price: BOOK_PRICES['apc-workbook'],
+                quantity: 1,
+                size: 'Digital',
+                fulfillmentType: 'digital',
+                imageUrl: 'Assets/45.png'
+            }];
+            localStorage.setItem('disciplinedDisciplesCart', JSON.stringify(window.cart));
+            hideDeliveryForDigital();
+            return;
+        }
 
         if (productType === 'journal') {
             const price = await loadJournalPrice();

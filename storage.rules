@@ -57,6 +57,13 @@ service firebase.storage {
       allow write: if isAdmin();
     }
 
+    // DDA APC Candidate Workbook master file (private). Only admins read directly; buyers
+    // receive a short-lived link from the getWorkbookDownloadLink callable.
+    match /workbook/{allPaths=**} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
     // Default deny all other paths
     match /{allPaths=**} {
       allow read, write: if false;
