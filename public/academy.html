@@ -10,7 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <link rel="stylesheet" href="styles.css?v=20261005d">
+    <link rel="stylesheet" href="styles.css?v=20261112c">
     <link rel="stylesheet" href="profile-avatar-fix.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -74,6 +74,12 @@
         .pkg-card ul li i { color: #10b981; margin-top: 4px; font-size: 0.85rem; flex-shrink: 0; }
         .pkg-cta { display: block; width: 100%; padding: 0.85rem 1rem; border: none; border-radius: 10px; background: #0f172a; color: #fff; font-weight: 700; font-size: 0.92rem; cursor: pointer; transition: all 0.2s ease; text-align: center; text-decoration: none; }
         .pkg-cta:hover { background: #1e293b; transform: translateY(-1px); }
+        /* Workbook (standalone digital product): the same card look, one card, centred. */
+        .pkg-grid.single { grid-template-columns: minmax(0, 440px); justify-content: center; }
+        .pkg-card .wb-desc { font-size: 0.9rem; color: #475569; line-height: 1.6; margin: 0 0 1rem; }
+        .wb-cta { display: block; box-sizing: border-box; width: 100%; padding: 0.85rem 1rem; border: none; border-radius: 10px; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; font-weight: 700; font-size: 0.92rem; cursor: pointer; transition: all 0.2s ease; text-align: center; text-decoration: none; }
+        .wb-cta:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(79,70,229,0.28); }
+        .wb-note { text-align: center; margin: 0.9rem auto 0; max-width: 440px; font-size: 0.78rem; color: #64748b; line-height: 1.5; }
         .pkg-card.featured .pkg-cta { background: linear-gradient(135deg, #4f46e5, #7c3aed); }
         .pkg-card.free .pkg-cta { background: #fff; color: #0f172a; border: 2px solid #0f172a; }
         .pkg-card.free .pkg-cta:hover { background: #0f172a; color: #fff; }
@@ -202,28 +208,29 @@
         .journey-others h4 { margin: 0 0 0.3rem; color: #1e1b4b; font-size: 1rem; font-weight: 800; }
         .journey-others p { margin: 0; color: #3730a3; font-size: 0.9rem; line-height: 1.6; }
 
-        .apc-section { background: #0f172a; color: #fff; padding: 4rem 1rem; }
+        .apc-section { background: linear-gradient(180deg, #f5f3ff 0%, #ede9fe 100%); color: #1f2937; padding: 3.5rem 1rem; border-top: 1px solid #e4defa; }
         .apc-shell { max-width: 1100px; margin: 0 auto; }
         .apc-head { text-align: center; max-width: 780px; margin: 0 auto 2.4rem; }
-        .apc-head .m-kicker { color: #fff; }
-        .apc-head h2 { color: #fff; font-size: clamp(1.7rem, 3.5vw, 2.4rem); font-weight: 800; margin: 0 0 0.8rem; line-height: 1.2; }
-        .apc-head p { color: rgba(255,255,255,0.78); line-height: 1.7; margin: 0; font-size: 1.02rem; }
+        .apc-head .m-kicker { color: #fff; background: linear-gradient(135deg, #4f46e5, #7c3aed); border: none; }
+        .apc-head h2 { color: #111827; font-size: clamp(1.7rem, 3.5vw, 2.4rem); font-weight: 800; margin: 0 0 0.8rem; line-height: 1.2; }
+        .apc-head p { color: #4b5563; line-height: 1.7; margin: 0; font-size: 1.02rem; }
         .apc-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
         @media (max-width: 960px) { .apc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
         @media (max-width: 600px) { .apc-grid { grid-template-columns: 1fr; } }
-        .apc-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 1.3rem; }
-        .apc-card i.apc-icon { font-size: 1.3rem; color: #a5b4fc; margin-bottom: 0.7rem; display: block; }
-        .apc-card h4 { color: #fff; margin: 0 0 0.45rem; font-size: 1rem; font-weight: 800; }
-        .apc-card p, .apc-card li { color: rgba(255,255,255,0.75); font-size: 0.9rem; line-height: 1.6; margin: 0; }
+        .apc-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 18px; padding: 1.3rem; box-shadow: 0 2px 8px rgba(15,23,42,0.04); }
+        .apc-card i.apc-icon { font-size: 1.3rem; color: #6d28d9; margin-bottom: 0.7rem; display: block; }
+        .apc-card h4 { color: #111827; margin: 0 0 0.45rem; font-size: 1rem; font-weight: 800; }
+        .apc-card p, .apc-card li { color: #4b5563; font-size: 0.9rem; line-height: 1.6; margin: 0; }
         .apc-card ul { margin: 0.5rem 0 0; padding-left: 1.1rem; }
-        .apc-card .apc-note { margin-top: 0.6rem; font-size: 0.8rem; color: rgba(255,255,255,0.55); }
-        .apc-commitment { margin: 1.8rem auto 0; max-width: 820px; text-align: center; color: rgba(255,255,255,0.8); line-height: 1.7; font-size: 0.98rem; }
+        .apc-card .apc-note { margin-top: 0.6rem; font-size: 0.8rem; color: #6b7280; }
+        .apc-commitment { margin: 1.8rem auto 0; max-width: 820px; text-align: center; color: #374151; line-height: 1.7; font-size: 0.98rem; }
         .apc-cta-row { display: flex; gap: 0.8rem; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 1.6rem; }
-        .apc-price { font-size: 1.6rem; font-weight: 800; color: #fff; }
-        .apc-price small { font-size: 0.85rem; color: rgba(255,255,255,0.6); font-weight: 600; margin-left: 6px; }
+        .apc-price { font-size: 1.6rem; font-weight: 800; color: #111827; }
+        .apc-price small { font-size: 0.85rem; color: #6b7280; font-weight: 600; margin-left: 6px; }
         .apc-cta { display: inline-flex; align-items: center; gap: 8px; padding: 0.95rem 1.6rem; border: none; border-radius: 10px; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; font-weight: 700; cursor: pointer; transition: all 0.2s ease; font-size: 0.95rem; }
         .apc-cta:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(79,70,229,0.4); }
-        .apc-disclaimer { text-align: center; margin-top: 1.2rem; font-size: 0.78rem; color: rgba(255,255,255,0.5); }
+        .apc-disclaimer { text-align: center; margin-top: 1.2rem; font-size: 0.8rem; color: #6b7280; }
+        @media (max-width: 600px) { .apc-section { padding: 2.4rem 1rem; } .apc-head { margin-bottom: 1.6rem; } .apc-grid { gap: 0.8rem; } .apc-commitment { margin-top: 1.3rem; } .apc-cta-row { margin-top: 1.2rem; } }
 
         .journal-included { max-width: 1100px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 1rem 1.2rem; display: flex; gap: 0.9rem; align-items: center; box-shadow: 0 2px 8px rgba(15,23,42,0.04); }
         .journal-included i { color: #7c3aed; font-size: 1.4rem; }
@@ -463,6 +470,31 @@
             </div>
         </section>
 
+        <!-- Standalone product: DDA APC Candidate Workbook (digital PDF, paid through PayFast checkout) -->
+        <section class="m-section" style="padding-top:0;" id="apc-workbook">
+            <h2>Prefer to start on your own?</h2>
+            <p class="section-sub">The DDA APC Candidate Workbook gives you the method and the toolkit as a 108-page PDF, yours to keep.</p>
+            <div class="pkg-grid single">
+                <article class="pkg-card featured" data-product="apc-workbook">
+                    <h3>DDA APC Candidate Workbook</h3>
+                    <p class="pkg-tag">Self-study &middot; PDF &middot; 108 pages</p>
+                    <p class="pkg-price">R149</p>
+                    <p class="pkg-cadence">One-time purchase, instant download</p>
+                    <p class="wb-desc">A complete preparation workbook for APC candidates: how to spot triggers, research a case in three layers, and write like a professional advisor, with a ready-to-use prompt suite for your own preparation.</p>
+                    <ul>
+                        <li><i class="fas fa-check-circle"></i> Part 1: Candidate Manual</li>
+                        <li><i class="fas fa-check-circle"></i> Part 2: Trigger identification</li>
+                        <li><i class="fas fa-check-circle"></i> Part 3: Three-layer research</li>
+                        <li><i class="fas fa-check-circle"></i> Part 4: The research method</li>
+                        <li><i class="fas fa-check-circle"></i> Part 5: The writing masterclass</li>
+                        <li><i class="fas fa-check-circle"></i> Part 6: The prompt suite</li>
+                    </ul>
+                    <a class="wb-cta" href="checkout.html?product=apc-workbook" id="apc-workbook-buy">Buy the workbook</a>
+                </article>
+            </div>
+            <p class="wb-note">Independent of SAICA. No guarantee of exam results. For preparation only.</p>
+        </section>
+
         <!-- Flagship: SAICA APC Programme -->
         <section class="apc-section" id="apc-programme">
             <div class="apc-shell">
@@ -476,7 +508,7 @@
                     <article class="apc-card">
                         <i class="fas fa-file-pen apc-icon"></i>
                         <h4>Professional Writing Framework</h4>
-                        <p>Our comprehensive 33-page master guide on how to structure, articulate and write like a high-level professional advisor. Available exclusively to programme candidates.</p>
+                        <p>Our comprehensive 33-page master guide on how to structure, articulate and write like a high-level professional advisor. Included in the programme, and its method is also in the DDA APC Candidate Workbook. The programme adds personal mentoring and feedback on your own writing.</p>
                     </article>
                     <article class="apc-card">
                         <i class="fas fa-user-group apc-icon"></i>
@@ -494,6 +526,7 @@
                             <li>Microeconomic industry and case study research</li>
                         </ul>
                         <p class="apc-note">For preparation and research. Not for use in the exam itself.</p>
+                        <p class="apc-note">The prompt suite is also part of the DDA APC Candidate Workbook. The programme adds personal mentoring, feedback and the Discovery Call process on top.</p>
                     </article>
                     <article class="apc-card">
                         <i class="fas fa-clipboard-check apc-icon"></i>
@@ -767,7 +800,7 @@
     </a>
 
     <script src="firebase-config.js"></script>
-    <script src="script.js?v=20261005a"></script>
+    <script src="script.js?v=20261112b"></script>
     <script src="js/event-banner.js?v=20261019a"></script>
     <script>
     (function () {

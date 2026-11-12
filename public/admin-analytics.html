@@ -20,6 +20,7 @@
         .kpi { background:#fff; border-radius:.85rem; padding:1.1rem 1.25rem; box-shadow:0 1px 2px rgba(15,23,42,.05); border:1px solid #e2e8f0; }
         .kpi-label { font-size:.78rem; color:#64748b; text-transform:uppercase; letter-spacing:.5px; font-weight:600; }
         .kpi-value { font-size:1.7rem; font-weight:700; color:#0f172a; margin-top:.35rem; }
+        @media (max-width: 420px) { .kpi-value { font-size:1.45rem; overflow-wrap:anywhere; } }
         .kpi-sub { font-size:.78rem; color:#94a3b8; margin-top:.25rem; }
         .card { background:#fff; border-radius:.85rem; padding:1.25rem; box-shadow:0 1px 2px rgba(15,23,42,.05); border:1px solid #e2e8f0; }
         .card h3 { font-weight:700; color:#0f172a; margin-bottom:.85rem; font-size:1rem; display:flex; align-items:center; gap:.5rem; }
@@ -126,7 +127,7 @@
     </div>
 
     <script src="firebase-config.js?v=20260601c"></script>
-    <script src="js/admin-sidebar.js?v=20261019a" defer></script>
+    <script src="js/admin-sidebar.js?v=20261112h" defer></script>
     <script>
     (function(){
         'use strict';
