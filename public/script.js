@@ -1,3 +1,28 @@
+// Phones: label each cell of a wide table with its column heading so styles.css can show every row as a card.
+(function () {
+    function labelTables() {
+        document.querySelectorAll('table').forEach(function (table) {
+            var heads = Array.prototype.slice.call(table.querySelectorAll('thead th'));
+            if (heads.length < 4) return;
+            table.classList.add('stack-mobile');
+            var names = heads.map(function (h) { return (h.innerText || h.textContent || '').trim(); });
+            table.querySelectorAll('tbody tr').forEach(function (row) {
+                if (row.getAttribute('data-labelled') === String(row.children.length)) return;
+                Array.prototype.slice.call(row.children).forEach(function (cell, i) {
+                    if (cell.tagName === 'TD' && !cell.hasAttribute('data-label')) cell.setAttribute('data-label', cell.hasAttribute('colspan') ? '' : (names[i] || ''));
+                });
+                row.setAttribute('data-labelled', String(row.children.length));
+            });
+        });
+    }
+    function start() {
+        var queued = false;
+        new MutationObserver(function () { if (!queued) { queued = true; requestAnimationFrame(function () { queued = false; labelTables(); }); } }).observe(document.body, { childList: true, subtree: true });
+        labelTables();
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
 // Redirect non-www to www for consistent auth sessions across all pages
 if (window.location.hostname === 'disciplineddisciples.co.za') {
     window.location.href = window.location.href.replace('disciplineddisciples.co.za', 'www.disciplineddisciples.co.za');
@@ -1560,7 +1585,7 @@ window.checkEbookEntitlementAndShow = async function() {
                     <img src="Assets/book.png" alt="Relentlessly Disciplined eBook cover" class="w-20 h-28 object-cover rounded shadow-sm flex-shrink-0" onerror="this.style.display='none'" />
                     <div class="flex flex-col justify-between flex-1 min-w-0">
                         <div>
-                            <h3 class="font-semibold text-gray-900 truncate">Relentlessly Disciplined eBook</h3>
+                            <h3 class="font-semibold text-gray-900 break-words">Relentlessly Disciplined eBook</h3>
                             <p class="text-xs text-gray-500 mt-1">PDF • Permanent access</p>
                             ${purchasedOn ? `<p class="text-xs text-gray-400 mt-1">Purchased ${purchasedOn}</p>` : ''}
                         </div>
@@ -1601,7 +1626,7 @@ window.checkEbookEntitlementAndShow = async function() {
                     </div>
                     <div class="flex flex-col justify-between flex-1 min-w-0">
                         <div>
-                            <h3 class="font-semibold text-gray-900 truncate">30-Day Discipline Journal</h3>
+                            <h3 class="font-semibold text-gray-900 break-words">30-Day Discipline Journal</h3>
                             <p class="text-xs text-gray-500 mt-1">Online journal • Printable version • Permanent access</p>
                             <p class="text-xs text-gray-400 mt-1">Your entries are private to you.</p>
                         </div>

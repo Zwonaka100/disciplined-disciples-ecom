@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Disciplined Disciples - Order History</title>
-    <link rel="stylesheet" href="styles.css?v=20261005d">
+    <link rel="stylesheet" href="styles.css?v=20261112c">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">  
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="icon" type="image/png" href="Assets/45.png">
@@ -379,8 +379,8 @@
             orderDiv.innerHTML = `
                 <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
                     <div class="flex-1">
-                        <div class="flex items-center gap-4 mb-3">
-                            <h3 class="text-xl font-semibold">Order #${order.orderId}</h3>
+                        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mb-3">
+                            <h3 class="text-xl font-semibold break-all">Order #${order.orderId}</h3>
                             <span class="order-status-badge ${statusColor}">${order.status || 'Unknown'}</span>
                             <span class="order-status-badge ${paymentStatusColor}">${order.paymentStatus || 'Unknown'}</span>
                         </div>
@@ -597,7 +597,7 @@
             window.showMessage(message, 'error');
         }
     </script>
-    <script src="script.js?v=20261005a"></script>
+    <script src="script.js?v=20261112b"></script>
 
     <!-- WhatsApp Floating Button -->
     <a href="https://wa.me/27692060618?text=Hi%20Disciplined%20Disciples!%20I%20have%20a%20question%20about%20your%20products." class="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp">
